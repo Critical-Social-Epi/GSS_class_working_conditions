@@ -1,0 +1,173 @@
+---
+title: "Intro data exploration"
+author: "Jerzy Eisenberg-Guyot"
+date: "10/16/2020"
+output: 
+  github_document:
+    toc: true
+always_allow_html: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+# Prepare data for analysis
+
+## Data cleaning
+
+```{r warning=FALSE, message=FALSE}
+library(readstata13)
+library(dplyr)
+library(survival)
+library(dplyr)
+library(knitr)
+library(ggplot2)
+library(kableExtra)
+library(survey)
+library(tableone)
+library(RColorBrewer)
+library(survey)
+library(VIM)
+library(mice)
+library(parallel)
+library(mitools)
+library(viridis)
+library(survminer)
+library(gridExtra)
+library(stringr)
+library(rms)
+library(patchwork) 
+library(spatstat)
+library(purrr)
+
+#########load data and subset to those who are working fulltime, part time, or temporarily not working (the only people who were asked the QWL variables)
+#note that not all QWL variables were asked in every year, and within years, not all QWL/non-QWL variables were asked on every ballot
+
+#load data
+read.dta13('GSS_02_06_10_14_18.dta') %>% 
+  droplevels() -> dat
+
+#subset
+dat <- subset(dat, wrkstat=="working fulltime" | wrkstat=="working parttime" | wrkstat=="temp not working")
+
+########potential variables of interest (dataset already subsetted, but useful if we need to do again and add some variables)
+#####
+#
+
+#vars <- c("ballot", "id", "year", "wrkstat", "wrkslf", "wrkgovt", "health1", "health", "mntlhlth", 
+#          "occ10", "indus10", "marital", "spwrkslf", "age", "degree", "padeg", "madeg", "spdeg", 
+#          "wksup", "wksups", "union", "prestg10", "prestg105plus", "sex", "race", "income", "rincome",
+#          "coninc", "conrinc", "region", "hispanic", "sample", "wtssall", "vstrat", "vpsu", #QWL vars start on next line
+#          'cowrkint', 'laidoff', 'jobfind1', 'trynewjb', 'wkageism', 'wkracism', 'wksexism', 'wkharsex', 
+#          'wkharoth', 'health1', 'rincblls', 'fairearn', 'wkbonus', 'jobsecok', 'suphelp', 'wrktime',
+#          'cowrkhlp', 'trainops', 'manvsemp', 'hvylift', 'handmove', 'wkpraise', 'physhlth', 'mntlhlth',
+#          'hyperten', 'depress', 'misswork', 'usetech', 'knowschd', 'satjob1', 'hlthdays', 'usedup',
+#          'backpain', 'painarms', 'hurtatwk', 'spvtrfair', 'strredpg', 'phyeffrt', 'slpprblm', 'promtefr',
+#          'year', 'famvswk', 'hrsrelax', 'secondwk', 'learnnew', 'workfast', 'workdiff', 'lotofsay', 'wktopsat', 
+#          'overwork', 'wkvsfam', 'famwkoff', 'whywkhme', 'wrktype', 'yearsjob', 'waypaid', 'wrksched', 
+#          'moredays', 'mustwork', 'chngtme', 'wrkhome', 'knowwhat', 'myskills', 'setthngs',
+#          'toofewwk', 'promteok', 'opdevel', 'hlpequip', 'haveinfo', 'wkfreedm', 'fringeok', 'supcares',
+#          'wkdecide', 'partteam', 'trdunion', 'respect', 'trustman', 'safetywk', 'safefrst', 'teamsafe',
+#          'safehlth', 'proudemp', 'prodctiv', 'wksmooth', 'condemnd')
+
+#subset of QWL variables we'll focus on for now
+#qwl_vars <- c("mustwork", "chngtme", "famwkoff", "wkvsfam", "secondwk", "learnnew", "workfast",
+#              "wrktime", "workdiff", "toofewwk", "overwork", "myskills", "trainops",  "opdevel",
+#              "respect", "trustman", "manvsemp", "suphelp", "supcares", "wkfreedm", "lotofsay", "wkdecide",  "satjob1", 
+#              "fairearn", "fringeok", "rincblls", "laidoff", "jobsecok", "any_discrim_harass", "safetywk", "safehlth")
+
+#########make variables
+######
+#
+
+dat %>% 
+  mutate(educ = factor(ifelse(degree == "bachelor" | degree == "graduate", "College +", 
+                              ifelse(degree== "high school", "HS", 
+                                     ifelse(degree == "junior college", "JuCo", 
+                                            ifelse(degree == "lt high school", "<HS", NA)))),
+                       levels=c("<HS", "HS", "JuCo", "College +")), 
+         region = factor(ifelse(region == "new england" | region == "middle atlantic", "Northeast",
+                                   ifelse(region == "e. sou. central" | region == "south atlantic" | region == "w. sou. central", "South",
+                                          ifelse(region == "e. nor. central" | region == "w. nor. central", "Midwest", "West")))),
+         marital_tri=ifelse(marital=="married", "married",
+                            ifelse(marital=="never married", "never married",
+                                   ifelse(marital=="widowed" | marital=="divorced" | marital=="separated", "wid/div/sep", marital))),
+         srh_bin=ifelse(health1 == "fair" | health1 == "poor", "poor/fair", "good/vgood/exc"), 
+         any_discrim_harass=ifelse(wkageism=="yes" | wkracism=="yes" | wksexism=="yes" | wkharsex=="yes" | wkharoth=="yes", "yes", "no"),
+         income = as.numeric(as.character(coninc)) * 251.1 / 172.2, #adjust income to 2018 dollars from 2000 dollars
+         prestg10_bin = ifelse(prestg10 < weighted.median(prestg10, w=wtssall, na.rm=T), "low prestige", "high prestige"),  #prestige below median
+         #we could also create the class variable using numemps (number of employees employed by the self-employed), but it's not available in 2002 
+         class_det=factor(ifelse((wksup == "yes" & wksups == "yes" & wrkslf == "self-employed") | (wksup == "yes" & wksups == "yes" & wrkslf == "someone else" & occ10 == "chief executives"), "Large capitalists", 
+                                          ifelse((wksup == "yes" & wksups == "no" & wrkslf == "self-employed") | (wksup == "yes" & wksups == "no" & wrkslf == "someone else" & occ10 == "chief executives"), "Small capitalists",
+                                                  ifelse((wksup == "no" & wrkslf == "self-employed") | (wksup == "no" & wrkslf == "someone else" & occ10 == "chief executives"), "Petty bourgeoisie", 
+                                                          ifelse(wksup == "yes" & wksups == "yes" & wrkslf == "someone else" & occ10 != "chief executives", "High-level managers",
+                                                                         ifelse(wksup == "yes" & wksups == "no" & wrkslf == "someone else" & occ10 != "chief executives", "Low-level managers",
+                                                                                ifelse(wksup == "no" & wrkslf ==  "someone else" & occ10 != "chief executives" & prestg10_bin == "low prestige", "Less-skilled workers", 
+                                                                                       ifelse(wksup == "no" & wrkslf ==  "someone else" & occ10 != "chief executives" & prestg10_bin == "high prestige", "More-skilled workers", NA))))))), 
+                                             levels=c("Less-skilled workers", "More-skilled workers", "Low-level managers", "High-level managers", "Petty bourgeoisie", "Small capitalists", "Large capitalists")),
+         class=factor(ifelse((wksup == "yes" & wrkslf == "self-employed") | (wksup == "yes" & wrkslf == "someone else" & occ10 == "chief executives"), "Capitalists", 
+                              ifelse((wksup == "no" & wrkslf == "self-employed") | (wksup == "no" & wrkslf == "someone else" & occ10 == "chief executives"), "Petty bourgeoisie", 
+                                                 ifelse(wksup == "yes" & wrkslf == "someone else" & occ10 != "chief executives", "Managers", 
+                                                        ifelse(wksup == "no" & wrkslf ==  "someone else" & occ10 != "chief executives", "Workers", NA)))), 
+                                   levels=c("Workers", "Managers", "Petty bourgeoisie", "Capitalists"))) -> dat
+```
+
+## Set survey data
+
+```{r warning=FALSE, message=FALSE}
+#center data for the single-PSU stratum at the sample grand mean rather than the stratum mean (conservative)
+options(survey.lonely.psu="adjust")
+
+svy_dat <- svydesign(ids = ~ vpsu,
+                     strata = ~ vstrat,
+                     weights = ~ wtssall, 
+                     nest=TRUE, 
+                     data=dat)
+```
+
+# Descriptives
+
+Some QWL variables have lots of missingness because they weren't asked of every ballot in a given year
+
+## Demographics and health stratifed by class (weighted but nonimputed)
+
+```{r warning=FALSE, message=FALSE}
+#vars of interest
+vars <- c('sex', 'race', 'educ', 'marital_tri', 'region', 'income', 'age', "srh_bin", "mntlhlth", "depress")
+nonorm <- c('income', 'age')
+
+#aggregate
+x <- svyCreateTableOne(data = svy_dat, vars = vars, strata='class')
+x <- print(x, printToggle=FALSE, noSpaces=TRUE, nonnormal=nonorm)
+kable(x[,1:4], caption="Simple") %>%
+  kable_styling("striped")
+
+#most disaggregate
+x <- svyCreateTableOne(data = svy_dat, vars = vars, strata='class_det')
+x <- print(x, printToggle=FALSE, noSpaces=TRUE, nonnormal=nonorm)
+kable(x[,1:7], caption="Most disaggregate") %>%
+  kable_styling("striped")
+```
+
+## QWL variables stratified by class (weighted but nonimputed)
+
+```{r warning=FALSE, message=FALSE}
+#vars of interest
+qwl_vars <- c("mustwork", "chngtme", "famwkoff", "wkvsfam", "secondwk", "learnnew", "workfast",
+              "wrktime", "workdiff", "toofewwk", "overwork", "myskills", "trainops",  "opdevel",
+              "respect", "trustman", "manvsemp", "suphelp", "supcares", "wkfreedm", "lotofsay", "wkdecide",  "satjob1", 
+              "fairearn", "fringeok", "rincblls", "laidoff", "jobsecok", "any_discrim_harass", "safetywk", "safehlth")
+
+#aggregate
+x <- svyCreateTableOne(data = svy_dat, vars = qwl_vars, strata='class')
+x <- print(x, printToggle=FALSE, noSpaces=TRUE)
+kable(x[,1:4], caption="Simple") %>%
+  kable_styling("striped")
+
+#most disaggregate
+x <- svyCreateTableOne(data = svy_dat, vars = qwl_vars, strata='class_det')
+x <- print(x, printToggle=FALSE, noSpaces=TRUE)
+kable(x[,1:7], caption="Most disaggregate") %>%
+  kable_styling("striped")
+```
