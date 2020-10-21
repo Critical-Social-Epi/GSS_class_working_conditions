@@ -1,7 +1,7 @@
 ---
 title: "Intro data exploration"
 author: "Jerzy Eisenberg-Guyot"
-date: "10/16/2020"
+date: "10/21/2020"
 output: 
   github_document:
     toc: true
@@ -11,10 +11,6 @@ always_allow_html: true
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 ```
-
-# Prepare data for analysis
-
-## Data cleaning
 
 ```{r warning=FALSE, message=FALSE}
 library(readstata13)
@@ -75,7 +71,7 @@ dat <- subset(dat, wrkstat=="working fulltime" | wrkstat=="working parttime" | w
 #qwl_vars <- c("mustwork", "chngtme", "famwkoff", "wkvsfam", "secondwk", "learnnew", "workfast",
 #              "wrktime", "workdiff", "toofewwk", "overwork", "myskills", "trainops",  "opdevel",
 #              "respect", "trustman", "manvsemp", "suphelp", "supcares", "wkfreedm", "lotofsay", "wkdecide",  "satjob1", 
-#              "fairearn", "fringeok", "rincblls", "laidoff", "jobsecok", "any_discrim_harass", "safetywk", "safehlth")
+#              "fairearn", "fringeok", "rincblls", "laidoff", "jobsecok", "any_discrim_harass", "safetywk", "safehlth", "safefrst")
 
 #########make variables
 ######
@@ -100,20 +96,18 @@ dat %>%
          #we could also create the class variable using numemps (number of employees employed by the self-employed), but it's not available in 2002 
          class_det=factor(ifelse((wksup == "yes" & wksups == "yes" & wrkslf == "self-employed") | (wksup == "yes" & wksups == "yes" & wrkslf == "someone else" & occ10 == "chief executives"), "Large capitalists", 
                                           ifelse((wksup == "yes" & wksups == "no" & wrkslf == "self-employed") | (wksup == "yes" & wksups == "no" & wrkslf == "someone else" & occ10 == "chief executives"), "Small capitalists",
-                                                  ifelse((wksup == "no" & wrkslf == "self-employed") | (wksup == "no" & wrkslf == "someone else" & occ10 == "chief executives"), "Petty bourgeoisie", 
+                                                  ifelse((wksup == "no" & wrkslf == "self-employed") | (wksup == "no" & wrkslf == "someone else" & occ10 == "chief executives"), "Petit bourgeoisie", 
                                                           ifelse(wksup == "yes" & wksups == "yes" & wrkslf == "someone else" & occ10 != "chief executives", "High-level managers",
                                                                          ifelse(wksup == "yes" & wksups == "no" & wrkslf == "someone else" & occ10 != "chief executives", "Low-level managers",
                                                                                 ifelse(wksup == "no" & wrkslf ==  "someone else" & occ10 != "chief executives" & prestg10_bin == "low prestige", "Less-skilled workers", 
                                                                                        ifelse(wksup == "no" & wrkslf ==  "someone else" & occ10 != "chief executives" & prestg10_bin == "high prestige", "More-skilled workers", NA))))))), 
-                                             levels=c("Less-skilled workers", "More-skilled workers", "Low-level managers", "High-level managers", "Petty bourgeoisie", "Small capitalists", "Large capitalists")),
+                                             levels=c("Less-skilled workers", "More-skilled workers", "Low-level managers", "High-level managers", "Petit bourgeoisie", "Small capitalists", "Large capitalists")),
          class=factor(ifelse((wksup == "yes" & wrkslf == "self-employed") | (wksup == "yes" & wrkslf == "someone else" & occ10 == "chief executives"), "Capitalists", 
-                              ifelse((wksup == "no" & wrkslf == "self-employed") | (wksup == "no" & wrkslf == "someone else" & occ10 == "chief executives"), "Petty bourgeoisie", 
+                              ifelse((wksup == "no" & wrkslf == "self-employed") | (wksup == "no" & wrkslf == "someone else" & occ10 == "chief executives"), "Petit bourgeoisie", 
                                                  ifelse(wksup == "yes" & wrkslf == "someone else" & occ10 != "chief executives", "Managers", 
                                                         ifelse(wksup == "no" & wrkslf ==  "someone else" & occ10 != "chief executives", "Workers", NA)))), 
-                                   levels=c("Workers", "Managers", "Petty bourgeoisie", "Capitalists"))) -> dat
+                                   levels=c("Workers", "Managers", "Petit bourgeoisie", "Capitalists"))) -> dat
 ```
-
-## Set survey data
 
 ```{r warning=FALSE, message=FALSE}
 #center data for the single-PSU stratum at the sample grand mean rather than the stratum mean (conservative)
@@ -130,7 +124,10 @@ svy_dat <- svydesign(ids = ~ vpsu,
 
 Some QWL variables have lots of missingness because they weren't asked of every ballot in a given year
 
-## Demographics and health stratifed by class (weighted but nonimputed)
+"depress" is whether respondent has ever been diagnosed by a healthcare professional with depression.
+"mntlhlth" is days of poor mental health in past 30 days
+
+## Demographics and health stratifed by class (weighted but unimputed)
 
 ```{r warning=FALSE, message=FALSE}
 #vars of interest
@@ -146,18 +143,52 @@ kable(x[,1:4], caption="Simple") %>%
 #most disaggregate
 x <- svyCreateTableOne(data = svy_dat, vars = vars, strata='class_det')
 x <- print(x, printToggle=FALSE, noSpaces=TRUE, nonnormal=nonorm)
-kable(x[,1:7], caption="Most disaggregate") %>%
+kable(x[,1:7], caption="Complex") %>%
   kable_styling("striped")
 ```
 
-## QWL variables stratified by class (weighted but nonimputed)
+## QWL variables stratified by class (weighted but unimputed)
+
+* The QWL variables analyzed are:
+    + mustwork: Mandatory to work extra hours
+    + chngtme: How often r allowed change schedule
+    + famwkoff: How hard to take time off
+    + wkvsfam: How often job interferes fam life
+    + secondwk: R has job other than main
+    + learnnew: Job requires r to learn new things
+    + workfast: Job requires r to work fast
+    + wrktime: R has enough time to get the job done
+    + workdiff: R does numerous things on job
+    + toofewwk: How often not enough staff
+    + overwork: R has too much work to do well
+    + myskills: Job allows r use of skills
+    + trainops: R have the training opportunities
+    + opdevel: Opportunity to develop my abilities
+    + respect: R treated with respect at work
+    + trustman: R trust management at work
+    + manvsemp: Relations bw management and employees
+    + suphelp: Supervisor helpful to r in getting job done
+    + supcares: Supervisor concerned about welfare
+    + wkfreedm: A lot of freedom to decide how to do job
+    + lotofsay: R has lot of say in job
+    + wkdecide: How often r take part in decisions
+    + satjob1: 	Job satisfaction in general
+    + fairearn: How fair is what r earn on the job
+    + fringeok: Fringe benefits are good
+    + rincblls: Income alone is enough
+    + laidoff: R was laid off main job last year
+    + jobsecok: The job security is good
+    + any_discrim_harass: Any discrimination or harassment on job (created by me from several more specific variables focused separately on racism, sexism, etc.)
+    + safetywk: Worker safety priority at work
+    + safehlth: Safety and health condition good at work
+    + safefrst: No shortcuts on worker safety
 
 ```{r warning=FALSE, message=FALSE}
 #vars of interest
 qwl_vars <- c("mustwork", "chngtme", "famwkoff", "wkvsfam", "secondwk", "learnnew", "workfast",
               "wrktime", "workdiff", "toofewwk", "overwork", "myskills", "trainops",  "opdevel",
               "respect", "trustman", "manvsemp", "suphelp", "supcares", "wkfreedm", "lotofsay", "wkdecide",  "satjob1", 
-              "fairearn", "fringeok", "rincblls", "laidoff", "jobsecok", "any_discrim_harass", "safetywk", "safehlth")
+              "fairearn", "fringeok", "rincblls", "laidoff", "jobsecok", "any_discrim_harass", "safetywk", "safehlth", "safefrst")
 
 #aggregate
 x <- svyCreateTableOne(data = svy_dat, vars = qwl_vars, strata='class')
@@ -168,6 +199,6 @@ kable(x[,1:4], caption="Simple") %>%
 #most disaggregate
 x <- svyCreateTableOne(data = svy_dat, vars = qwl_vars, strata='class_det')
 x <- print(x, printToggle=FALSE, noSpaces=TRUE)
-kable(x[,1:7], caption="Most disaggregate") %>%
+kable(x[,1:7], caption="Complex") %>%
   kable_styling("striped")
 ```

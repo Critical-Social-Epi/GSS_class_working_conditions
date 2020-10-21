@@ -1,29 +1,24 @@
 Intro data exploration
 ================
 Jerzy Eisenberg-Guyot
-10/16/2020
+10/21/2020
 
-  - [Prepare data for analysis](#prepare-data-for-analysis)
-      - [Data cleaning](#data-cleaning)
-      - [Set survey data](#set-survey-data)
   - [Descriptives](#descriptives)
       - [Demographics and health stratifed by class (weighted but
-        nonimputed)](#demographics-and-health-stratifed-by-class-weighted-but-nonimputed)
+        unimputed)](#demographics-and-health-stratifed-by-class-weighted-but-unimputed)
       - [QWL variables stratified by class (weighted but
-        nonimputed)](#qwl-variables-stratified-by-class-weighted-but-nonimputed)
-
-# Prepare data for analysis
-
-## Data cleaning
-
-## Set survey data
+        unimputed)](#qwl-variables-stratified-by-class-weighted-but-unimputed)
 
 # Descriptives
 
 Some QWL variables have lots of missingness because they weren’t asked
 of every ballot in a given year
 
-## Demographics and health stratifed by class (weighted but nonimputed)
+“depress” is whether respondent has ever been diagnosed by a healthcare
+professional with depression. “mntlhlth” is days of poor mental health
+in past 30 days
+
+## Demographics and health stratifed by class (weighted but unimputed)
 
 <table class="table table-striped" style="margin-left: auto; margin-right: auto;">
 
@@ -55,7 +50,7 @@ Managers
 
 <th style="text-align:left;">
 
-Petty bourgeoisie
+Petit bourgeoisie
 
 </th>
 
@@ -897,7 +892,7 @@ depress = no (%)
 
 <caption>
 
-Most disaggregate
+Complex
 
 </caption>
 
@@ -935,7 +930,7 @@ High-level managers
 
 <th style="text-align:left;">
 
-Petty bourgeoisie
+Petit bourgeoisie
 
 </th>
 
@@ -2205,7 +2200,43 @@ depress = no (%)
 
 </table>
 
-## QWL variables stratified by class (weighted but nonimputed)
+## QWL variables stratified by class (weighted but unimputed)
+
+  - The QWL variables analyzed are:
+      - mustwork: Mandatory to work extra hours
+      - chngtme: How often r allowed change schedule
+      - famwkoff: How hard to take time off
+      - wkvsfam: How often job interferes fam life
+      - secondwk: R has job other than main
+      - learnnew: Job requires r to learn new things
+      - workfast: Job requires r to work fast
+      - wrktime: R has enough time to get the job done
+      - workdiff: R does numerous things on job
+      - toofewwk: How often not enough staff
+      - overwork: R has too much work to do well
+      - myskills: Job allows r use of skills
+      - trainops: R have the training opportunities
+      - opdevel: Opportunity to develop my abilities
+      - respect: R treated with respect at work
+      - trustman: R trust management at work
+      - manvsemp: Relations bw management and employees
+      - suphelp: Supervisor helpful to r in getting job done
+      - supcares: Supervisor concerned about welfare
+      - wkfreedm: A lot of freedom to decide how to do job
+      - lotofsay: R has lot of say in job
+      - wkdecide: How often r take part in decisions
+      - satjob1: Job satisfaction in general
+      - fairearn: How fair is what r earn on the job
+      - fringeok: Fringe benefits are good
+      - rincblls: Income alone is enough
+      - laidoff: R was laid off main job last year
+      - jobsecok: The job security is good
+      - any\_discrim\_harass: Any discrimination or harassment on job
+        (created by me from several more specific variables focused
+        separately on racism, sexism, etc.)
+      - safetywk: Worker safety priority at work
+      - safehlth: Safety and health condition good at work
+      - safefrst: No shortcuts on worker safety
 
 <table class="table table-striped" style="margin-left: auto; margin-right: auto;">
 
@@ -2237,7 +2268,7 @@ Managers
 
 <th style="text-align:left;">
 
-Petty bourgeoisie
+Petit bourgeoisie
 
 </th>
 
@@ -6737,6 +6768,168 @@ strongly disagree
 
 </tr>
 
+<tr>
+
+<td style="text-align:left;">
+
+safefrst (%)
+
+</td>
+
+<td style="text-align:left;">
+
+</td>
+
+<td style="text-align:left;">
+
+</td>
+
+<td style="text-align:left;">
+
+</td>
+
+<td style="text-align:left;">
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="text-align:left;">
+
+strongly agree
+
+</td>
+
+<td style="text-align:left;">
+
+1389.3 (36.9)
+
+</td>
+
+<td style="text-align:left;">
+
+973.9 (46.1)
+
+</td>
+
+<td style="text-align:left;">
+
+246.8 (49.5)
+
+</td>
+
+<td style="text-align:left;">
+
+217.4 (57.9)
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="text-align:left;">
+
+agree
+
+</td>
+
+<td style="text-align:left;">
+
+1984.1 (52.8)
+
+</td>
+
+<td style="text-align:left;">
+
+951.0 (45.0)
+
+</td>
+
+<td style="text-align:left;">
+
+231.0 (46.4)
+
+</td>
+
+<td style="text-align:left;">
+
+131.3 (35.0)
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="text-align:left;">
+
+disagree
+
+</td>
+
+<td style="text-align:left;">
+
+317.0 (8.4)
+
+</td>
+
+<td style="text-align:left;">
+
+160.3 (7.6)
+
+</td>
+
+<td style="text-align:left;">
+
+19.5 (3.9)
+
+</td>
+
+<td style="text-align:left;">
+
+24.5 (6.5)
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="text-align:left;">
+
+strongly disagree
+
+</td>
+
+<td style="text-align:left;">
+
+70.7 (1.9)
+
+</td>
+
+<td style="text-align:left;">
+
+28.4 (1.3)
+
+</td>
+
+<td style="text-align:left;">
+
+0.9 (0.2)
+
+</td>
+
+<td style="text-align:left;">
+
+2.4 (0.6)
+
+</td>
+
+</tr>
+
 </tbody>
 
 </table>
@@ -6745,7 +6938,7 @@ strongly disagree
 
 <caption>
 
-Most disaggregate
+Complex
 
 </caption>
 
@@ -6783,7 +6976,7 @@ High-level managers
 
 <th style="text-align:left;">
 
-Petty bourgeoisie
+Petit bourgeoisie
 
 </th>
 
@@ -13612,6 +13805,252 @@ strongly disagree
 <td style="text-align:left;">
 
 0.0 (0.0)
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="text-align:left;">
+
+safefrst (%)
+
+</td>
+
+<td style="text-align:left;">
+
+</td>
+
+<td style="text-align:left;">
+
+</td>
+
+<td style="text-align:left;">
+
+</td>
+
+<td style="text-align:left;">
+
+</td>
+
+<td style="text-align:left;">
+
+</td>
+
+<td style="text-align:left;">
+
+</td>
+
+<td style="text-align:left;">
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="text-align:left;">
+
+strongly agree
+
+</td>
+
+<td style="text-align:left;">
+
+699.4 (35.2)
+
+</td>
+
+<td style="text-align:left;">
+
+689.0 (39.0)
+
+</td>
+
+<td style="text-align:left;">
+
+690.1 (44.8)
+
+</td>
+
+<td style="text-align:left;">
+
+283.8 (50.0)
+
+</td>
+
+<td style="text-align:left;">
+
+246.8 (49.5)
+
+</td>
+
+<td style="text-align:left;">
+
+121.4 (56.1)
+
+</td>
+
+<td style="text-align:left;">
+
+96.0 (60.9)
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="text-align:left;">
+
+agree
+
+</td>
+
+<td style="text-align:left;">
+
+1070.9 (53.8)
+
+</td>
+
+<td style="text-align:left;">
+
+908.7 (51.4)
+
+</td>
+
+<td style="text-align:left;">
+
+696.7 (45.2)
+
+</td>
+
+<td style="text-align:left;">
+
+250.5 (44.1)
+
+</td>
+
+<td style="text-align:left;">
+
+231.0 (46.4)
+
+</td>
+
+<td style="text-align:left;">
+
+78.3 (36.2)
+
+</td>
+
+<td style="text-align:left;">
+
+51.6 (32.7)
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="text-align:left;">
+
+disagree
+
+</td>
+
+<td style="text-align:left;">
+
+178.2 (9.0)
+
+</td>
+
+<td style="text-align:left;">
+
+138.8 (7.9)
+
+</td>
+
+<td style="text-align:left;">
+
+131.6 (8.5)
+
+</td>
+
+<td style="text-align:left;">
+
+28.7 (5.1)
+
+</td>
+
+<td style="text-align:left;">
+
+19.5 (3.9)
+
+</td>
+
+<td style="text-align:left;">
+
+15.7 (7.2)
+
+</td>
+
+<td style="text-align:left;">
+
+8.8 (5.6)
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="text-align:left;">
+
+strongly disagree
+
+</td>
+
+<td style="text-align:left;">
+
+41.0 (2.1)
+
+</td>
+
+<td style="text-align:left;">
+
+29.7 (1.7)
+
+</td>
+
+<td style="text-align:left;">
+
+23.5 (1.5)
+
+</td>
+
+<td style="text-align:left;">
+
+4.8 (0.8)
+
+</td>
+
+<td style="text-align:left;">
+
+0.9 (0.2)
+
+</td>
+
+<td style="text-align:left;">
+
+1.1 (0.5)
+
+</td>
+
+<td style="text-align:left;">
+
+1.3 (0.8)
 
 </td>
 
