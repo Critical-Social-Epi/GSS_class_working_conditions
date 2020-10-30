@@ -3,8 +3,10 @@ title: "Intro data exploration"
 author: "Jerzy Eisenberg-Guyot"
 date: "10/21/2020"
 output: 
-  github_document:
+  html_document:
+    code_folding: hide
     toc: true
+    keep_md: true
 always_allow_html: true
 ---
 
@@ -12,11 +14,61 @@ always_allow_html: true
 knitr::opts_chunk$set(echo = FALSE)
 ```
 
+**General notes**
+
+Some QWL variables have lots of missingness because they weren't asked of every ballot in a given year
+
+I made the QWL variables binary for the regression analyses for simplicity and stability
+
+**Codebook for non-self-explanatory variables**
+
+* Class variables:
+    + explained in IJHS (2020) paper
+
+* Health variables:
+    + srh_bin: poor/fair vs good/vgood/excellent self-rated health
+    + depress: whether respondent has ever been diagnosed by a healthcare professional with depression
+    + mntlhlth: days of poor mental health in past 30 days
+
+* Relevant QWL variables:
+    + mustwork: Mandatory to work extra hours
+    + chngtme: How often r allowed change schedule
+    + famwkoff: How hard to take time off
+    + wkvsfam: How often job interferes fam life
+    + secondwk: R has job other than main
+    + learnnew: Job requires r to learn new things
+    + workfast: Job requires r to work fast
+    + wrktime: R has enough time to get the job done
+    + workdiff: R does numerous things on job
+    + toofewwk: How often not enough staff
+    + overwork: R has too much work to do well
+    + myskills: Job allows r use of skills
+    + trainops: R have the training opportunities
+    + opdevel: Opportunity to develop my abilities
+    + respect: R treated with respect at work
+    + trustman: R trust management at work
+    + manvsemp: Relations bw management and employees
+    + suphelp: Supervisor helpful to r in getting job done
+    + supcares: Supervisor concerned about welfare
+    + wkfreedm: A lot of freedom to decide how to do job
+    + lotofsay: R has lot of say in job
+    + wkdecide: How often r take part in decisions
+    + satjob1: 	Job satisfaction in general
+    + fairearn: How fair is what r earn on the job
+    + fringeok: Fringe benefits are good
+    + rincblls: Income alone is enough
+    + laidoff: R was laid off main job last year
+    + jobsecok: The job security is good
+    + any_disc_haras: Any discrimination or harassment on job (created by me from several more specific variables focused separately on racism, sexism, etc.)
+    + safetywk: Worker safety priority at work
+    + safehlth: Safety and health condition good at work
+    + safefrst: No shortcuts on worker safety
+
 ```{r warning=FALSE, message=FALSE}
 library(readstata13)
+library(tidyr)
 library(dplyr)
 library(survival)
-library(dplyr)
 library(knitr)
 library(ggplot2)
 library(kableExtra)
@@ -71,7 +123,7 @@ dat <- subset(dat, wrkstat=="working fulltime" | wrkstat=="working parttime" | w
 #qwl_vars <- c("mustwork", "chngtme", "famwkoff", "wkvsfam", "secondwk", "learnnew", "workfast",
 #              "wrktime", "workdiff", "toofewwk", "overwork", "myskills", "trainops",  "opdevel",
 #              "respect", "trustman", "manvsemp", "suphelp", "supcares", "wkfreedm", "lotofsay", "wkdecide",  "satjob1", 
-#              "fairearn", "fringeok", "rincblls", "laidoff", "jobsecok", "any_discrim_harass", "safetywk", "safehlth", "safefrst")
+#              "fairearn", "fringeok", "rincblls", "laidoff", "jobsecok", "any_disc_haras", "safetywk", "safehlth", "safefrst")
 
 #########make variables
 ######
@@ -90,9 +142,18 @@ dat %>%
                             ifelse(marital=="never married", "never married",
                                    ifelse(marital=="widowed" | marital=="divorced" | marital=="separated", "wid/div/sep", marital))),
          srh_bin=ifelse(health1 == "fair" | health1 == "poor", "poor/fair", "good/vgood/exc"), 
-         any_discrim_harass=ifelse(wkageism=="yes" | wkracism=="yes" | wksexism=="yes" | wkharsex=="yes" | wkharoth=="yes", "yes", "no"),
-         income = as.numeric(as.character(coninc)) * 251.1 / 172.2, #adjust income to 2018 dollars from 2000 dollars
-         prestg10_bin = ifelse(prestg10 < weighted.median(prestg10, w=wtssall, na.rm=T), "low prestige", "high prestige"),  #prestige below median
+         any_disc_haras=ifelse(wkageism=="yes" | wkracism=="yes" | wksexism=="yes" | wkharsex=="yes" | wkharoth=="yes", 1, 0),
+         respect_bin=ifelse(respect=="disagree" | respect=="strongly disagree", 1, 0),
+         trustman_bin=ifelse(trustman=="disagree" | trustman=="strongly disagree", 1, 0),
+         manvsemp_bin=ifelse(manvsemp=="quite bad" | manvsemp=="very bad", 1, 0),
+         suphelp_bin=ifelse(suphelp=="not too true" | suphelp=="not at all true", 1, 0),
+         supcares_bin=ifelse(supcares=="not too true" | supcares=="not at all true", 1, 0),
+         wkfreedm_bin=ifelse(wkfreedm=="not too true" | wkfreedm=="not at all true", 1, 0),
+         wkdecide_bin=ifelse(wkdecide=="rarely" | wkdecide=="never", 1, 0),
+         safehlth_bin=ifelse(safehlth=="disagree" | safehlth=="strongly disagree", 1, 0),
+         safefrst_bin=ifelse(safefrst=="disagree" | safefrst=="strongly disagree", 1, 0),
+         income=as.numeric(as.character(coninc)) * 251.1 / 172.2, #adjust income to 2018 dollars from 2000 dollars
+         prestg10_bin=ifelse(prestg10 < weighted.median(prestg10, w=wtssall, na.rm=T), "low prestige", "high prestige"),  #prestige below median
          #we could also create the class variable using numemps (number of employees employed by the self-employed), but it's not available in 2002 
          class_det=factor(ifelse((wksup == "yes" & wksups == "yes" & wrkslf == "self-employed") | (wksup == "yes" & wksups == "yes" & wrkslf == "someone else" & occ10 == "chief executives"), "Large capitalists", 
                                           ifelse((wksup == "yes" & wksups == "no" & wrkslf == "self-employed") | (wksup == "yes" & wksups == "no" & wrkslf == "someone else" & occ10 == "chief executives"), "Small capitalists",
@@ -120,14 +181,9 @@ svy_dat <- svydesign(ids = ~ vpsu,
                      data=dat)
 ```
 
-# Descriptives
+# Survey-weighted, unimputed descriptives
 
-Some QWL variables have lots of missingness because they weren't asked of every ballot in a given year
-
-"depress" is whether respondent has ever been diagnosed by a healthcare professional with depression.
-"mntlhlth" is days of poor mental health in past 30 days
-
-## Demographics and health stratifed by class (weighted but unimputed)
+## Demographics and health stratifed by class 
 
 ```{r warning=FALSE, message=FALSE}
 #vars of interest
@@ -138,67 +194,115 @@ nonorm <- c('income', 'age')
 x <- svyCreateTableOne(data = svy_dat, vars = vars, strata='class')
 x <- print(x, printToggle=FALSE, noSpaces=TRUE, nonnormal=nonorm)
 kable(x[,1:4], caption="Simple") %>%
-  kable_styling("striped")
+  kable_styling(c("striped", "condensed"))
 
 #most disaggregate
 x <- svyCreateTableOne(data = svy_dat, vars = vars, strata='class_det')
 x <- print(x, printToggle=FALSE, noSpaces=TRUE, nonnormal=nonorm)
 kable(x[,1:7], caption="Complex") %>%
-  kable_styling("striped")
+  kable_styling(c("striped", "condensed"))
 ```
 
-## QWL variables stratified by class (weighted but unimputed)
-
-* The QWL variables analyzed are:
-    + mustwork: Mandatory to work extra hours
-    + chngtme: How often r allowed change schedule
-    + famwkoff: How hard to take time off
-    + wkvsfam: How often job interferes fam life
-    + secondwk: R has job other than main
-    + learnnew: Job requires r to learn new things
-    + workfast: Job requires r to work fast
-    + wrktime: R has enough time to get the job done
-    + workdiff: R does numerous things on job
-    + toofewwk: How often not enough staff
-    + overwork: R has too much work to do well
-    + myskills: Job allows r use of skills
-    + trainops: R have the training opportunities
-    + opdevel: Opportunity to develop my abilities
-    + respect: R treated with respect at work
-    + trustman: R trust management at work
-    + manvsemp: Relations bw management and employees
-    + suphelp: Supervisor helpful to r in getting job done
-    + supcares: Supervisor concerned about welfare
-    + wkfreedm: A lot of freedom to decide how to do job
-    + lotofsay: R has lot of say in job
-    + wkdecide: How often r take part in decisions
-    + satjob1: 	Job satisfaction in general
-    + fairearn: How fair is what r earn on the job
-    + fringeok: Fringe benefits are good
-    + rincblls: Income alone is enough
-    + laidoff: R was laid off main job last year
-    + jobsecok: The job security is good
-    + any_discrim_harass: Any discrimination or harassment on job (created by me from several more specific variables focused separately on racism, sexism, etc.)
-    + safetywk: Worker safety priority at work
-    + safehlth: Safety and health condition good at work
-    + safefrst: No shortcuts on worker safety
+## QWL variables stratified by class 
 
 ```{r warning=FALSE, message=FALSE}
 #vars of interest
 qwl_vars <- c("mustwork", "chngtme", "famwkoff", "wkvsfam", "secondwk", "learnnew", "workfast",
               "wrktime", "workdiff", "toofewwk", "overwork", "myskills", "trainops",  "opdevel",
               "respect", "trustman", "manvsemp", "suphelp", "supcares", "wkfreedm", "lotofsay", "wkdecide",  "satjob1", 
-              "fairearn", "fringeok", "rincblls", "laidoff", "jobsecok", "any_discrim_harass", "safetywk", "safehlth", "safefrst")
+              "fairearn", "fringeok", "rincblls", "laidoff", "jobsecok", "any_disc_haras", "safetywk", "safehlth", "safefrst")
 
 #aggregate
 x <- svyCreateTableOne(data = svy_dat, vars = qwl_vars, strata='class')
 x <- print(x, printToggle=FALSE, noSpaces=TRUE)
 kable(x[,1:4], caption="Simple") %>%
-  kable_styling("striped")
+  kable_styling(c("striped", "condensed"))
 
 #most disaggregate
 x <- svyCreateTableOne(data = svy_dat, vars = qwl_vars, strata='class_det')
 x <- print(x, printToggle=FALSE, noSpaces=TRUE)
 kable(x[,1:7], caption="Complex") %>%
-  kable_styling("striped")
+  kable_styling(c("striped", "condensed"))
+```
+
+# Survey-weighted associations between QWL variables and class from age- and year-adjusted regressions
+
+Restricted to intrinsically relational variables with potentially interesting differences across classes or races
+
+## Class and QWL 
+
+Prevalence of bad category of each binary QWL variable among each class relative to the prevalence among workers
+
+```{r warning=FALSE, message=FALSE, fig.height=12, fig.width=8}
+mysvy <- function(data, columns, ...) {
+    model <- lapply(as.list(columns), function(x) {
+          svyglm(as.formula(paste0(names(data)[x], "~class + rcs(age, 3) + rcs(year, 3)")), 
+            data = data, family=poisson(), ...)
+        })
+    return(model)
+}
+
+results <- mysvy(dat, 124:133, design = svy_dat)
+
+regs = NULL
+for(i in 1:10){
+  cbind(exp(results[[i]]$coefficients[2:4]), exp(confint(results[[i]])[2:4,])) -> bind
+  rbind(regs, cbind(bind, rep(names(dat)[124:133][i],3))) -> regs
+}
+
+regs %>%
+  as.data.frame() %>%
+  mutate(Class=factor(rep(c("Managers", "Petit bourgeoisie", "Capitalists"), 10), levels=c("Managers", "Petit bourgeoisie", "Capitalists")),
+         `Prevalence ratio`=as.numeric(V1),
+         Lower=as.numeric(`2.5 %`),
+         Upper=as.numeric(`97.5 %`)) -> regs
+
+ggplot(regs, aes(y=Class, x=`Prevalence ratio`, xmin=Lower, xmax=Upper)) +
+  geom_point() +
+  geom_errorbar() + 
+  geom_vline(xintercept=1, lty=2, col='darkgrey') +
+  facet_grid(V4~.) +
+  scale_x_continuous(trans="log", limits=c(0.039, 1.9), breaks=c(0.1, 0.4, 0.7, 1, 1.3, 1.6, 1.9), labels=c("0.1", "0.4", "0.7", "1.0", "1.3", "1.6", "1.9")) +
+  scale_y_discrete(limits=rev(levels(regs$Class))) +
+  theme_light() + 
+  theme(strip.background = element_rect(fill=NA, color='grey'), strip.text = element_text(colour = "black"))
+```
+
+## Race and QWL among workers
+
+Prevalence of bad category of each binary QWL variable among Black or "other" workers relative to the prevalence among white workers
+
+```{r warning=FALSE, message=FALSE, fig.height=12, fig.width=8}
+mysvy <- function(data, columns, ...) {
+    model <- lapply(as.list(columns), function(x) {
+          svyglm(as.formula(paste0(names(data)[x], "~race + rcs(age, 3) + rcs(year, 3)")), 
+            data = data, family=poisson(), ...)
+        })
+    return(model)
+}
+
+results <- mysvy(dat, 124:133, design = subset(svy_dat, class=="Workers"))
+
+regs = NULL
+for(i in 1:10){
+  cbind(exp(results[[i]]$coefficients[2:3]), exp(confint(results[[i]])[2:3,])) -> bind
+  rbind(regs, cbind(bind, rep(names(dat)[124:133][i],2))) -> regs
+}
+
+regs %>%
+  as.data.frame() %>%
+  mutate(Race=factor(rep(c("Black", "Other"), 10), levels=c("Black", "Other")),
+         `Prevalence ratio`=as.numeric(V1),
+         Lower=as.numeric(`2.5 %`),
+         Upper=as.numeric(`97.5 %`)) -> regs
+
+ggplot(regs, aes(y=Race, x=`Prevalence ratio`, xmin=Lower, xmax=Upper)) +
+  geom_point() +
+  geom_errorbar() + 
+  geom_vline(xintercept=1, lty=2, col='darkgrey') +
+  facet_grid(V4~.) +
+  scale_x_continuous(trans="log", limits=c(0.3, 2.5), breaks=c(0.3, 0.65, 1, 1.35, 1.7, 2.05, 2.4)) +
+  scale_y_discrete(limits=rev(levels(regs$Class))) +
+  theme_light() + 
+  theme(strip.background = element_rect(fill=NA, color='grey'), strip.text = element_text(colour = "black"))
 ```
