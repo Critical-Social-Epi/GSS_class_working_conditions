@@ -2994,18 +2994,30 @@ I made the QWL variables binary for the regression analyses for simplicity and s
 </tbody>
 </table>
 
-# Survey-weighted associations between QWL variables and class from age- and year-adjusted regressions
+# Survey-weighted associations between QWL variables and class from Poisson regressions
 
 Restricted to intrinsically relational variables with potentially interesting differences across classes or races
 
 ## Class and QWL 
 
-Prevalence of bad category of each binary QWL variable among each class relative to the prevalence among workers
+Prevalence of bad category of each binary QWL variable among each class relative to the prevalence among workers w/ various levels of adjustment
+
+### No gender interaction
 
 ![](intro_data_exploration_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
 
-## Race and QWL among workers
-
-Prevalence of bad category of each binary QWL variable among Black or "other" workers relative to the prevalence among white workers
+### Gender interaction
 
 ![](intro_data_exploration_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
+
+## Race and QWL among workers
+
+Prevalence of bad category of each binary QWL variable among Black or "other" workers relative to the prevalence among white workers w/ various levels of adjustment
+
+### No gender interaction
+
+![](intro_data_exploration_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
+
+### Gender interaction
+
+![](intro_data_exploration_files/figure-html/unnamed-chunk-8-1.png)<!-- -->

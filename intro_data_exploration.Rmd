@@ -167,7 +167,16 @@ dat %>%
                               ifelse((wksup == "no" & wrkslf == "self-employed") | (wksup == "no" & wrkslf == "someone else" & occ10 == "chief executives"), "Petit bourgeoisie", 
                                                  ifelse(wksup == "yes" & wrkslf == "someone else" & occ10 != "chief executives", "Managers", 
                                                         ifelse(wksup == "no" & wrkslf ==  "someone else" & occ10 != "chief executives", "Workers", NA)))), 
-                                   levels=c("Workers", "Managers", "Petit bourgeoisie", "Capitalists"))) -> dat
+                                   levels=c("Workers", "Managers", "Petit bourgeoisie", "Capitalists")),
+         class_gender=factor(ifelse(class=="Workers" & sex=="male", "Male workers",
+                                    ifelse(class=="Workers" & sex=="female", "Female workers",
+                                           ifelse(class=="Managers" & sex=="male", "Male managers",
+                                                  ifelse(class=="Managers" & sex=="female", "Female managers",
+                                                         ifelse(class=="Petit bourgeoisie" & sex=="male", "Male petit bourgeoisie",
+                                                                ifelse(class=="Petit bourgeoisie" & sex=="female", "Female petit bourgeoisie",
+                                                                       ifelse(class=="Capitalists" & sex=="male", "Male capitalists",
+                                                                              ifelse(class=="Capitalists" & sex=="female", "Female capitalists", NA)))))))),
+                             levels=c("Male workers", "Male managers", "Male petit bourgeoisie", "Male capitalists", "Female workers", "Female managers", "Female petit bourgeoisie", "Female capitalists"))) -> dat
 ```
 
 ```{r warning=FALSE, message=FALSE}
@@ -225,84 +234,281 @@ kable(x[,1:7], caption="Complex") %>%
   kable_styling(c("striped", "condensed"))
 ```
 
-# Survey-weighted associations between QWL variables and class from age- and year-adjusted regressions
+# Survey-weighted associations between QWL variables and class from Poisson regressions
 
 Restricted to intrinsically relational variables with potentially interesting differences across classes or races
 
 ## Class and QWL 
 
-Prevalence of bad category of each binary QWL variable among each class relative to the prevalence among workers
+Prevalence of bad category of each binary QWL variable among each class relative to the prevalence among workers w/ various levels of adjustment
+
+### No gender interaction
 
 ```{r warning=FALSE, message=FALSE, fig.height=12, fig.width=8}
-mysvy <- function(data, columns, ...) {
-    model <- lapply(as.list(columns), function(x) {
-          svyglm(as.formula(paste0(names(data)[x], "~class + rcs(age, 3) + rcs(year, 3)")), 
-            data = data, family=poisson(), ...)
-        })
-    return(model)
+mysvy <- function(data, columns, adjvars, ...) {
+  model <- lapply(as.list(columns), function(x) {
+    svyglm(as.formula(paste0(names(data)[x], adjvars)), 
+           data = data, family=poisson(), ...)
+  })
+  return(model)
 }
 
-results <- mysvy(dat, 124:133, design = svy_dat)
+#less adjusted
+less_adj <- mysvy(dat, 124:133, "~class + rcs(age, 3) + rcs(year, 3)", design = svy_dat)
 
-regs = NULL
+regs_less = NULL
 for(i in 1:10){
-  cbind(exp(results[[i]]$coefficients[2:4]), exp(confint(results[[i]])[2:4,])) -> bind
-  rbind(regs, cbind(bind, rep(names(dat)[124:133][i],3))) -> regs
+  cbind(exp(less_adj[[i]]$coefficients[2:4]), exp(confint(less_adj[[i]])[2:4,])) -> bind
+  rbind(regs_less, cbind(bind, rep(names(dat)[124:133][i],3))) -> regs_less
 }
 
-regs %>%
+#more adjusted
+more_adj <- mysvy(dat, 124:133, "~class + rcs(age, 3) + rcs(year, 3) + sex + race", design = svy_dat)
+
+regs_more = NULL
+for(i in 1:10){
+  cbind(exp(more_adj[[i]]$coefficients[2:4]), exp(confint(more_adj[[i]])[2:4,])) -> bind
+  rbind(regs_more, cbind(bind, rep(names(dat)[124:133][i],3))) -> regs_more
+}
+
+#fully adjusted
+full_adj <- mysvy(dat, 124:133, "~class + rcs(age, 3) + rcs(year, 3) + sex + race + region + educ", design = svy_dat)
+
+regs_full = NULL
+for(i in 1:10){
+  cbind(exp(full_adj[[i]]$coefficients[2:4]), exp(confint(full_adj[[i]])[2:4,])) -> bind
+  rbind(regs_full, cbind(bind, rep(names(dat)[124:133][i],3))) -> regs_full
+}
+
+#bind together
+binded <- rbind(cbind(regs_less, rep("Age+year", 30)), cbind(regs_more, rep("Age+year+gender+race", 30)), cbind(regs_full, rep("Age+year+gender+race+educ+region", 30)))
+
+#format
+binded %>%
   as.data.frame() %>%
-  mutate(Class=factor(rep(c("Managers", "Petit bourgeoisie", "Capitalists"), 10), levels=c("Managers", "Petit bourgeoisie", "Capitalists")),
+  mutate(Class=factor(rep(c("Managers", "Petit bourgeoisie", "Capitalists"), 30), levels=c("Managers", "Petit bourgeoisie", "Capitalists")),
+         V5=factor(V5, levels=c("Age+year", "Age+year+gender+race", "Age+year+gender+race+educ+region")),
          `Prevalence ratio`=as.numeric(V1),
          Lower=as.numeric(`2.5 %`),
-         Upper=as.numeric(`97.5 %`)) -> regs
+         Upper=as.numeric(`97.5 %`)) -> binded
 
-ggplot(regs, aes(y=Class, x=`Prevalence ratio`, xmin=Lower, xmax=Upper)) +
-  geom_point() +
-  geom_errorbar() + 
+#plot
+ggplot(binded, aes(y=Class, x=`Prevalence ratio`, xmin=Lower, xmax=Upper, group=rev(V5), shape=V5, color=V5)) +
+  geom_point(position=position_dodge(width = 0.5)) +
+  geom_errorbar(position=position_dodge(width = 0.5)) + 
   geom_vline(xintercept=1, lty=2, col='darkgrey') +
   facet_grid(V4~.) +
   scale_x_continuous(trans="log", limits=c(0.039, 1.9), breaks=c(0.1, 0.4, 0.7, 1, 1.3, 1.6, 1.9), labels=c("0.1", "0.4", "0.7", "1.0", "1.3", "1.6", "1.9")) +
-  scale_y_discrete(limits=rev(levels(regs$Class))) +
+  scale_y_discrete(limits=rev(levels(binded$Class))) +
   theme_light() + 
-  theme(strip.background = element_rect(fill=NA, color='grey'), strip.text = element_text(colour = "black"))
+  scale_color_manual(values=brewer.pal(8, "Blues")[c(4,6,8)]) +
+  theme(strip.background = element_rect(fill=NA, color='grey'), strip.text = element_text(colour = "black"), legend.position='bottom', legend.title=element_blank())
+```
+
+### Gender interaction
+
+```{r warning=FALSE, message=FALSE, fig.height=12, fig.width=12}
+#less adjusted men
+less_adj <- mysvy(dat, 124:133, "~class*sex + rcs(age, 3) + rcs(year, 3)", design = svy_dat)
+
+regs_less_men = NULL
+for(i in 1:10){
+  cbind(exp(less_adj[[i]]$coefficients[2:4]), exp(confint(less_adj[[i]])[2:4,])) -> bind
+  rbind(regs_less_men, cbind(bind, rep(names(dat)[124:133][i],3))) -> regs_less_men
+}
+
+#less adjusted women
+less_adj <- mysvy(dat, 124:133, "~class*relevel(sex, 'female') + rcs(age, 3) + rcs(year, 3)", design = svy_dat)
+
+regs_less_women = NULL
+for(i in 1:10){
+  cbind(exp(less_adj[[i]]$coefficients[2:4]), exp(confint(less_adj[[i]])[2:4,])) -> bind
+  rbind(regs_less_women, cbind(bind, rep(names(dat)[124:133][i],3))) -> regs_less_women
+}
+
+#more adjusted men
+more_adj <- mysvy(dat, 124:133, "~class*sex + rcs(age, 3) + rcs(year, 3) + race", design = svy_dat)
+
+regs_more_men = NULL
+for(i in 1:10){
+  cbind(exp(more_adj[[i]]$coefficients[2:4]), exp(confint(more_adj[[i]])[2:4,])) -> bind
+  rbind(regs_more_men, cbind(bind, rep(names(dat)[124:133][i],3))) -> regs_more_men
+}
+
+#more adjusted women
+more_adj <- mysvy(dat, 124:133, "~class*relevel(sex, 'female') + rcs(age, 3) + rcs(year, 3) + race", design = svy_dat)
+                  
+regs_more_women = NULL
+for(i in 1:10){
+  cbind(exp(more_adj[[i]]$coefficients[2:4]), exp(confint(more_adj[[i]])[2:4,])) -> bind
+  rbind(regs_more_women, cbind(bind, rep(names(dat)[124:133][i],3))) -> regs_more_women
+}
+
+#fully adjusted men
+full_adj <- mysvy(dat, 124:133, "~class*sex + rcs(age, 3) + rcs(year, 3) + race + region + educ", design = svy_dat)
+
+regs_full_men = NULL
+for(i in 1:10){
+  cbind(exp(full_adj[[i]]$coefficients[2:4]), exp(confint(full_adj[[i]])[2:4,])) -> bind
+  rbind(regs_full_men, cbind(bind, rep(names(dat)[124:133][i],3))) -> regs_full_men
+}
+
+#fully adjusted women
+full_adj <- mysvy(dat, 124:133, "~class*relevel(sex, 'female') + rcs(age, 3) + rcs(year, 3) + race + region + educ", design = svy_dat)
+
+regs_full_women = NULL
+for(i in 1:10){
+  cbind(exp(full_adj[[i]]$coefficients[2:4]), exp(confint(full_adj[[i]])[2:4,])) -> bind
+  rbind(regs_full_women, cbind(bind, rep(names(dat)[124:133][i],3))) -> regs_full_women
+}
+
+#bind together
+binded <- rbind(cbind(regs_less_men, rep("Age+year", 30)), cbind(regs_less_women, rep("Age+year", 30)), 
+                cbind(regs_more_men, rep("Age+year+race", 30)), cbind(regs_more_women, rep("Age+year+race", 30)), 
+                cbind(regs_full_men, rep("Age+year+race+educ+region", 30)), cbind(regs_full_women, rep("Age+year+race+educ+region", 30)))
+
+#format
+binded %>%
+  as.data.frame() %>%
+  mutate(Class=factor(rep(c("Managers", "Petit bourgeoisie", "Capitalists"), 60), levels=c("Managers", "Petit bourgeoisie", "Capitalists")),
+         V5=factor(V5, levels=c("Age+year", "Age+year+race", "Age+year+race+educ+region")),
+         Gender=rep(c(rep("Men", 30), rep("Women", 30)), 3),
+         `Prevalence ratio`=as.numeric(V1),
+         Lower=as.numeric(`2.5 %`),
+         Upper=as.numeric(`97.5 %`)) -> binded
+
+#plot
+ggplot(binded, aes(y=Class, x=`Prevalence ratio`, xmin=Lower, xmax=Upper, group=rev(V5), shape=V5, color=V5)) +
+  geom_point(position=position_dodge(width = 0.5)) +
+  geom_errorbar(position=position_dodge(width = 0.5)) + 
+  geom_vline(xintercept=1, lty=2, col='darkgrey') +
+  facet_grid(V4~Gender) +
+  scale_x_continuous(trans="log", limits=c(0.016, 2.31), breaks=c(0.1, 0.55, 1, 1.45, 1.9, 2.35), labels=c("0.1", "0.55", "1.0", "1.45", "1.9", "2.35")) +
+  scale_y_discrete(limits=rev(levels(binded$Class))) +
+  theme_light() + 
+  scale_color_manual(values=brewer.pal(8, "Blues")[c(4,6,8)]) +
+  theme(strip.background = element_rect(fill=NA, color='grey'), strip.text = element_text(colour = "black"), legend.position='bottom', legend.title=element_blank())
 ```
 
 ## Race and QWL among workers
 
-Prevalence of bad category of each binary QWL variable among Black or "other" workers relative to the prevalence among white workers
+Prevalence of bad category of each binary QWL variable among Black or "other" workers relative to the prevalence among white workers w/ various levels of adjustment
+
+### No gender interaction
 
 ```{r warning=FALSE, message=FALSE, fig.height=12, fig.width=8}
-mysvy <- function(data, columns, ...) {
-    model <- lapply(as.list(columns), function(x) {
-          svyglm(as.formula(paste0(names(data)[x], "~race + rcs(age, 3) + rcs(year, 3)")), 
-            data = data, family=poisson(), ...)
-        })
-    return(model)
-}
+#less adjusted
+less_adj <- mysvy(dat, 124:133, "~race + rcs(age, 3) + rcs(year, 3)", design = subset(svy_dat, class=="Workers"))
 
-results <- mysvy(dat, 124:133, design = subset(svy_dat, class=="Workers"))
-
-regs = NULL
+regs_less = NULL
 for(i in 1:10){
-  cbind(exp(results[[i]]$coefficients[2:3]), exp(confint(results[[i]])[2:3,])) -> bind
-  rbind(regs, cbind(bind, rep(names(dat)[124:133][i],2))) -> regs
+  cbind(exp(less_adj[[i]]$coefficients[2:3]), exp(confint(less_adj[[i]])[2:3,])) -> bind
+  rbind(regs_less, cbind(bind, rep(names(dat)[124:133][i],2))) -> regs_less
 }
 
-regs %>%
+#more adj
+more_adj <- mysvy(dat, 124:133, "~race + rcs(age, 3) + rcs(year, 3) + sex", design = subset(svy_dat, class=="Workers"))
+
+regs_more = NULL
+for(i in 1:10){
+  cbind(exp(more_adj[[i]]$coefficients[2:3]), exp(confint(more_adj[[i]])[2:3,])) -> bind
+  rbind(regs_more, cbind(bind, rep(names(dat)[124:133][i],2))) -> regs_more
+}
+
+#full adj
+full_adj <- mysvy(dat, 124:133, "~race + rcs(age, 3) + rcs(year, 3) + sex + educ + region", design = subset(svy_dat, class=="Workers"))
+
+regs_full = NULL
+for(i in 1:10){
+  cbind(exp(full_adj[[i]]$coefficients[2:3]), exp(confint(full_adj[[i]])[2:3,])) -> bind
+  rbind(regs_full, cbind(bind, rep(names(dat)[124:133][i],2))) -> regs_full
+}
+
+#bind together
+binded <- rbind(cbind(regs_less, rep("Age+year", 20)), cbind(regs_more, rep("Age+year+gender", 20)), cbind(regs_full, rep("Age+year+gender+educ+region", 20)))
+
+#format
+binded %>%
   as.data.frame() %>%
-  mutate(Race=factor(rep(c("Black", "Other"), 10), levels=c("Black", "Other")),
+  mutate(Race=factor(rep(c("Black", "Other"), 30), levels=c("Black", "Other")),
+         V5=factor(V5, levels=c("Age+year", "Age+year+gender", "Age+year+gender+educ+region")),
          `Prevalence ratio`=as.numeric(V1),
          Lower=as.numeric(`2.5 %`),
-         Upper=as.numeric(`97.5 %`)) -> regs
+         Upper=as.numeric(`97.5 %`)) -> binded
 
-ggplot(regs, aes(y=Race, x=`Prevalence ratio`, xmin=Lower, xmax=Upper)) +
-  geom_point() +
-  geom_errorbar() + 
+#plot
+ggplot(binded, aes(y=Race, x=`Prevalence ratio`, xmin=Lower, xmax=Upper, group=rev(V5), shape=V5, color=V5)) +
+  geom_point(position=position_dodge(width = 0.5)) +
+  geom_errorbar(position=position_dodge(width = 0.5)) + 
   geom_vline(xintercept=1, lty=2, col='darkgrey') +
   facet_grid(V4~.) +
-  scale_x_continuous(trans="log", limits=c(0.3, 2.5), breaks=c(0.3, 0.65, 1, 1.35, 1.7, 2.05, 2.4)) +
-  scale_y_discrete(limits=rev(levels(regs$Class))) +
+  scale_x_continuous(trans="log", limits=c(0.3, 2.5), breaks=c(0.3, 1, 1.7, 2.4)) +
   theme_light() + 
-  theme(strip.background = element_rect(fill=NA, color='grey'), strip.text = element_text(colour = "black"))
+  scale_color_manual(values=brewer.pal(8, "Blues")[c(4,6,8)]) +
+  theme(strip.background = element_rect(fill=NA, color='grey'), strip.text = element_text(colour = "black"), legend.position='bottom', legend.title=element_blank())
+```
+
+### Gender interaction
+
+```{r warning=FALSE, message=FALSE, fig.height=12, fig.width=12}
+#less adjusted men
+less_adj <- mysvy(dat, 124:133, "~race*sex + rcs(age, 3) + rcs(year, 3)", design = subset(svy_dat, class=="Workers"))
+
+regs_less_men = NULL
+for(i in 1:10){
+  cbind(exp(less_adj[[i]]$coefficients[2:3]), exp(confint(less_adj[[i]])[2:3,])) -> bind
+  rbind(regs_less_men, cbind(bind, rep(names(dat)[124:133][i],2))) -> regs_less_men
+}
+
+#less adjusted women
+less_adj <- mysvy(dat, 124:133, "~race*relevel(sex, 'female') + rcs(age, 3) + rcs(year, 3)", design = subset(svy_dat, class=="Workers"))
+
+regs_less_women = NULL
+for(i in 1:10){
+  cbind(exp(less_adj[[i]]$coefficients[2:3]), exp(confint(less_adj[[i]])[2:3,])) -> bind
+  rbind(regs_less_women, cbind(bind, rep(names(dat)[124:133][i],2))) -> regs_less_women
+}
+
+#fully adjusted men
+full_adj <- mysvy(dat, 124:133, "~race*sex + rcs(age, 3) + rcs(year, 3) + region + educ", design = subset(svy_dat, class=="Workers"))
+
+regs_full_men = NULL
+for(i in 1:10){
+  cbind(exp(full_adj[[i]]$coefficients[2:3]), exp(confint(full_adj[[i]])[2:3,])) -> bind
+  rbind(regs_full_men, cbind(bind, rep(names(dat)[124:133][i],2))) -> regs_full_men
+}
+
+#fully adjusted women
+full_adj <- mysvy(dat, 124:133, "~race*relevel(sex, 'female') + rcs(age, 3) + rcs(year, 3) + region + educ", design = subset(svy_dat, class=="Workers"))
+
+regs_full_women = NULL
+for(i in 1:10){
+  cbind(exp(full_adj[[i]]$coefficients[2:3]), exp(confint(full_adj[[i]])[2:3,])) -> bind
+  rbind(regs_full_women, cbind(bind, rep(names(dat)[124:133][i],2))) -> regs_full_women
+}
+
+#bind together
+binded <- rbind(cbind(regs_less_men, rep("Age+year", 20)), cbind(regs_less_women, rep("Age+year", 20)), 
+                cbind(regs_full_men, rep("Age+year+educ+region", 20)), cbind(regs_full_women, rep("Age+year+educ+region", 20)))
+
+#format
+binded %>%
+  as.data.frame() %>%
+  mutate(Race=factor(rep(c("Black", "Other"), 40), levels=c("Black", "Other")),
+         V5=factor(V5, levels=c("Age+year", "Age+year+educ+region")),
+         Gender=rep(c(rep("Men", 20), rep("Women", 20)), 2),
+         `Prevalence ratio`=as.numeric(V1),
+         Lower=as.numeric(`2.5 %`),
+         Upper=as.numeric(`97.5 %`)) -> binded
+
+#plot
+ggplot(binded, aes(y=Race, x=`Prevalence ratio`, xmin=Lower, xmax=Upper, group=rev(V5), shape=V5, color=V5)) +
+  geom_point(position=position_dodge(width = 0.5)) +
+  geom_errorbar(position=position_dodge(width = 0.5)) + 
+  geom_vline(xintercept=1, lty=2, col='darkgrey') +
+  facet_grid(V4~Gender) +
+  scale_x_continuous(trans="log", limits=c(0.08, 3.26), breaks=c(0.25, 1, 1.75, 2.5, 3.25)) +
+  theme_light() + 
+  scale_color_manual(values=brewer.pal(8, "Blues")[c(4,6,8)]) +
+  theme(strip.background = element_rect(fill=NA, color='grey'), strip.text = element_text(colour = "black"), legend.position='bottom', legend.title=element_blank())
 ```
