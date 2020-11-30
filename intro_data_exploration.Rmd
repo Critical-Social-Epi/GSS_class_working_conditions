@@ -16,9 +16,11 @@ knitr::opts_chunk$set(echo = FALSE)
 
 **General notes**
 
-Some QWL variables have lots of missingness because they weren't asked of every ballot in a given year
+* Note that "mntlhlth" wasn't asked of ballot A in 2018.
 
-I made the QWL variables binary for the regression analyses for simplicity and stability
+* I made the QWL variables binary for the regression analyses for simplicity and stability.
+
+* I remove analyses of the detailed class variable because cell sizes get pretty small (there are only 268 small capitalists and 215 large capitalists) and we already have a lot going on. 
 
 **Codebook for non-self-explanatory variables**
 
@@ -30,7 +32,7 @@ I made the QWL variables binary for the regression analyses for simplicity and s
     + depress: whether respondent has ever been diagnosed by a healthcare professional with depression
     + mntlhlth: days of poor mental health in past 30 days
 
-* Relevant QWL variables:
+* Relevant QWL variables, with most interesting variables (at least at first glance) bolded:
     + mustwork: Mandatory to work extra hours
     + chngtme: How often r allowed change schedule
     + famwkoff: How hard to take time off
@@ -63,7 +65,7 @@ I made the QWL variables binary for the regression analyses for simplicity and s
     + safetywk: Worker safety priority at work
     + safehlth: Safety and health condition good at work
     + safefrst: No shortcuts on worker safety
-
+    
 ```{r warning=FALSE, message=FALSE}
 library(readstata13)
 library(tidyr)
@@ -89,15 +91,17 @@ library(patchwork)
 library(spatstat)
 library(purrr)
 
-#########load data and subset to those who are working fulltime, part time, or temporarily not working (the only people who were asked the QWL variables)
-#note that not all QWL variables were asked in every year, and within years, not all QWL/non-QWL variables were asked on every ballot
-
-#load data
+#########load data
+#####
+#
+#drop survey-ballot d, which was a ballot in 2006 that lacked responses to QWL variables
+#remove those who were not employed, as only employed respondents were asked the QWL variables - also remove those with NA wrkstat (n=9), since they weren't asked the QWL variables 
+#remove ballot b in 2002, as class variables weren't asked of that ballot in that year
 read.dta13('GSS_02_06_10_14_18.dta') %>% 
+  filter(ballot != "ballot d") %>%
+  filter(wrkstat=="working fulltime" | wrkstat=="working parttime" | wrkstat=="temp not working") %>%
+  #filter(!(year==2002 & ballot=="ballot b")) %>%
   droplevels() -> dat
-
-#subset
-dat <- subset(dat, wrkstat=="working fulltime" | wrkstat=="working parttime" | wrkstat=="temp not working")
 
 ########potential variables of interest (dataset already subsetted, but useful if we need to do again and add some variables)
 #####
@@ -155,16 +159,8 @@ dat %>%
          income=as.numeric(as.character(coninc)) * 251.1 / 172.2, #adjust income to 2018 dollars from 2000 dollars
          prestg10_bin=ifelse(prestg10 < weighted.median(prestg10, w=wtssall, na.rm=T), "low prestige", "high prestige"),  #prestige below median
          #we could also create the class variable using numemps (number of employees employed by the self-employed), but it's not available in 2002 
-         class_det=factor(ifelse((wksup == "yes" & wksups == "yes" & wrkslf == "self-employed") | (wksup == "yes" & wksups == "yes" & wrkslf == "someone else" & occ10 == "chief executives"), "Large capitalists", 
-                                          ifelse((wksup == "yes" & wksups == "no" & wrkslf == "self-employed") | (wksup == "yes" & wksups == "no" & wrkslf == "someone else" & occ10 == "chief executives"), "Small capitalists",
-                                                  ifelse((wksup == "no" & wrkslf == "self-employed") | (wksup == "no" & wrkslf == "someone else" & occ10 == "chief executives"), "Petit bourgeoisie", 
-                                                          ifelse(wksup == "yes" & wksups == "yes" & wrkslf == "someone else" & occ10 != "chief executives", "High-level managers",
-                                                                         ifelse(wksup == "yes" & wksups == "no" & wrkslf == "someone else" & occ10 != "chief executives", "Low-level managers",
-                                                                                ifelse(wksup == "no" & wrkslf ==  "someone else" & occ10 != "chief executives" & prestg10_bin == "low prestige", "Less-skilled workers", 
-                                                                                       ifelse(wksup == "no" & wrkslf ==  "someone else" & occ10 != "chief executives" & prestg10_bin == "high prestige", "More-skilled workers", NA))))))), 
-                                             levels=c("Less-skilled workers", "More-skilled workers", "Low-level managers", "High-level managers", "Petit bourgeoisie", "Small capitalists", "Large capitalists")),
-         class=factor(ifelse((wksup == "yes" & wrkslf == "self-employed") | (wksup == "yes" & wrkslf == "someone else" & occ10 == "chief executives"), "Capitalists", 
-                              ifelse((wksup == "no" & wrkslf == "self-employed") | (wksup == "no" & wrkslf == "someone else" & occ10 == "chief executives"), "Petit bourgeoisie", 
+         class=factor(ifelse((wksup == "yes" & wrkslf == "self-employed") | (wksup == "yes" & wrkslf == "someone else" & occ10 == 10), "Capitalists", 
+                              ifelse((wksup == "no" & wrkslf == "self-employed") | (wksup == "no" & wrkslf == "someone else" & occ10 == 10), "Petit bourgeoisie", 
                                                  ifelse(wksup == "yes" & wrkslf == "someone else" & occ10 != "chief executives", "Managers", 
                                                         ifelse(wksup == "no" & wrkslf ==  "someone else" & occ10 != "chief executives", "Workers", NA)))), 
                                    levels=c("Workers", "Managers", "Petit bourgeoisie", "Capitalists")),
@@ -190,25 +186,24 @@ svy_dat <- svydesign(ids = ~ vpsu,
                      data=dat)
 ```
 
+# Missingness patterns
+
+```{r warning=FALSE, message=FALSE, fig.height=6, fig.width=10}
+aggr(dat[,c("class", 'sex', 'race', 'educ', 'marital_tri', 'region', 'income', 'age', "srh_bin", "mntlhlth", "any_disc_haras", "respect_bin", "trustman_bin", "manvsemp_bin", "suphelp_bin", "supcares_bin", "wkfreedm_bin", "wkdecide_bin", "safehlth_bin", "safefrst_bin")], cex.axis = 0.7, numbers=FALSE, prop=TRUE)
+```
+
 # Survey-weighted, unimputed descriptives
 
 ## Demographics and health stratifed by class 
 
 ```{r warning=FALSE, message=FALSE}
 #vars of interest
-vars <- c('sex', 'race', 'educ', 'marital_tri', 'region', 'income', 'age', "srh_bin", "mntlhlth", "depress")
+vars <- c('sex', 'race', 'educ', 'marital_tri', 'region', 'income', 'age', "srh_bin", "mntlhlth")
 nonorm <- c('income', 'age')
 
-#aggregate
 x <- svyCreateTableOne(data = svy_dat, vars = vars, strata='class')
 x <- print(x, printToggle=FALSE, noSpaces=TRUE, nonnormal=nonorm)
 kable(x[,1:4], caption="Simple") %>%
-  kable_styling(c("striped", "condensed"))
-
-#most disaggregate
-x <- svyCreateTableOne(data = svy_dat, vars = vars, strata='class_det')
-x <- print(x, printToggle=FALSE, noSpaces=TRUE, nonnormal=nonorm)
-kable(x[,1:7], caption="Complex") %>%
   kable_styling(c("striped", "condensed"))
 ```
 
@@ -216,21 +211,11 @@ kable(x[,1:7], caption="Complex") %>%
 
 ```{r warning=FALSE, message=FALSE}
 #vars of interest
-qwl_vars <- c("mustwork", "chngtme", "famwkoff", "wkvsfam", "secondwk", "learnnew", "workfast",
-              "wrktime", "workdiff", "toofewwk", "overwork", "myskills", "trainops",  "opdevel",
-              "respect", "trustman", "manvsemp", "suphelp", "supcares", "wkfreedm", "lotofsay", "wkdecide",  "satjob1", 
-              "fairearn", "fringeok", "rincblls", "laidoff", "jobsecok", "any_disc_haras", "safetywk", "safehlth", "safefrst")
+qwl_vars <- c("any_disc_haras", "respect_bin", "trustman_bin", "manvsemp_bin", "suphelp_bin", "supcares_bin", "wkfreedm_bin", "wkdecide_bin", "safehlth_bin", "safefrst_bin")
 
-#aggregate
-x <- svyCreateTableOne(data = svy_dat, vars = qwl_vars, strata='class')
+x <- svyCreateTableOne(data = svy_dat, vars = qwl_vars, factorVars=qwl_vars, strata='class')
 x <- print(x, printToggle=FALSE, noSpaces=TRUE)
 kable(x[,1:4], caption="Simple") %>%
-  kable_styling(c("striped", "condensed"))
-
-#most disaggregate
-x <- svyCreateTableOne(data = svy_dat, vars = qwl_vars, strata='class_det')
-x <- print(x, printToggle=FALSE, noSpaces=TRUE)
-kable(x[,1:7], caption="Complex") %>%
   kable_styling(c("striped", "condensed"))
 ```
 
@@ -511,4 +496,15 @@ ggplot(binded, aes(y=Race, x=`Prevalence ratio`, xmin=Lower, xmax=Upper, group=r
   theme_light() + 
   scale_color_manual(values=brewer.pal(8, "Blues")[c(4,6,8)]) +
   theme(strip.background = element_rect(fill=NA, color='grey'), strip.text = element_text(colour = "black"), legend.position='bottom', legend.title=element_blank())
+```
+
+# Appendix
+
+## How many employees do PBs and capitalists typically identify as having? Note that the numemps variable wasn't asked in 2002, which is why we aren't using it for our primary analyses.
+
+```{r, warning=FALSE, message=FALSE}
+dat %>%
+  filter(class=="Capitalists" | class=="Petit bourgeoisie") %>%
+  group_by(class) %>%
+  summarise(round(mean(numemps, na.rm=T),2))
 ```
