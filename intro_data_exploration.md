@@ -18,7 +18,7 @@ always_allow_html: true
 
 * I made the QWL variables binary for the regression analyses for simplicity and stability.
 
-* I remove analyses of the detailed class variable because cell sizes get pretty small (there are only 268 small capitalists and 215 large capitalists) and we already have a lot going on. 
+* I removed analyses of the detailed class variable because cell sizes get pretty small and we already have a lot going on. 
 
 **Codebook for non-self-explanatory variables**
 
@@ -30,7 +30,7 @@ always_allow_html: true
     + depress: whether respondent has ever been diagnosed by a healthcare professional with depression
     + mntlhlth: days of poor mental health in past 30 days
 
-* Relevant QWL variables, with most interesting variables (at least at first glance) bolded:
+* Potentially relevant QWL variables:
     + mustwork: Mandatory to work extra hours
     + chngtme: How often r allowed change schedule
     + famwkoff: How hard to take time off
@@ -387,9 +387,9 @@ Prevalence of bad category of each binary QWL variable among Black or "other" wo
 
 
 ```
-## # A tibble: 2 x 2
-##   class             `round(mean(numemps, na.rm = T), 2)`
-##   <fct>                                            <dbl>
-## 1 Petit bourgeoisie                                 0.22
-## 2 Capitalists                                       6.04
+## # A tibble: 2 x 5
+##   class             mean_emps median_emps lower_IQR upper_IQR
+##   <fct>                 <dbl>       <dbl>     <dbl>     <dbl>
+## 1 Petit bourgeoisie       0.2           0         0         0
+## 2 Capitalists             6             2         0         6
 ```

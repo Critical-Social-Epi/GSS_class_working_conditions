@@ -20,7 +20,7 @@ knitr::opts_chunk$set(echo = FALSE)
 
 * I made the QWL variables binary for the regression analyses for simplicity and stability.
 
-* I remove analyses of the detailed class variable because cell sizes get pretty small (there are only 268 small capitalists and 215 large capitalists) and we already have a lot going on. 
+* I removed analyses of the detailed class variable because cell sizes get pretty small and we already have a lot going on. 
 
 **Codebook for non-self-explanatory variables**
 
@@ -32,7 +32,7 @@ knitr::opts_chunk$set(echo = FALSE)
     + depress: whether respondent has ever been diagnosed by a healthcare professional with depression
     + mntlhlth: days of poor mental health in past 30 days
 
-* Relevant QWL variables, with most interesting variables (at least at first glance) bolded:
+* Potentially relevant QWL variables:
     + mustwork: Mandatory to work extra hours
     + chngtme: How often r allowed change schedule
     + famwkoff: How hard to take time off
@@ -257,7 +257,7 @@ for(i in 1:10){
 }
 
 #fully adjusted
-full_adj <- mysvy(dat, 124:133, "~class + rcs(age, 3) + rcs(year, 3) + sex + race + region + educ", design = svy_dat)
+full_adj <- mysvy(dat, 124:133, "~class + rcs(age, 3) + rcs(year, 3) + sex + race + region + educ + marital_tri", design = svy_dat)
 
 regs_full = NULL
 for(i in 1:10){
@@ -266,21 +266,22 @@ for(i in 1:10){
 }
 
 #bind together
-binded <- rbind(cbind(regs_less, rep("Age+year", 30)), cbind(regs_more, rep("Age+year+gender+race", 30)), cbind(regs_full, rep("Age+year+gender+race+educ+region", 30)))
+binded <- rbind(cbind(regs_less, rep("Age+year", 30)), cbind(regs_more, rep("Age+year+gender+race", 30)), cbind(regs_full, rep("Age+year+gender+race+educ+region+marital", 30)))
 
 #format
 binded %>%
   as.data.frame() %>%
   mutate(Class=factor(rep(c("Managers", "Petit bourgeoisie", "Capitalists"), 30), levels=c("Managers", "Petit bourgeoisie", "Capitalists")),
-         V5=factor(V5, levels=c("Age+year", "Age+year+gender+race", "Age+year+gender+race+educ+region")),
+         V4=factor(V4, levels=c("any_disc_haras", "respect_bin", "trustman_bin", "manvsemp_bin", "suphelp_bin", "supcares_bin", "wkfreedm_bin", "wkdecide_bin", "safehlth_bin", "safefrst_bin")),
+         V5=factor(V5, levels=c("Age+year", "Age+year+gender+race", "Age+year+gender+race+educ+region+marital")),
          `Prevalence ratio`=as.numeric(V1),
          Lower=as.numeric(`2.5 %`),
          Upper=as.numeric(`97.5 %`)) -> binded
 
 #plot
 ggplot(binded, aes(y=Class, x=`Prevalence ratio`, xmin=Lower, xmax=Upper, group=rev(V5), shape=V5, color=V5)) +
-  geom_point(position=position_dodge(width = 0.5)) +
-  geom_errorbar(position=position_dodge(width = 0.5)) + 
+  geom_point(position=position_dodge(width = 0.75)) +
+  geom_errorbar(position=position_dodge(width = 0.75)) + 
   geom_vline(xintercept=1, lty=2, col='darkgrey') +
   facet_grid(V4~.) +
   scale_x_continuous(trans="log", limits=c(0.039, 1.9), breaks=c(0.1, 0.4, 0.7, 1, 1.3, 1.6, 1.9), labels=c("0.1", "0.4", "0.7", "1.0", "1.3", "1.6", "1.9")) +
@@ -330,7 +331,7 @@ for(i in 1:10){
 }
 
 #fully adjusted men
-full_adj <- mysvy(dat, 124:133, "~class*sex + rcs(age, 3) + rcs(year, 3) + race + region + educ", design = svy_dat)
+full_adj <- mysvy(dat, 124:133, "~class*sex + rcs(age, 3) + rcs(year, 3) + race + region + educ + marital_tri", design = svy_dat)
 
 regs_full_men = NULL
 for(i in 1:10){
@@ -339,7 +340,7 @@ for(i in 1:10){
 }
 
 #fully adjusted women
-full_adj <- mysvy(dat, 124:133, "~class*relevel(sex, 'female') + rcs(age, 3) + rcs(year, 3) + race + region + educ", design = svy_dat)
+full_adj <- mysvy(dat, 124:133, "~class*relevel(sex, 'female') + rcs(age, 3) + rcs(year, 3) + race + region + educ + marital_tri", design = svy_dat)
 
 regs_full_women = NULL
 for(i in 1:10){
@@ -350,13 +351,14 @@ for(i in 1:10){
 #bind together
 binded <- rbind(cbind(regs_less_men, rep("Age+year", 30)), cbind(regs_less_women, rep("Age+year", 30)), 
                 cbind(regs_more_men, rep("Age+year+race", 30)), cbind(regs_more_women, rep("Age+year+race", 30)), 
-                cbind(regs_full_men, rep("Age+year+race+educ+region", 30)), cbind(regs_full_women, rep("Age+year+race+educ+region", 30)))
+                cbind(regs_full_men, rep("Age+year+race+educ+region+marital", 30)), cbind(regs_full_women, rep("Age+year+race+educ+region+marital", 30)))
 
 #format
 binded %>%
   as.data.frame() %>%
   mutate(Class=factor(rep(c("Managers", "Petit bourgeoisie", "Capitalists"), 60), levels=c("Managers", "Petit bourgeoisie", "Capitalists")),
-         V5=factor(V5, levels=c("Age+year", "Age+year+race", "Age+year+race+educ+region")),
+         V4=factor(V4, levels=c("any_disc_haras", "respect_bin", "trustman_bin", "manvsemp_bin", "suphelp_bin", "supcares_bin", "wkfreedm_bin", "wkdecide_bin", "safehlth_bin", "safefrst_bin")),
+         V5=factor(V5, levels=c("Age+year", "Age+year+race", "Age+year+race+educ+region+marital")),
          Gender=rep(c(rep("Men", 30), rep("Women", 30)), 3),
          `Prevalence ratio`=as.numeric(V1),
          Lower=as.numeric(`2.5 %`),
@@ -364,11 +366,11 @@ binded %>%
 
 #plot
 ggplot(binded, aes(y=Class, x=`Prevalence ratio`, xmin=Lower, xmax=Upper, group=rev(V5), shape=V5, color=V5)) +
-  geom_point(position=position_dodge(width = 0.5)) +
-  geom_errorbar(position=position_dodge(width = 0.5)) + 
+  geom_point(position=position_dodge(width = 0.75)) +
+  geom_errorbar(position=position_dodge(width = 0.75)) + 
   geom_vline(xintercept=1, lty=2, col='darkgrey') +
   facet_grid(V4~Gender) +
-  scale_x_continuous(trans="log", limits=c(0.016, 2.31), breaks=c(0.1, 0.55, 1, 1.45, 1.9, 2.35), labels=c("0.1", "0.55", "1.0", "1.45", "1.9", "2.35")) +
+  scale_x_continuous(trans="log", limits=c(0.015, 2.31), breaks=c(0.1, 0.55, 1, 1.45, 1.9, 2.35), labels=c("0.1", "0.55", "1.0", "1.45", "1.9", "2.35")) +
   scale_y_discrete(limits=rev(levels(binded$Class))) +
   theme_light() + 
   scale_color_manual(values=brewer.pal(8, "Blues")[c(4,6,8)]) +
@@ -401,7 +403,7 @@ for(i in 1:10){
 }
 
 #full adj
-full_adj <- mysvy(dat, 124:133, "~race + rcs(age, 3) + rcs(year, 3) + sex + educ + region", design = subset(svy_dat, class=="Workers"))
+full_adj <- mysvy(dat, 124:133, "~race + rcs(age, 3) + rcs(year, 3) + sex + educ + region + marital_tri", design = subset(svy_dat, class=="Workers"))
 
 regs_full = NULL
 for(i in 1:10){
@@ -410,21 +412,22 @@ for(i in 1:10){
 }
 
 #bind together
-binded <- rbind(cbind(regs_less, rep("Age+year", 20)), cbind(regs_more, rep("Age+year+gender", 20)), cbind(regs_full, rep("Age+year+gender+educ+region", 20)))
+binded <- rbind(cbind(regs_less, rep("Age+year", 20)), cbind(regs_more, rep("Age+year+gender", 20)), cbind(regs_full, rep("Age+year+gender+educ+region+marital", 20)))
 
 #format
 binded %>%
   as.data.frame() %>%
   mutate(Race=factor(rep(c("Black", "Other"), 30), levels=c("Black", "Other")),
-         V5=factor(V5, levels=c("Age+year", "Age+year+gender", "Age+year+gender+educ+region")),
+         V4=factor(V4, levels=c("any_disc_haras", "respect_bin", "trustman_bin", "manvsemp_bin", "suphelp_bin", "supcares_bin", "wkfreedm_bin", "wkdecide_bin", "safehlth_bin", "safefrst_bin")),
+         V5=factor(V5, levels=c("Age+year", "Age+year+gender", "Age+year+gender+educ+region+marital")),
          `Prevalence ratio`=as.numeric(V1),
          Lower=as.numeric(`2.5 %`),
          Upper=as.numeric(`97.5 %`)) -> binded
 
 #plot
 ggplot(binded, aes(y=Race, x=`Prevalence ratio`, xmin=Lower, xmax=Upper, group=rev(V5), shape=V5, color=V5)) +
-  geom_point(position=position_dodge(width = 0.5)) +
-  geom_errorbar(position=position_dodge(width = 0.5)) + 
+  geom_point(position=position_dodge(width = 0.75)) +
+  geom_errorbar(position=position_dodge(width = 0.75)) + 
   geom_vline(xintercept=1, lty=2, col='darkgrey') +
   facet_grid(V4~.) +
   scale_x_continuous(trans="log", limits=c(0.3, 2.5), breaks=c(0.3, 1, 1.7, 2.4)) +
@@ -455,7 +458,7 @@ for(i in 1:10){
 }
 
 #fully adjusted men
-full_adj <- mysvy(dat, 124:133, "~race*sex + rcs(age, 3) + rcs(year, 3) + region + educ", design = subset(svy_dat, class=="Workers"))
+full_adj <- mysvy(dat, 124:133, "~race*sex + rcs(age, 3) + rcs(year, 3) + region + educ + marital_tri", design = subset(svy_dat, class=="Workers"))
 
 regs_full_men = NULL
 for(i in 1:10){
@@ -464,7 +467,7 @@ for(i in 1:10){
 }
 
 #fully adjusted women
-full_adj <- mysvy(dat, 124:133, "~race*relevel(sex, 'female') + rcs(age, 3) + rcs(year, 3) + region + educ", design = subset(svy_dat, class=="Workers"))
+full_adj <- mysvy(dat, 124:133, "~race*relevel(sex, 'female') + rcs(age, 3) + rcs(year, 3) + region + educ + marital_tri", design = subset(svy_dat, class=="Workers"))
 
 regs_full_women = NULL
 for(i in 1:10){
@@ -474,13 +477,14 @@ for(i in 1:10){
 
 #bind together
 binded <- rbind(cbind(regs_less_men, rep("Age+year", 20)), cbind(regs_less_women, rep("Age+year", 20)), 
-                cbind(regs_full_men, rep("Age+year+educ+region", 20)), cbind(regs_full_women, rep("Age+year+educ+region", 20)))
+                cbind(regs_full_men, rep("Age+year+educ+region+marital", 20)), cbind(regs_full_women, rep("Age+year+educ+region+marital", 20)))
 
 #format
 binded %>%
   as.data.frame() %>%
   mutate(Race=factor(rep(c("Black", "Other"), 40), levels=c("Black", "Other")),
-         V5=factor(V5, levels=c("Age+year", "Age+year+educ+region")),
+         V4=factor(V4, levels=c("any_disc_haras", "respect_bin", "trustman_bin", "manvsemp_bin", "suphelp_bin", "supcares_bin", "wkfreedm_bin", "wkdecide_bin", "safehlth_bin", "safefrst_bin")),
+         V5=factor(V5, levels=c("Age+year", "Age+year+educ+region+marital")),
          Gender=rep(c(rep("Men", 20), rep("Women", 20)), 2),
          `Prevalence ratio`=as.numeric(V1),
          Lower=as.numeric(`2.5 %`),
@@ -488,8 +492,8 @@ binded %>%
 
 #plot
 ggplot(binded, aes(y=Race, x=`Prevalence ratio`, xmin=Lower, xmax=Upper, group=rev(V5), shape=V5, color=V5)) +
-  geom_point(position=position_dodge(width = 0.5)) +
-  geom_errorbar(position=position_dodge(width = 0.5)) + 
+  geom_point(position=position_dodge(width = 0.75)) +
+  geom_errorbar(position=position_dodge(width = 0.75)) + 
   geom_vline(xintercept=1, lty=2, col='darkgrey') +
   facet_grid(V4~Gender) +
   scale_x_continuous(trans="log", limits=c(0.08, 3.26), breaks=c(0.25, 1, 1.75, 2.5, 3.25)) +
@@ -506,5 +510,8 @@ ggplot(binded, aes(y=Race, x=`Prevalence ratio`, xmin=Lower, xmax=Upper, group=r
 dat %>%
   filter(class=="Capitalists" | class=="Petit bourgeoisie") %>%
   group_by(class) %>%
-  summarise(round(mean(numemps, na.rm=T),2))
+  summarise(mean_emps=round(mean(numemps, na.rm=T),1), 
+            median_emps=round(median(numemps, na.rm=T),1),
+            lower_IQR=round(quantile(numemps, 0.25, na.rm=T),1),
+            upper_IQR=round(quantile(numemps, 0.75, na.rm=T),1))
 ```
