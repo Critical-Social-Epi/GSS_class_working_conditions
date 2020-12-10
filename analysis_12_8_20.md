@@ -108,8 +108,7 @@ read.csv('GSS_02_06_10_14_18.csv') %>%
   filter(wrkstat=="working fulltime" | wrkstat=="working parttime" | wrkstat=="temp not working") %>%
   filter(!(year==2002 & ballot=="ballot b")) %>%
   mutate_all(funs(ifelse(.=="DK" | .=="NO ANSWER" | .=="DONT KNOW" | .=="Not asked" | .=="IAP,DK,NA,uncodeable", NA, .))) %>%
-  filter(respect!="IAP") %>%
-  droplevels() -> dat
+  filter(is.na(respect) | respect!="IAP") -> dat #removing those with IAP for respect is sufficient since IAPs are the same across other QWL variables
 
 ########potential variables of interest (dataset already subsetted, but useful if we need to do again and add some variables)
 #####
@@ -172,8 +171,8 @@ dat %>%
          income=as.numeric(as.character(coninc)) * 251.1 / 172.2, #adjust income to 2018 dollars from 2000 dollars
          prestg10_bin=ifelse(prestg10 < weighted.median(prestg10, w=wtssall, na.rm=T), "low prestige", "high prestige"),  #prestige below median
          #we could also create the class variable using numemps (number of employees employed by the self-employed), but it's not available in 2002 
-         class=factor(ifelse((wksup == "yes" & wrkslf == "self-employed") | (wksup == "yes" & wrkslf == "someone else" & occ10 == 10), "Capitalists", 
-                              ifelse((wksup == "no" & wrkslf == "self-employed") | (wksup == "no" & wrkslf == "someone else" & occ10 == 10), "Petit bourgeoisie", 
+         class=factor(ifelse((wksup == "yes" & wrkslf == "self-employed") | (wksup == "yes" & wrkslf == "someone else" & occ10 == "chief executives"), "Capitalists", 
+                              ifelse((wksup == "no" & wrkslf == "self-employed") | (wksup == "no" & wrkslf == "someone else" & occ10 == "chief executives"), "Petit bourgeoisie", 
                                                  ifelse(wksup == "yes" & wrkslf == "someone else" & occ10 != "chief executives", "Managers", 
                                                         ifelse(wksup == "no" & wrkslf ==  "someone else" & occ10 != "chief executives", "Workers", NA)))), 
                                    levels=c("Workers", "Managers", "Petit bourgeoisie", "Capitalists")),
@@ -221,16 +220,715 @@ dat %>%
                             levels=c("white male", "white female", "black male", "black female", "other male", "other female"))) -> dat
 ```
 
+# Confirming that class, race, and gender variables are coded correctly
+
+
+```r
+#class variable 
+kable(table(dat$class, dat$wrkslf, dat$wksup, dat$occ10=="chief executives"), caption="Class by self employed by supervisor by chief executive", col.names=c("Class", "Self-employed", "Supervisor", "Chief executive", "Count")) %>%
+  kable_styling("striped") %>%
+  scroll_box(width = "100%", height = "250px")
+```
+
+<div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:250px; overflow-x: scroll; width:100%; "><table class="table table-striped" style="margin-left: auto; margin-right: auto;">
+<caption>Class by self employed by supervisor by chief executive</caption>
+ <thead>
+  <tr>
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> Class </th>
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> Self-employed </th>
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> Supervisor </th>
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> Chief executive </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> Count </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> Workers </td>
+   <td style="text-align:left;"> self-employed </td>
+   <td style="text-align:left;"> no </td>
+   <td style="text-align:left;"> FALSE </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Managers </td>
+   <td style="text-align:left;"> self-employed </td>
+   <td style="text-align:left;"> no </td>
+   <td style="text-align:left;"> FALSE </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
+   <td style="text-align:left;"> self-employed </td>
+   <td style="text-align:left;"> no </td>
+   <td style="text-align:left;"> FALSE </td>
+   <td style="text-align:right;"> 523 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Capitalists </td>
+   <td style="text-align:left;"> self-employed </td>
+   <td style="text-align:left;"> no </td>
+   <td style="text-align:left;"> FALSE </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Workers </td>
+   <td style="text-align:left;"> someone else </td>
+   <td style="text-align:left;"> no </td>
+   <td style="text-align:left;"> FALSE </td>
+   <td style="text-align:right;"> 3737 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Managers </td>
+   <td style="text-align:left;"> someone else </td>
+   <td style="text-align:left;"> no </td>
+   <td style="text-align:left;"> FALSE </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
+   <td style="text-align:left;"> someone else </td>
+   <td style="text-align:left;"> no </td>
+   <td style="text-align:left;"> FALSE </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Capitalists </td>
+   <td style="text-align:left;"> someone else </td>
+   <td style="text-align:left;"> no </td>
+   <td style="text-align:left;"> FALSE </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Workers </td>
+   <td style="text-align:left;"> self-employed </td>
+   <td style="text-align:left;"> yes </td>
+   <td style="text-align:left;"> FALSE </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Managers </td>
+   <td style="text-align:left;"> self-employed </td>
+   <td style="text-align:left;"> yes </td>
+   <td style="text-align:left;"> FALSE </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
+   <td style="text-align:left;"> self-employed </td>
+   <td style="text-align:left;"> yes </td>
+   <td style="text-align:left;"> FALSE </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Capitalists </td>
+   <td style="text-align:left;"> self-employed </td>
+   <td style="text-align:left;"> yes </td>
+   <td style="text-align:left;"> FALSE </td>
+   <td style="text-align:right;"> 358 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Workers </td>
+   <td style="text-align:left;"> someone else </td>
+   <td style="text-align:left;"> yes </td>
+   <td style="text-align:left;"> FALSE </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Managers </td>
+   <td style="text-align:left;"> someone else </td>
+   <td style="text-align:left;"> yes </td>
+   <td style="text-align:left;"> FALSE </td>
+   <td style="text-align:right;"> 2084 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
+   <td style="text-align:left;"> someone else </td>
+   <td style="text-align:left;"> yes </td>
+   <td style="text-align:left;"> FALSE </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Capitalists </td>
+   <td style="text-align:left;"> someone else </td>
+   <td style="text-align:left;"> yes </td>
+   <td style="text-align:left;"> FALSE </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Workers </td>
+   <td style="text-align:left;"> self-employed </td>
+   <td style="text-align:left;"> no </td>
+   <td style="text-align:left;"> TRUE </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Managers </td>
+   <td style="text-align:left;"> self-employed </td>
+   <td style="text-align:left;"> no </td>
+   <td style="text-align:left;"> TRUE </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
+   <td style="text-align:left;"> self-employed </td>
+   <td style="text-align:left;"> no </td>
+   <td style="text-align:left;"> TRUE </td>
+   <td style="text-align:right;"> 3 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Capitalists </td>
+   <td style="text-align:left;"> self-employed </td>
+   <td style="text-align:left;"> no </td>
+   <td style="text-align:left;"> TRUE </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Workers </td>
+   <td style="text-align:left;"> someone else </td>
+   <td style="text-align:left;"> no </td>
+   <td style="text-align:left;"> TRUE </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Managers </td>
+   <td style="text-align:left;"> someone else </td>
+   <td style="text-align:left;"> no </td>
+   <td style="text-align:left;"> TRUE </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
+   <td style="text-align:left;"> someone else </td>
+   <td style="text-align:left;"> no </td>
+   <td style="text-align:left;"> TRUE </td>
+   <td style="text-align:right;"> 3 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Capitalists </td>
+   <td style="text-align:left;"> someone else </td>
+   <td style="text-align:left;"> no </td>
+   <td style="text-align:left;"> TRUE </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Workers </td>
+   <td style="text-align:left;"> self-employed </td>
+   <td style="text-align:left;"> yes </td>
+   <td style="text-align:left;"> TRUE </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Managers </td>
+   <td style="text-align:left;"> self-employed </td>
+   <td style="text-align:left;"> yes </td>
+   <td style="text-align:left;"> TRUE </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
+   <td style="text-align:left;"> self-employed </td>
+   <td style="text-align:left;"> yes </td>
+   <td style="text-align:left;"> TRUE </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Capitalists </td>
+   <td style="text-align:left;"> self-employed </td>
+   <td style="text-align:left;"> yes </td>
+   <td style="text-align:left;"> TRUE </td>
+   <td style="text-align:right;"> 11 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Workers </td>
+   <td style="text-align:left;"> someone else </td>
+   <td style="text-align:left;"> yes </td>
+   <td style="text-align:left;"> TRUE </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Managers </td>
+   <td style="text-align:left;"> someone else </td>
+   <td style="text-align:left;"> yes </td>
+   <td style="text-align:left;"> TRUE </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
+   <td style="text-align:left;"> someone else </td>
+   <td style="text-align:left;"> yes </td>
+   <td style="text-align:left;"> TRUE </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Capitalists </td>
+   <td style="text-align:left;"> someone else </td>
+   <td style="text-align:left;"> yes </td>
+   <td style="text-align:left;"> TRUE </td>
+   <td style="text-align:right;"> 27 </td>
+  </tr>
+</tbody>
+</table></div>
+
+```r
+#class-gender variable 
+kable(table(dat$class_gender, dat$sex), caption="Class-gender by gender", col.names=c("Class-gender", "Gender")) %>%
+  kable_styling("striped") %>%
+  scroll_box(width = "100%", height = "250px")
+```
+
+<div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:250px; overflow-x: scroll; width:100%; "><table class="table table-striped" style="margin-left: auto; margin-right: auto;">
+<caption>Class-gender by gender</caption>
+ <thead>
+  <tr>
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">   </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> Class-gender </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> Gender </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> Male workers </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 1630 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Male managers </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 1060 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 272 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Male capitalists </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 293 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Female workers </td>
+   <td style="text-align:right;"> 2107 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Female managers </td>
+   <td style="text-align:right;"> 1024 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
+   <td style="text-align:right;"> 261 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Female capitalists </td>
+   <td style="text-align:right;"> 104 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+</tbody>
+</table></div>
+
+```r
+#class-POC variable
+kable(table(dat$class_poc, dat$race_poc), caption="Class-POC by POC") %>%
+  kable_styling("striped") %>%
+  scroll_box(width = "100%", height = "250px")
+```
+
+<div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:250px; overflow-x: scroll; width:100%; "><table class="table table-striped" style="margin-left: auto; margin-right: auto;">
+<caption>Class-POC by POC</caption>
+ <thead>
+  <tr>
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">   </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> poc </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> white </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> white workers </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 2709 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> white managers </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 1580 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> white petit bourgeoisie </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 434 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> white capitalists </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 335 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> poc workers </td>
+   <td style="text-align:right;"> 1028 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> poc managers </td>
+   <td style="text-align:right;"> 504 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> poc petit bourgeoisie </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> poc capitalists </td>
+   <td style="text-align:right;"> 62 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+</tbody>
+</table></div>
+
+```r
+#class-race variable
+kable(table(dat$class_race, dat$race), caption="Class-race by race") %>%
+  kable_styling("striped") %>%
+  scroll_box(width = "100%", height = "250px")
+```
+
+<div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:250px; overflow-x: scroll; width:100%; "><table class="table table-striped" style="margin-left: auto; margin-right: auto;">
+<caption>Class-race by race</caption>
+ <thead>
+  <tr>
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">   </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> white </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> black </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> other </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> white workers </td>
+   <td style="text-align:right;"> 2709 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> white managers </td>
+   <td style="text-align:right;"> 1580 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> white petit bourgeoisie </td>
+   <td style="text-align:right;"> 434 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> white capitalists </td>
+   <td style="text-align:right;"> 335 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> black workers </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 660 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> black managers </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 292 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> black petit bourgeoisie </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 45 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> black capitalists </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 26 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> other workers </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 368 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> other managers </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 212 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> other petit bourgeoisie </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 54 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> other capitalists </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 36 </td>
+  </tr>
+</tbody>
+</table></div>
+
+```r
+#race-gender variable
+kable(table(dat$race_gender, dat$race, dat$sex), caption="Race-gender by race and gender", col.names=c("Race-gender", "Race", "Gender", "Count")) %>%
+  kable_styling("striped") %>%
+  scroll_box(width = "100%", height = "250px")
+```
+
+<div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:250px; overflow-x: scroll; width:100%; "><table class="table table-striped" style="margin-left: auto; margin-right: auto;">
+<caption>Race-gender by race and gender</caption>
+ <thead>
+  <tr>
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> Race-gender </th>
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> Race </th>
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> Gender </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> Count </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> white male </td>
+   <td style="text-align:left;"> white </td>
+   <td style="text-align:left;"> female </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> white female </td>
+   <td style="text-align:left;"> white </td>
+   <td style="text-align:left;"> female </td>
+   <td style="text-align:right;"> 2569 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> black male </td>
+   <td style="text-align:left;"> white </td>
+   <td style="text-align:left;"> female </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> black female </td>
+   <td style="text-align:left;"> white </td>
+   <td style="text-align:left;"> female </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> other male </td>
+   <td style="text-align:left;"> white </td>
+   <td style="text-align:left;"> female </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> other female </td>
+   <td style="text-align:left;"> white </td>
+   <td style="text-align:left;"> female </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> white male </td>
+   <td style="text-align:left;"> black </td>
+   <td style="text-align:left;"> female </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> white female </td>
+   <td style="text-align:left;"> black </td>
+   <td style="text-align:left;"> female </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> black male </td>
+   <td style="text-align:left;"> black </td>
+   <td style="text-align:left;"> female </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> black female </td>
+   <td style="text-align:left;"> black </td>
+   <td style="text-align:left;"> female </td>
+   <td style="text-align:right;"> 642 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> other male </td>
+   <td style="text-align:left;"> black </td>
+   <td style="text-align:left;"> female </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> other female </td>
+   <td style="text-align:left;"> black </td>
+   <td style="text-align:left;"> female </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> white male </td>
+   <td style="text-align:left;"> other </td>
+   <td style="text-align:left;"> female </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> white female </td>
+   <td style="text-align:left;"> other </td>
+   <td style="text-align:left;"> female </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> black male </td>
+   <td style="text-align:left;"> other </td>
+   <td style="text-align:left;"> female </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> black female </td>
+   <td style="text-align:left;"> other </td>
+   <td style="text-align:left;"> female </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> other male </td>
+   <td style="text-align:left;"> other </td>
+   <td style="text-align:left;"> female </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> other female </td>
+   <td style="text-align:left;"> other </td>
+   <td style="text-align:left;"> female </td>
+   <td style="text-align:right;"> 314 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> white male </td>
+   <td style="text-align:left;"> white </td>
+   <td style="text-align:left;"> male </td>
+   <td style="text-align:right;"> 2531 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> white female </td>
+   <td style="text-align:left;"> white </td>
+   <td style="text-align:left;"> male </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> black male </td>
+   <td style="text-align:left;"> white </td>
+   <td style="text-align:left;"> male </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> black female </td>
+   <td style="text-align:left;"> white </td>
+   <td style="text-align:left;"> male </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> other male </td>
+   <td style="text-align:left;"> white </td>
+   <td style="text-align:left;"> male </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> other female </td>
+   <td style="text-align:left;"> white </td>
+   <td style="text-align:left;"> male </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> white male </td>
+   <td style="text-align:left;"> black </td>
+   <td style="text-align:left;"> male </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> white female </td>
+   <td style="text-align:left;"> black </td>
+   <td style="text-align:left;"> male </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> black male </td>
+   <td style="text-align:left;"> black </td>
+   <td style="text-align:left;"> male </td>
+   <td style="text-align:right;"> 391 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> black female </td>
+   <td style="text-align:left;"> black </td>
+   <td style="text-align:left;"> male </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> other male </td>
+   <td style="text-align:left;"> black </td>
+   <td style="text-align:left;"> male </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> other female </td>
+   <td style="text-align:left;"> black </td>
+   <td style="text-align:left;"> male </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> white male </td>
+   <td style="text-align:left;"> other </td>
+   <td style="text-align:left;"> male </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> white female </td>
+   <td style="text-align:left;"> other </td>
+   <td style="text-align:left;"> male </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> black male </td>
+   <td style="text-align:left;"> other </td>
+   <td style="text-align:left;"> male </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> black female </td>
+   <td style="text-align:left;"> other </td>
+   <td style="text-align:left;"> male </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> other male </td>
+   <td style="text-align:left;"> other </td>
+   <td style="text-align:left;"> male </td>
+   <td style="text-align:right;"> 359 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> other female </td>
+   <td style="text-align:left;"> other </td>
+   <td style="text-align:left;"> male </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+</tbody>
+</table></div>
+
 # Handling missing data
 
 ## Missingness patterns
 
 
 ```r
-aggr(dat[,c("class", 'sex', 'race', 'educ', 'marital_tri', 'region', 'income', 'age', "srh_bin", "mntlhlth", "disc_haras", "respect_bin", "trustman_bin", "manvsemp_bin", "suphelp_bin", "supcares_bin", "wkfreedm_bin", "wkdecide_bin", "safehlth_bin", "safefrst_bin")], cex.axis = 0.7, numbers=FALSE, prop=TRUE)
+aggr(dat[,c("wrkslf", "wksup", "class", 'sex', 'race', 'educ', 'marital_tri', 'region', 'income', 'age', "srh_bin", "mntlhlth", "disc_haras", "respect_bin", "trustman_bin", "manvsemp_bin", "suphelp_bin", "supcares_bin", "wkfreedm_bin", "wkdecide_bin", "safehlth_bin", "safefrst_bin")], cex.axis = 0.7, numbers=FALSE, prop=TRUE)
 ```
 
-![](analysis_12_8_20_files/figure-html/unnamed-chunk-2-1.png)<!-- -->
+![](analysis_12_8_20_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
 
 ## Multiple imputation
 
@@ -312,12 +1010,11 @@ nonorm <- c('income', 'age')
 
 x <- svyCreateTableOne(data = svy_dat, vars = vars, strata='class')
 x <- print(x, printToggle=FALSE, noSpaces=TRUE, nonnormal=nonorm)
-kable(x[,1:4], caption="Simple") %>%
+kable(x[,1:4]) %>%
   kable_styling(c("striped", "condensed"))
 ```
 
 <table class="table table-striped table-condensed" style="margin-left: auto; margin-right: auto;">
-<caption>Simple</caption>
  <thead>
   <tr>
    <th style="text-align:left;">   </th>
@@ -330,17 +1027,17 @@ kable(x[,1:4], caption="Simple") %>%
 <tbody>
   <tr>
    <td style="text-align:left;"> n </td>
-   <td style="text-align:left;"> 3797.1 </td>
-   <td style="text-align:left;"> 2104.5 </td>
-   <td style="text-align:left;"> 525.1 </td>
-   <td style="text-align:left;"> 382.4 </td>
+   <td style="text-align:left;"> 3821.8 </td>
+   <td style="text-align:left;"> 2128.6 </td>
+   <td style="text-align:left;"> 544.2 </td>
+   <td style="text-align:left;"> 423.8 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> sex = male (%) </td>
-   <td style="text-align:left;"> 1695.5 (44.7) </td>
-   <td style="text-align:left;"> 1089.9 (51.8) </td>
-   <td style="text-align:left;"> 264.0 (50.3) </td>
-   <td style="text-align:left;"> 294.8 (77.1) </td>
+   <td style="text-align:left;"> 1703.1 (44.6) </td>
+   <td style="text-align:left;"> 1097.2 (51.5) </td>
+   <td style="text-align:left;"> 278.4 (51.2) </td>
+   <td style="text-align:left;"> 324.9 (76.7) </td>
   </tr>
   <tr>
    <td style="text-align:left;"> race (%) </td>
@@ -351,24 +1048,24 @@ kable(x[,1:4], caption="Simple") %>%
   </tr>
   <tr>
    <td style="text-align:left;"> white </td>
-   <td style="text-align:left;"> 2763.9 (72.8) </td>
-   <td style="text-align:left;"> 1618.9 (76.9) </td>
-   <td style="text-align:left;"> 416.3 (79.3) </td>
-   <td style="text-align:left;"> 316.1 (82.7) </td>
+   <td style="text-align:left;"> 2780.2 (72.7) </td>
+   <td style="text-align:left;"> 1636.3 (76.9) </td>
+   <td style="text-align:left;"> 431.3 (79.2) </td>
+   <td style="text-align:left;"> 352.6 (83.2) </td>
   </tr>
   <tr>
    <td style="text-align:left;"> black </td>
-   <td style="text-align:left;"> 614.7 (16.2) </td>
-   <td style="text-align:left;"> 261.6 (12.4) </td>
-   <td style="text-align:left;"> 36.7 (7.0) </td>
-   <td style="text-align:left;"> 21.6 (5.6) </td>
+   <td style="text-align:left;"> 618.7 (16.2) </td>
+   <td style="text-align:left;"> 266.4 (12.5) </td>
+   <td style="text-align:left;"> 40.8 (7.5) </td>
+   <td style="text-align:left;"> 25.6 (6.0) </td>
   </tr>
   <tr>
    <td style="text-align:left;"> other </td>
-   <td style="text-align:left;"> 418.6 (11.0) </td>
-   <td style="text-align:left;"> 223.9 (10.6) </td>
-   <td style="text-align:left;"> 72.1 (13.7) </td>
-   <td style="text-align:left;"> 44.7 (11.7) </td>
+   <td style="text-align:left;"> 422.9 (11.1) </td>
+   <td style="text-align:left;"> 225.8 (10.6) </td>
+   <td style="text-align:left;"> 72.1 (13.3) </td>
+   <td style="text-align:left;"> 45.6 (10.8) </td>
   </tr>
   <tr>
    <td style="text-align:left;"> educ (%) </td>
@@ -379,31 +1076,31 @@ kable(x[,1:4], caption="Simple") %>%
   </tr>
   <tr>
    <td style="text-align:left;"> &lt;HS </td>
-   <td style="text-align:left;"> 359.4 (9.5) </td>
-   <td style="text-align:left;"> 158.1 (7.5) </td>
-   <td style="text-align:left;"> 63.2 (12.0) </td>
-   <td style="text-align:left;"> 33.4 (8.7) </td>
+   <td style="text-align:left;"> 359.4 (9.4) </td>
+   <td style="text-align:left;"> 158.1 (7.4) </td>
+   <td style="text-align:left;"> 65.0 (11.9) </td>
+   <td style="text-align:left;"> 33.4 (7.9) </td>
   </tr>
   <tr>
    <td style="text-align:left;"> HS </td>
-   <td style="text-align:left;"> 2095.5 (55.2) </td>
-   <td style="text-align:left;"> 918.9 (43.7) </td>
-   <td style="text-align:left;"> 253.7 (48.3) </td>
-   <td style="text-align:left;"> 160.3 (41.9) </td>
+   <td style="text-align:left;"> 2111.2 (55.2) </td>
+   <td style="text-align:left;"> 927.3 (43.6) </td>
+   <td style="text-align:left;"> 259.7 (47.7) </td>
+   <td style="text-align:left;"> 170.7 (40.3) </td>
   </tr>
   <tr>
    <td style="text-align:left;"> JuCo </td>
-   <td style="text-align:left;"> 342.9 (9.0) </td>
-   <td style="text-align:left;"> 220.9 (10.5) </td>
-   <td style="text-align:left;"> 48.5 (9.2) </td>
-   <td style="text-align:left;"> 27.3 (7.1) </td>
+   <td style="text-align:left;"> 345.7 (9.0) </td>
+   <td style="text-align:left;"> 227.7 (10.7) </td>
+   <td style="text-align:left;"> 50.0 (9.2) </td>
+   <td style="text-align:left;"> 31.1 (7.3) </td>
   </tr>
   <tr>
    <td style="text-align:left;"> College + </td>
-   <td style="text-align:left;"> 999.3 (26.3) </td>
-   <td style="text-align:left;"> 806.6 (38.3) </td>
-   <td style="text-align:left;"> 159.7 (30.4) </td>
-   <td style="text-align:left;"> 161.4 (42.2) </td>
+   <td style="text-align:left;"> 1005.5 (26.3) </td>
+   <td style="text-align:left;"> 815.5 (38.3) </td>
+   <td style="text-align:left;"> 169.5 (31.1) </td>
+   <td style="text-align:left;"> 188.7 (44.5) </td>
   </tr>
   <tr>
    <td style="text-align:left;"> marital_tri (%) </td>
@@ -414,24 +1111,24 @@ kable(x[,1:4], caption="Simple") %>%
   </tr>
   <tr>
    <td style="text-align:left;"> married </td>
-   <td style="text-align:left;"> 1938.3 (51.0) </td>
-   <td style="text-align:left;"> 1176.2 (55.9) </td>
-   <td style="text-align:left;"> 313.0 (59.6) </td>
-   <td style="text-align:left;"> 270.9 (70.8) </td>
+   <td style="text-align:left;"> 1950.2 (51.0) </td>
+   <td style="text-align:left;"> 1190.8 (55.9) </td>
+   <td style="text-align:left;"> 327.5 (60.2) </td>
+   <td style="text-align:left;"> 301.5 (71.1) </td>
   </tr>
   <tr>
    <td style="text-align:left;"> never married </td>
-   <td style="text-align:left;"> 1186.0 (31.2) </td>
-   <td style="text-align:left;"> 560.1 (26.6) </td>
-   <td style="text-align:left;"> 104.7 (19.9) </td>
-   <td style="text-align:left;"> 36.4 (9.5) </td>
+   <td style="text-align:left;"> 1192.5 (31.2) </td>
+   <td style="text-align:left;"> 565.9 (26.6) </td>
+   <td style="text-align:left;"> 106.1 (19.5) </td>
+   <td style="text-align:left;"> 41.6 (9.8) </td>
   </tr>
   <tr>
    <td style="text-align:left;"> wid/div/sep </td>
-   <td style="text-align:left;"> 672.8 (17.7) </td>
-   <td style="text-align:left;"> 368.2 (17.5) </td>
-   <td style="text-align:left;"> 107.4 (20.4) </td>
-   <td style="text-align:left;"> 75.1 (19.6) </td>
+   <td style="text-align:left;"> 679.1 (17.8) </td>
+   <td style="text-align:left;"> 371.8 (17.5) </td>
+   <td style="text-align:left;"> 110.6 (20.3) </td>
+   <td style="text-align:left;"> 80.7 (19.0) </td>
   </tr>
   <tr>
    <td style="text-align:left;"> region (%) </td>
@@ -442,64 +1139,66 @@ kable(x[,1:4], caption="Simple") %>%
   </tr>
   <tr>
    <td style="text-align:left;"> Midwest </td>
-   <td style="text-align:left;"> 926.6 (24.4) </td>
-   <td style="text-align:left;"> 474.5 (22.5) </td>
-   <td style="text-align:left;"> 99.5 (18.9) </td>
-   <td style="text-align:left;"> 79.7 (20.8) </td>
+   <td style="text-align:left;"> 932.2 (24.4) </td>
+   <td style="text-align:left;"> 475.6 (22.3) </td>
+   <td style="text-align:left;"> 99.9 (18.4) </td>
+   <td style="text-align:left;"> 87.7 (20.7) </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Northeast </td>
-   <td style="text-align:left;"> 625.0 (16.5) </td>
-   <td style="text-align:left;"> 387.9 (18.4) </td>
-   <td style="text-align:left;"> 78.8 (15.0) </td>
-   <td style="text-align:left;"> 46.0 (12.0) </td>
+   <td style="text-align:left;"> 630.1 (16.5) </td>
+   <td style="text-align:left;"> 395.9 (18.6) </td>
+   <td style="text-align:left;"> 87.4 (16.1) </td>
+   <td style="text-align:left;"> 57.2 (13.5) </td>
   </tr>
   <tr>
    <td style="text-align:left;"> South </td>
-   <td style="text-align:left;"> 1477.1 (38.9) </td>
-   <td style="text-align:left;"> 734.6 (34.9) </td>
-   <td style="text-align:left;"> 190.3 (36.2) </td>
-   <td style="text-align:left;"> 134.5 (35.2) </td>
+   <td style="text-align:left;"> 1485.9 (38.9) </td>
+   <td style="text-align:left;"> 745.6 (35.0) </td>
+   <td style="text-align:left;"> 197.7 (36.3) </td>
+   <td style="text-align:left;"> 150.2 (35.4) </td>
   </tr>
   <tr>
    <td style="text-align:left;"> West </td>
-   <td style="text-align:left;"> 768.5 (20.2) </td>
-   <td style="text-align:left;"> 507.5 (24.1) </td>
-   <td style="text-align:left;"> 156.5 (29.8) </td>
-   <td style="text-align:left;"> 122.3 (32.0) </td>
+   <td style="text-align:left;"> 773.6 (20.2) </td>
+   <td style="text-align:left;"> 511.5 (24.0) </td>
+   <td style="text-align:left;"> 159.1 (29.2) </td>
+   <td style="text-align:left;"> 128.6 (30.3) </td>
   </tr>
   <tr>
    <td style="text-align:left;"> income (median [IQR]) </td>
    <td style="text-align:left;"> 63838.02 [35022.03, 102218.99] </td>
    <td style="text-align:left;"> 84330.67 [48492.05, 128628.24] </td>
    <td style="text-align:left;"> 63838.02 [32196.43, 122662.79] </td>
-   <td style="text-align:left;"> 117053.99 [64773.77, 230688.05] </td>
+   <td style="text-align:left;"> 122662.79 [69724.29, 230688.05] </td>
   </tr>
   <tr>
    <td style="text-align:left;"> age (median [IQR]) </td>
    <td style="text-align:left;"> 40.00 [29.00, 51.00] </td>
-   <td style="text-align:left;"> 41.00 [31.00, 51.00] </td>
-   <td style="text-align:left;"> 49.00 [37.00, 57.00] </td>
-   <td style="text-align:left;"> 50.00 [41.00, 58.01] </td>
+   <td style="text-align:left;"> 42.00 [31.00, 51.00] </td>
+   <td style="text-align:left;"> 49.00 [37.00, 58.00] </td>
+   <td style="text-align:left;"> 50.00 [40.00, 58.00] </td>
   </tr>
   <tr>
    <td style="text-align:left;"> srh_bin = poor/fair (%) </td>
-   <td style="text-align:left;"> 575.1 (15.2) </td>
-   <td style="text-align:left;"> 269.4 (12.8) </td>
-   <td style="text-align:left;"> 83.4 (15.9) </td>
-   <td style="text-align:left;"> 41.9 (11.0) </td>
+   <td style="text-align:left;"> 579.3 (15.2) </td>
+   <td style="text-align:left;"> 271.1 (12.9) </td>
+   <td style="text-align:left;"> 83.4 (15.6) </td>
+   <td style="text-align:left;"> 43.4 (10.4) </td>
   </tr>
   <tr>
    <td style="text-align:left;"> mntlhlth (mean (SD)) </td>
-   <td style="text-align:left;"> 3.52 (7.09) </td>
-   <td style="text-align:left;"> 3.34 (6.84) </td>
-   <td style="text-align:left;"> 2.60 (6.18) </td>
-   <td style="text-align:left;"> 3.02 (7.10) </td>
+   <td style="text-align:left;"> 3.55 (7.14) </td>
+   <td style="text-align:left;"> 3.34 (6.83) </td>
+   <td style="text-align:left;"> 2.55 (6.13) </td>
+   <td style="text-align:left;"> 2.98 (6.99) </td>
   </tr>
 </tbody>
 </table>
 
 ## QWL variables stratified by class 
+
+Unadjusted prevalence of bad category of each binary QWL variable among each class.
 
 
 ```r
@@ -508,12 +1207,11 @@ qwl_vars <- c("disc_haras", "respect_bin", "trustman_bin", "manvsemp_bin", "suph
 
 x <- svyCreateTableOne(data = svy_dat, vars = qwl_vars, factorVars=qwl_vars, strata='class')
 x <- print(x, printToggle=FALSE, noSpaces=TRUE)
-kable(x[,1:4], caption="Simple") %>%
+kable(x[,1:4]) %>%
   kable_styling(c("striped", "condensed"))
 ```
 
 <table class="table table-striped table-condensed" style="margin-left: auto; margin-right: auto;">
-<caption>Simple</caption>
  <thead>
   <tr>
    <th style="text-align:left;">   </th>
@@ -526,80 +1224,80 @@ kable(x[,1:4], caption="Simple") %>%
 <tbody>
   <tr>
    <td style="text-align:left;"> n </td>
-   <td style="text-align:left;"> 3797.1 </td>
-   <td style="text-align:left;"> 2104.5 </td>
-   <td style="text-align:left;"> 525.1 </td>
-   <td style="text-align:left;"> 382.4 </td>
+   <td style="text-align:left;"> 3821.8 </td>
+   <td style="text-align:left;"> 2128.6 </td>
+   <td style="text-align:left;"> 544.2 </td>
+   <td style="text-align:left;"> 423.8 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> disc_haras = 1 (%) </td>
-   <td style="text-align:left;"> 786.6 (20.7) </td>
-   <td style="text-align:left;"> 497.6 (23.7) </td>
-   <td style="text-align:left;"> 72.6 (14.0) </td>
-   <td style="text-align:left;"> 63.1 (16.7) </td>
+   <td style="text-align:left;"> 789.4 (20.8) </td>
+   <td style="text-align:left;"> 499.3 (23.8) </td>
+   <td style="text-align:left;"> 72.6 (13.8) </td>
+   <td style="text-align:left;"> 67.9 (16.6) </td>
   </tr>
   <tr>
    <td style="text-align:left;"> respect_bin = 1 (%) </td>
    <td style="text-align:left;"> 334.9 (8.8) </td>
    <td style="text-align:left;"> 131.3 (6.2) </td>
-   <td style="text-align:left;"> 22.4 (4.3) </td>
-   <td style="text-align:left;"> 8.7 (2.3) </td>
+   <td style="text-align:left;"> 22.4 (4.2) </td>
+   <td style="text-align:left;"> 11.6 (2.8) </td>
   </tr>
   <tr>
    <td style="text-align:left;"> trustman_bin = 1 (%) </td>
-   <td style="text-align:left;"> 829.0 (21.9) </td>
-   <td style="text-align:left;"> 396.3 (18.9) </td>
-   <td style="text-align:left;"> 26.4 (5.2) </td>
-   <td style="text-align:left;"> 16.0 (4.3) </td>
+   <td style="text-align:left;"> 833.9 (22.0) </td>
+   <td style="text-align:left;"> 398.0 (19.0) </td>
+   <td style="text-align:left;"> 26.4 (5.1) </td>
+   <td style="text-align:left;"> 18.9 (4.7) </td>
   </tr>
   <tr>
    <td style="text-align:left;"> manvsemp_bin = 1 (%) </td>
-   <td style="text-align:left;"> 317.2 (8.4) </td>
-   <td style="text-align:left;"> 136.8 (6.5) </td>
+   <td style="text-align:left;"> 318.6 (8.4) </td>
+   <td style="text-align:left;"> 138.5 (6.6) </td>
    <td style="text-align:left;"> 10.2 (2.3) </td>
-   <td style="text-align:left;"> 4.8 (1.3) </td>
+   <td style="text-align:left;"> 7.6 (1.9) </td>
   </tr>
   <tr>
    <td style="text-align:left;"> suphelp_bin = 1 (%) </td>
-   <td style="text-align:left;"> 545.0 (14.4) </td>
-   <td style="text-align:left;"> 300.6 (14.4) </td>
-   <td style="text-align:left;"> 77.6 (18.2) </td>
-   <td style="text-align:left;"> 33.9 (11.1) </td>
+   <td style="text-align:left;"> 548.2 (14.5) </td>
+   <td style="text-align:left;"> 302.3 (14.5) </td>
+   <td style="text-align:left;"> 77.6 (18.1) </td>
+   <td style="text-align:left;"> 36.9 (11.1) </td>
   </tr>
   <tr>
    <td style="text-align:left;"> supcares_bin = 1 (%) </td>
-   <td style="text-align:left;"> 608.3 (16.2) </td>
+   <td style="text-align:left;"> 609.7 (16.2) </td>
    <td style="text-align:left;"> 297.0 (14.2) </td>
-   <td style="text-align:left;"> 90.8 (21.7) </td>
-   <td style="text-align:left;"> 40.3 (12.9) </td>
+   <td style="text-align:left;"> 90.8 (21.6) </td>
+   <td style="text-align:left;"> 45.0 (13.2) </td>
   </tr>
   <tr>
    <td style="text-align:left;"> wkfreedm_bin = 1 (%) </td>
-   <td style="text-align:left;"> 610.2 (16.1) </td>
-   <td style="text-align:left;"> 199.7 (9.5) </td>
-   <td style="text-align:left;"> 19.5 (3.8) </td>
-   <td style="text-align:left;"> 5.3 (1.4) </td>
+   <td style="text-align:left;"> 613.8 (16.2) </td>
+   <td style="text-align:left;"> 201.3 (9.6) </td>
+   <td style="text-align:left;"> 19.5 (3.7) </td>
+   <td style="text-align:left;"> 6.4 (1.6) </td>
   </tr>
   <tr>
    <td style="text-align:left;"> wkdecide_bin = 1 (%) </td>
-   <td style="text-align:left;"> 1078.4 (28.4) </td>
+   <td style="text-align:left;"> 1081.6 (28.5) </td>
    <td style="text-align:left;"> 231.1 (11.0) </td>
-   <td style="text-align:left;"> 210.5 (40.3) </td>
-   <td style="text-align:left;"> 62.3 (16.4) </td>
+   <td style="text-align:left;"> 211.6 (40.2) </td>
+   <td style="text-align:left;"> 62.7 (15.4) </td>
   </tr>
   <tr>
    <td style="text-align:left;"> safehlth_bin = 1 (%) </td>
-   <td style="text-align:left;"> 257.4 (6.8) </td>
+   <td style="text-align:left;"> 258.2 (6.8) </td>
    <td style="text-align:left;"> 110.3 (5.2) </td>
-   <td style="text-align:left;"> 19.7 (3.9) </td>
-   <td style="text-align:left;"> 14.1 (3.7) </td>
+   <td style="text-align:left;"> 19.7 (3.8) </td>
+   <td style="text-align:left;"> 17.0 (4.2) </td>
   </tr>
   <tr>
    <td style="text-align:left;"> safefrst_bin = 1 (%) </td>
-   <td style="text-align:left;"> 385.1 (10.3) </td>
-   <td style="text-align:left;"> 188.7 (9.1) </td>
+   <td style="text-align:left;"> 387.8 (10.3) </td>
+   <td style="text-align:left;"> 188.7 (9.0) </td>
    <td style="text-align:left;"> 20.4 (4.1) </td>
-   <td style="text-align:left;"> 27.0 (7.2) </td>
+   <td style="text-align:left;"> 27.0 (6.7) </td>
   </tr>
 </tbody>
 </table>
@@ -679,7 +1377,7 @@ plotted(xaxis=Class, limitsvec=c(0.041, 1.81), breaksvec=c(0.125, 0.25, 0.5, 1, 
         shapes=c(15,16,17,18), xlabbed="Class (ref: workers)")
 ```
 
-![](analysis_12_8_20_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+![](analysis_12_8_20_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
 
 ### Gender interaction
 
@@ -714,7 +1412,7 @@ plotted(xaxis=Class, limitsvec=c(0.017, 2.1), breaksvec=c(0.125, 0.25, 0.5, 1, 2
         shapes=c(15,16,17,18,0,1,2,5), xlabbed="Class & gender (ref: male workers)", nrow=2)
 ```
 
-![](analysis_12_8_20_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
+![](analysis_12_8_20_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
 
 ### Race interaction (white/POC)
 
@@ -751,7 +1449,7 @@ plotted(xaxis=Class, limitsvec=c(0.0165, 3.35), breaksvec=c(0.125, 0.25, 0.5, 1,
         shapes=c(15,16,17,18,0,1,2,5), xlabbed="Class & race (ref: white workers)", nrow=2)
 ```
 
-![](analysis_12_8_20_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
+![](analysis_12_8_20_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
 
 ## Race and QWL among workers
 
@@ -789,7 +1487,7 @@ plotted(xaxis=Race, limitsvec=c(0.3, 2.5), breaksvec=c(0.6, 1, 1.666667, 1.66666
         shapes=c(15, 0, 12), xlabbed="Race (ref: white)")
 ```
 
-![](analysis_12_8_20_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+![](analysis_12_8_20_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
 
 ### Gender interaction
 
@@ -823,7 +1521,7 @@ plotted(xaxis=race_gender, limitsvec=c(0.1, 3.1), breaksvec=c(0.125, 0.25, 0.5, 
         shapes=c(15, 16, 0, 1, 12, 10), xlabbed="Race & gender (ref: white male)", nrow=1)
 ```
 
-![](analysis_12_8_20_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
+![](analysis_12_8_20_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
 
 # Appendix
 
@@ -839,13 +1537,36 @@ dat %>%
   summarise(mean_emps=round(mean(as.numeric(numemps), na.rm=T),1), 
             median_emps=round(median(as.numeric(numemps), na.rm=T),1),
             lower_IQR=round(quantile(as.numeric(numemps), 0.25, na.rm=T),1),
-            upper_IQR=round(quantile(as.numeric(numemps), 0.75, na.rm=T),1))
+            upper_IQR=round(quantile(as.numeric(numemps), 0.75, na.rm=T),1)) %>%
+  kable() %>%
+  kable_styling("striped") %>%
+  scroll_box(width = "100%", height = "250px")
 ```
 
-```
-## # A tibble: 2 x 5
-##   class             mean_emps median_emps lower_IQR upper_IQR
-##   <fct>                 <dbl>       <dbl>     <dbl>     <dbl>
-## 1 Petit bourgeoisie       0.2           0         0         0
-## 2 Capitalists             5.9           2         0         6
-```
+<div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:250px; overflow-x: scroll; width:100%; "><table class="table table-striped" style="margin-left: auto; margin-right: auto;">
+ <thead>
+  <tr>
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> class </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> mean_emps </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> median_emps </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> lower_IQR </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> upper_IQR </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.2 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Capitalists </td>
+   <td style="text-align:right;"> 6.0 </td>
+   <td style="text-align:right;"> 2 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 6 </td>
+  </tr>
+</tbody>
+</table></div>

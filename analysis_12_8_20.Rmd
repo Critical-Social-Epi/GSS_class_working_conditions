@@ -109,8 +109,7 @@ read.csv('GSS_02_06_10_14_18.csv') %>%
   filter(wrkstat=="working fulltime" | wrkstat=="working parttime" | wrkstat=="temp not working") %>%
   filter(!(year==2002 & ballot=="ballot b")) %>%
   mutate_all(funs(ifelse(.=="DK" | .=="NO ANSWER" | .=="DONT KNOW" | .=="Not asked" | .=="IAP,DK,NA,uncodeable", NA, .))) %>%
-  filter(respect!="IAP") %>%
-  droplevels() -> dat
+  filter(is.na(respect) | respect!="IAP") -> dat #removing those with IAP for respect is sufficient since IAPs are the same across other QWL variables
 
 ########potential variables of interest (dataset already subsetted, but useful if we need to do again and add some variables)
 #####
@@ -173,8 +172,8 @@ dat %>%
          income=as.numeric(as.character(coninc)) * 251.1 / 172.2, #adjust income to 2018 dollars from 2000 dollars
          prestg10_bin=ifelse(prestg10 < weighted.median(prestg10, w=wtssall, na.rm=T), "low prestige", "high prestige"),  #prestige below median
          #we could also create the class variable using numemps (number of employees employed by the self-employed), but it's not available in 2002 
-         class=factor(ifelse((wksup == "yes" & wrkslf == "self-employed") | (wksup == "yes" & wrkslf == "someone else" & occ10 == 10), "Capitalists", 
-                              ifelse((wksup == "no" & wrkslf == "self-employed") | (wksup == "no" & wrkslf == "someone else" & occ10 == 10), "Petit bourgeoisie", 
+         class=factor(ifelse((wksup == "yes" & wrkslf == "self-employed") | (wksup == "yes" & wrkslf == "someone else" & occ10 == "chief executives"), "Capitalists", 
+                              ifelse((wksup == "no" & wrkslf == "self-employed") | (wksup == "no" & wrkslf == "someone else" & occ10 == "chief executives"), "Petit bourgeoisie", 
                                                  ifelse(wksup == "yes" & wrkslf == "someone else" & occ10 != "chief executives", "Managers", 
                                                         ifelse(wksup == "no" & wrkslf ==  "someone else" & occ10 != "chief executives", "Workers", NA)))), 
                                    levels=c("Workers", "Managers", "Petit bourgeoisie", "Capitalists")),
@@ -222,12 +221,41 @@ dat %>%
                             levels=c("white male", "white female", "black male", "black female", "other male", "other female"))) -> dat
 ```
 
+# Confirming that class, race, and gender variables are coded correctly
+
+```{r warning=FALSE, message=FALSE}
+#class variable 
+kable(table(dat$class, dat$wrkslf, dat$wksup, dat$occ10=="chief executives"), caption="Class by self employed by supervisor by chief executive", col.names=c("Class", "Self-employed", "Supervisor", "Chief executive", "Count")) %>%
+  kable_styling("striped") %>%
+  scroll_box(width = "100%", height = "250px")
+
+#class-gender variable 
+kable(table(dat$class_gender, dat$sex), caption="Class-gender by gender", col.names=c("Class-gender", "Gender")) %>%
+  kable_styling("striped") %>%
+  scroll_box(width = "100%", height = "250px")
+
+#class-POC variable
+kable(table(dat$class_poc, dat$race_poc), caption="Class-POC by POC") %>%
+  kable_styling("striped") %>%
+  scroll_box(width = "100%", height = "250px")
+
+#class-race variable
+kable(table(dat$class_race, dat$race), caption="Class-race by race") %>%
+  kable_styling("striped") %>%
+  scroll_box(width = "100%", height = "250px")
+
+#race-gender variable
+kable(table(dat$race_gender, dat$race, dat$sex), caption="Race-gender by race and gender", col.names=c("Race-gender", "Race", "Gender", "Count")) %>%
+  kable_styling("striped") %>%
+  scroll_box(width = "100%", height = "250px")
+```
+
 # Handling missing data
 
 ## Missingness patterns
 
 ```{r warning=FALSE, message=FALSE, fig.height=6, fig.width=10}
-aggr(dat[,c("class", 'sex', 'race', 'educ', 'marital_tri', 'region', 'income', 'age', "srh_bin", "mntlhlth", "disc_haras", "respect_bin", "trustman_bin", "manvsemp_bin", "suphelp_bin", "supcares_bin", "wkfreedm_bin", "wkdecide_bin", "safehlth_bin", "safefrst_bin")], cex.axis = 0.7, numbers=FALSE, prop=TRUE)
+aggr(dat[,c("wrkslf", "wksup", "class", 'sex', 'race', 'educ', 'marital_tri', 'region', 'income', 'age', "srh_bin", "mntlhlth", "disc_haras", "respect_bin", "trustman_bin", "manvsemp_bin", "suphelp_bin", "supcares_bin", "wkfreedm_bin", "wkdecide_bin", "safehlth_bin", "safefrst_bin")], cex.axis = 0.7, numbers=FALSE, prop=TRUE)
 ```
 
 ## Multiple imputation
@@ -307,11 +335,13 @@ nonorm <- c('income', 'age')
 
 x <- svyCreateTableOne(data = svy_dat, vars = vars, strata='class')
 x <- print(x, printToggle=FALSE, noSpaces=TRUE, nonnormal=nonorm)
-kable(x[,1:4], caption="Simple") %>%
+kable(x[,1:4]) %>%
   kable_styling(c("striped", "condensed"))
 ```
 
 ## QWL variables stratified by class 
+
+Unadjusted prevalence of bad category of each binary QWL variable among each class.
 
 ```{r warning=FALSE, message=FALSE}
 #vars of interest
@@ -319,7 +349,7 @@ qwl_vars <- c("disc_haras", "respect_bin", "trustman_bin", "manvsemp_bin", "suph
 
 x <- svyCreateTableOne(data = svy_dat, vars = qwl_vars, factorVars=qwl_vars, strata='class')
 x <- print(x, printToggle=FALSE, noSpaces=TRUE)
-kable(x[,1:4], caption="Simple") %>%
+kable(x[,1:4]) %>%
   kable_styling(c("striped", "condensed"))
 ```
 
@@ -541,5 +571,8 @@ dat %>%
   summarise(mean_emps=round(mean(as.numeric(numemps), na.rm=T),1), 
             median_emps=round(median(as.numeric(numemps), na.rm=T),1),
             lower_IQR=round(quantile(as.numeric(numemps), 0.25, na.rm=T),1),
-            upper_IQR=round(quantile(as.numeric(numemps), 0.75, na.rm=T),1))
+            upper_IQR=round(quantile(as.numeric(numemps), 0.75, na.rm=T),1)) %>%
+  kable() %>%
+  kable_styling("striped") %>%
+  scroll_box(width = "100%", height = "250px")
 ```
