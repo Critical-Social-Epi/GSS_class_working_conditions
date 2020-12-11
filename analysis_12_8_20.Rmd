@@ -387,7 +387,7 @@ matrix_func <- function(nums, coefs, cols){
   return(regs_less)
 }
 
-#format matrix
+#format matrix function
 formatted <- function(classvec, rows, qwlvec, dummy, facvec){
   as.data.frame(regs_less) %>%
   mutate(Class=rep(classvec, rows),
@@ -421,8 +421,8 @@ plotted <- function(xaxis, limitsvec, breaksvec, cols, shapes, xlabbed, nrow=1){
 }
 
 #kable function
-tabled <- function(rows){
-  kable(binded[rows,4:8], digits=2, col.names=c("QWL variable", "Class", "PR", "Lower", "Upper")) %>%
+tabled <- function(rows, captioned){
+  kable(binded[rows,4:8], digits=2, col.names=c("QWL variable", "Class", "PR", "Lower", "Upper"), caption=captioned) %>%
   kable_styling("striped") %>%
   scroll_box(width = "100%", height = "250px")
 }
@@ -434,10 +434,10 @@ Prevalence of bad category of each binary QWL variable among each class relative
 
 Excluded 'suphelp_bin' and 'supcares_bin'  for these regressions since PBs and caps shouldn't have supervisors (at least in theory).
 
-### No gender interaction
+### No interaction
 
 ```{r warning=FALSE, message=FALSE, fig.height=5.5, fig.width=8}
-#run min. adjusted regression
+#run regression
 less_adj <- mysvy(dat, c(125:128,131:134), "~class + rcs(age, 3) + rcs(year, 3)", design = svy_dat)
 
 #pull into matrix
@@ -455,13 +455,13 @@ plotted(xaxis=Class, limitsvec=c(0.041, 1.81), breaksvec=c(0.125, 0.25, 0.5, 1, 
         shapes=c(15,16,17,18), xlabbed="Class (ref: workers)")
 
 #table of estimates
-tabled(1:24)
+tabled(1:24, "Ref: workers")
 ```
 
 ### Gender interaction
 
 ```{r warning=FALSE, message=FALSE, fig.height=6, fig.width=10.1}
-#run min. adjusted regression
+#run regression
 less_adj <- mysvy(dat, c(125:128,131:134), "~class_gender + rcs(age, 3) + rcs(year, 3)", design = svy_dat)
 
 #pull into matrix
@@ -479,7 +479,7 @@ plotted(xaxis=Class, limitsvec=c(0.017, 2.1), breaksvec=c(0.125, 0.25, 0.5, 1, 2
         shapes=c(15,16,17,18,0,1,2,5), xlabbed="Class & gender (ref: male workers)", nrow=2)
 
 #table of estimates
-tabled(1:56)
+tabled(1:56, "Ref: male workers")
 ```
 
 ### Race interaction (white/POC)
@@ -487,7 +487,7 @@ tabled(1:56)
 Cell sizes too small among Black capitalists to divide up race variable even further. 
 
 ```{r warning=FALSE, message=FALSE, fig.height=6, fig.width=10.1}
-#run min. adjusted regression
+#run regression
 less_adj <- mysvy(dat, c(125:128,131:134), "~class_poc + rcs(age, 3) + rcs(year, 3)", design = svy_dat)
 
 #pull into matrix
@@ -505,7 +505,7 @@ plotted(xaxis=Class, limitsvec=c(0.0165, 3.35), breaksvec=c(0.125, 0.25, 0.5, 1,
         shapes=c(15,16,17,18,0,1,2,5), xlabbed="Class & race (ref: white workers)", nrow=2)
 
 #table of estimates
-tabled(1:56)
+tabled(1:56, "Ref: white workers")
 ```
 
 ## Race and QWL among workers
@@ -515,7 +515,7 @@ Prevalence of bad category of each binary QWL variable among Black or "other" wo
 ### No gender interaction
 
 ```{r warning=FALSE, message=FALSE, fig.height=5.5, fig.width=8}
-#less adjusted
+#run regression
 less_adj <- mysvy(dat, 125:134, "~race + rcs(age, 3) + rcs(year, 3)", design = subset(svy_dat, class=="Workers"))
 
 #pull into matrix
@@ -533,13 +533,13 @@ plotted(xaxis=Class, limitsvec=c(0.3, 2.5), breaksvec=c(0.6, 1, 1.666667, 1.6666
         shapes=c(15, 0, 12), xlabbed="Race (ref: white)")
 
 #table of estimates
-tabled(1:20)
+tabled(1:20, "Ref: white")
 ```
 
 ### Gender interaction
 
 ```{r warning=FALSE, message=FALSE, fig.height=5.5, fig.width=10.5}
-#less adjusted
+#run regression
 less_adj <- mysvy(dat, 125:134, "~race_gender + rcs(age, 3) + rcs(year, 3)", design = subset(svy_dat, class=="Workers"))
 
 #pull into matrix
@@ -557,7 +557,7 @@ plotted(xaxis=Class, limitsvec=c(0.1, 3.1), breaksvec=c(0.125, 0.25, 0.5, 1, 2),
         shapes=c(15, 16, 0, 1, 12, 10), xlabbed="Race & gender (ref: white male)", nrow=1)
 
 #table of estimates
-tabled(1:20)
+tabled(1:20, "Ref: white male")
 ```
 
 # Appendix

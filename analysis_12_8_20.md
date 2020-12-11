@@ -1337,7 +1337,7 @@ matrix_func <- function(nums, coefs, cols){
   return(regs_less)
 }
 
-#format matrix
+#format matrix function
 formatted <- function(classvec, rows, qwlvec, dummy, facvec){
   as.data.frame(regs_less) %>%
   mutate(Class=rep(classvec, rows),
@@ -1371,8 +1371,8 @@ plotted <- function(xaxis, limitsvec, breaksvec, cols, shapes, xlabbed, nrow=1){
 }
 
 #kable function
-tabled <- function(rows){
-  kable(binded[rows,4:8], digits=2, col.names=c("QWL variable", "Class", "PR", "Lower", "Upper")) %>%
+tabled <- function(rows, captioned){
+  kable(binded[rows,4:8], digits=2, col.names=c("QWL variable", "Class", "PR", "Lower", "Upper"), caption=captioned) %>%
   kable_styling("striped") %>%
   scroll_box(width = "100%", height = "250px")
 }
@@ -1384,11 +1384,11 @@ Prevalence of bad category of each binary QWL variable among each class relative
 
 Excluded 'suphelp_bin' and 'supcares_bin'  for these regressions since PBs and caps shouldn't have supervisors (at least in theory).
 
-### No gender interaction
+### No interaction
 
 
 ```r
-#run min. adjusted regression
+#run regression
 less_adj <- mysvy(dat, c(125:128,131:134), "~class + rcs(age, 3) + rcs(year, 3)", design = svy_dat)
 
 #pull into matrix
@@ -1410,10 +1410,11 @@ plotted(xaxis=Class, limitsvec=c(0.041, 1.81), breaksvec=c(0.125, 0.25, 0.5, 1, 
 
 ```r
 #table of estimates
-tabled(1:24)
+tabled(1:24, "Ref: workers")
 ```
 
 <div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:250px; overflow-x: scroll; width:100%; "><table class="table table-striped" style="margin-left: auto; margin-right: auto;">
+<caption>Ref: workers</caption>
  <thead>
   <tr>
    <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> QWL variable </th>
@@ -1599,7 +1600,7 @@ tabled(1:24)
 
 
 ```r
-#run min. adjusted regression
+#run regression
 less_adj <- mysvy(dat, c(125:128,131:134), "~class_gender + rcs(age, 3) + rcs(year, 3)", design = svy_dat)
 
 #pull into matrix
@@ -1621,10 +1622,11 @@ plotted(xaxis=Class, limitsvec=c(0.017, 2.1), breaksvec=c(0.125, 0.25, 0.5, 1, 2
 
 ```r
 #table of estimates
-tabled(1:56)
+tabled(1:56, "Ref: male workers")
 ```
 
 <div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:250px; overflow-x: scroll; width:100%; "><table class="table table-striped" style="margin-left: auto; margin-right: auto;">
+<caption>Ref: male workers</caption>
  <thead>
   <tr>
    <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> QWL variable </th>
@@ -2036,7 +2038,7 @@ Cell sizes too small among Black capitalists to divide up race variable even fur
 
 
 ```r
-#run min. adjusted regression
+#run regression
 less_adj <- mysvy(dat, c(125:128,131:134), "~class_poc + rcs(age, 3) + rcs(year, 3)", design = svy_dat)
 
 #pull into matrix
@@ -2058,10 +2060,11 @@ plotted(xaxis=Class, limitsvec=c(0.0165, 3.35), breaksvec=c(0.125, 0.25, 0.5, 1,
 
 ```r
 #table of estimates
-tabled(1:56)
+tabled(1:56, "Ref: white workers")
 ```
 
 <div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:250px; overflow-x: scroll; width:100%; "><table class="table table-striped" style="margin-left: auto; margin-right: auto;">
+<caption>Ref: white workers</caption>
  <thead>
   <tr>
    <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> QWL variable </th>
@@ -2475,7 +2478,7 @@ Prevalence of bad category of each binary QWL variable among Black or "other" wo
 
 
 ```r
-#less adjusted
+#run regression
 less_adj <- mysvy(dat, 125:134, "~race + rcs(age, 3) + rcs(year, 3)", design = subset(svy_dat, class=="Workers"))
 
 #pull into matrix
@@ -2497,10 +2500,11 @@ plotted(xaxis=Class, limitsvec=c(0.3, 2.5), breaksvec=c(0.6, 1, 1.666667, 1.6666
 
 ```r
 #table of estimates
-tabled(1:20)
+tabled(1:20, "Ref: white")
 ```
 
 <div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:250px; overflow-x: scroll; width:100%; "><table class="table table-striped" style="margin-left: auto; margin-right: auto;">
+<caption>Ref: white</caption>
  <thead>
   <tr>
    <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> QWL variable </th>
@@ -2658,7 +2662,7 @@ tabled(1:20)
 
 
 ```r
-#less adjusted
+#run regression
 less_adj <- mysvy(dat, 125:134, "~race_gender + rcs(age, 3) + rcs(year, 3)", design = subset(svy_dat, class=="Workers"))
 
 #pull into matrix
@@ -2680,10 +2684,11 @@ plotted(xaxis=Class, limitsvec=c(0.1, 3.1), breaksvec=c(0.125, 0.25, 0.5, 1, 2),
 
 ```r
 #table of estimates
-tabled(1:20)
+tabled(1:20, "Ref: white male")
 ```
 
 <div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:250px; overflow-x: scroll; width:100%; "><table class="table table-striped" style="margin-left: auto; margin-right: auto;">
+<caption>Ref: white male</caption>
  <thead>
   <tr>
    <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> QWL variable </th>
