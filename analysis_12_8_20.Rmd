@@ -15,6 +15,16 @@ always_allow_html: true
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+**To do**
+
+* Decide on the final variables we want to analyze
+
+* Do multiple imputation
+
+* Make tables of the regression estimates, in addition to the plots
+
+* Add more-adjusted results to the appendix
+
 **General notes**
 
 * I think including ethnicity in the race variable makes the cell sizes too small - for example, there are only 1000 Hispanics total and only 36 Hispanic capitalists of any race.
@@ -562,7 +572,7 @@ plotted(xaxis=race_gender, limitsvec=c(0.1, 3.1), breaksvec=c(0.125, 0.25, 0.5, 
 
 ## How many employees do PBs and capitalists typically identify as having? 
 
-Note that the numemps variable wasn't asked in 2002, which is why we aren't using it for our primary analyses. Note also that numemps was only asked of people who identified as self-employed, which further supports our use of the variable to identify owners.
+Note that the numemps variable wasn't asked in 2002, which is why we aren't using it for our primary analyses. Note also that numemps was only asked of people who identified as self-employed, which further supports our use of the self-employed variable to identify owners.
 
 ```{r, warning=FALSE, message=FALSE}
 dat %>%

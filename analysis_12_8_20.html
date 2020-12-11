@@ -1783,6 +1783,13 @@ div.tocify {
 </div>
 
 
+<p><strong>To do</strong></p>
+<ul>
+<li><p>Decide on the final variables we want to analyze</p></li>
+<li><p>Do multiple imputation</p></li>
+<li><p>Make tables of the regression estimates, in addition to the plots</p></li>
+<li><p>Add more-adjusted results to the appendix</p></li>
+</ul>
 <p><strong>General notes</strong></p>
 <ul>
 <li><p>I think including ethnicity in the race variable makes the cell sizes too small - for example, there are only 1000 Hispanics total and only 36 Hispanic capitalists of any race.</p></li>
@@ -4439,7 +4446,7 @@ plotted(xaxis=race_gender, limitsvec=c(0.1, 3.1), breaksvec=c(0.125, 0.25, 0.5, 
 <h1>Appendix</h1>
 <div id="how-many-employees-do-pbs-and-capitalists-typically-identify-as-having" class="section level2">
 <h2>How many employees do PBs and capitalists typically identify as having?</h2>
-<p>Note that the numemps variable wasn’t asked in 2002, which is why we aren’t using it for our primary analyses. Note also that numemps was only asked of people who identified as self-employed, which further supports our use of the variable to identify owners.</p>
+<p>Note that the numemps variable wasn’t asked in 2002, which is why we aren’t using it for our primary analyses. Note also that numemps was only asked of people who identified as self-employed, which further supports our use of the self-employed variable to identify owners.</p>
 <pre class="r"><code>dat %&gt;%
   filter(year !=2002 &amp; c(class==&quot;Capitalists&quot; | class==&quot;Petit bourgeoisie&quot;)) %&gt;%
   group_by(class) %&gt;%
