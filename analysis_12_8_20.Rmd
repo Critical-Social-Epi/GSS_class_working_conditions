@@ -21,9 +21,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 * Do multiple imputation
 
-* Make tables of the regression estimates, in addition to the plots
-
-* Add more-adjusted results to the appendix
+* Add more-adjusted regressions to the appendix
 
 **General notes**
 
@@ -379,6 +377,30 @@ mysvy <- function(data, columns, adjvars, ...) {
   return(model)
 }
 
+#regression matrix function
+matrix_func <- function(nums, coefs, cols){
+  regs_less = NULL
+  for(i in 1:nums){
+    cbind(exp(less_adj[[i]]$coefficients[2:coefs]), exp(confint(less_adj[[i]])[2:coefs,])) -> bind
+    rbind(regs_less, cbind(bind, names(dat)[c(cols)][i])) -> regs_less
+  }
+  return(regs_less)
+}
+
+#format matrix
+formatted <- function(classvec, rows, qwlvec, dummy, facvec){
+  as.data.frame(regs_less) %>%
+  mutate(Class=rep(classvec, rows),
+         PR=as.numeric(V1),
+         Lower=as.numeric(`2.5 %`),
+         Upper=as.numeric(`97.5 %`)) %>%
+  bind_rows(data.frame(V4=qwlvec, 
+             Class=rep(dummy, rows), PR=rep(1, rows), Lower=rep(NA, rows), Upper=rep(NA, rows))) %>% #worker dummy row
+  mutate(Class=factor(Class, levels=facvec),
+         V4=factor(V4, levels=qwlvec)) -> binded
+  return(binded)
+}
+
 #plot function
 plotted <- function(xaxis, limitsvec, breaksvec, cols, shapes, xlabbed, nrow=1){
   xaxis <- enquo(xaxis)
@@ -397,6 +419,13 @@ plotted <- function(xaxis, limitsvec, breaksvec, cols, shapes, xlabbed, nrow=1){
           legend.position='bottom', legend.title=element_blank(), axis.text.x = element_blank(), axis.ticks.x=element_blank()) +
     guides(color=guide_legend(nrow=nrow, byrow=T, label.position="bottom", keywidth=7, keyheight=0.5)) 
 }
+
+#kable function
+tabled <- function(rows){
+  kable(binded[rows,4:8], digits=2, col.names=c("QWL variable", "Class", "PR", "Lower", "Upper")) %>%
+  kable_styling("striped") %>%
+  scroll_box(width = "100%", height = "250px")
+}
 ```
 
 ## Class and QWL 
@@ -412,28 +441,21 @@ Excluded 'suphelp_bin' and 'supcares_bin'  for these regressions since PBs and c
 less_adj <- mysvy(dat, c(125:128,131:134), "~class + rcs(age, 3) + rcs(year, 3)", design = svy_dat)
 
 #pull into matrix
-regs_less = NULL
-for(i in 1:8){
-  cbind(exp(less_adj[[i]]$coefficients[2:4]), exp(confint(less_adj[[i]])[2:4,])) -> bind
-  rbind(regs_less, cbind(bind, names(dat)[c(125:128,131:134)][i])) -> regs_less
-}
+regs_less <- matrix_func(8, 4, c(125:128, 131:134))
 
-#format
-as.data.frame(regs_less) %>%
-  mutate(Class=rep(c("Managers", "Petite bourgeoisie", "Capitalists"), 8),
-         PR=as.numeric(V1),
-         Lower=as.numeric(`2.5 %`),
-         Upper=as.numeric(`97.5 %`)) %>%
-  bind_rows(data.frame(V4=c("disc_haras", "trustman_bin", "wkfreedm_bin", "safehlth_bin", "respect_bin", "manvsemp_bin", "wkdecide_bin", "safefrst_bin"), 
-             Class=rep("Workers", 8), PR=rep(1, 8), Lower=rep(NA, 8), Upper=rep(NA, 8))) %>% #worker dummy row
-  mutate(Class=factor(Class, levels=c("Workers", "Managers", "Petite bourgeoisie", "Capitalists")),
-         V4=factor(V4, levels=c("disc_haras", "trustman_bin", "wkfreedm_bin", "safehlth_bin", 
-                                "respect_bin", "manvsemp_bin", "wkdecide_bin", "safefrst_bin"))) -> binded
+#format matrix
+binded <- formatted(c("Managers", "Petite bourgeoisie", "Capitalists"), 8,
+                    c("disc_haras", "trustman_bin", "wkfreedm_bin", "safehlth_bin", "respect_bin", "manvsemp_bin", "wkdecide_bin", "safefrst_bin"), 
+                    "Workers",
+                    c("Workers", "Managers", "Petite bourgeoisie", "Capitalists"))
 
-#plot
+#plot of estimates
 plotted(xaxis=Class, limitsvec=c(0.041, 1.81), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
         cols=brewer.pal(8, "Blues")[c(5,6,7,8)], 
         shapes=c(15,16,17,18), xlabbed="Class (ref: workers)")
+
+#table of estimates
+tabled(1:24)
 ```
 
 ### Gender interaction
@@ -443,29 +465,21 @@ plotted(xaxis=Class, limitsvec=c(0.041, 1.81), breaksvec=c(0.125, 0.25, 0.5, 1, 
 less_adj <- mysvy(dat, c(125:128,131:134), "~class_gender + rcs(age, 3) + rcs(year, 3)", design = svy_dat)
 
 #pull into matrix
-regs_less_gender = NULL
-for(i in 1:8){
-  cbind(exp(less_adj[[i]]$coefficients[2:8]), exp(confint(less_adj[[i]])[2:8,])) -> bind
-  rbind(regs_less_gender, cbind(bind, names(dat)[c(125:128,131:134)][i])) -> regs_less_gender
-}
+regs_less <- matrix_func(8, 8, c(125:128, 131:134))
 
-#format
-as.data.frame(regs_less_gender) %>%
-  mutate(Class=rep(c("Male managers", "Male petite bourgeoisie", "Male capitalists", "Female workers", "Female managers", "Female petite bourgeoisie", "Female capitalists"), 8),
-         PR=as.numeric(V1),
-         Lower=as.numeric(`2.5 %`),
-         Upper=as.numeric(`97.5 %`)) %>%
-  bind_rows(data.frame(V4=c("disc_haras", "trustman_bin", "wkfreedm_bin", "safehlth_bin", "respect_bin", "manvsemp_bin", "wkdecide_bin", "safefrst_bin"), 
-             Class=rep("Male workers", 8), PR=rep(1, 8), Lower=rep(NA, 8), Upper=rep(NA, 8))) %>% #worker dummy row
-  mutate(Class=factor(Class, levels=c("Male workers", "Male managers", "Male petite bourgeoisie", "Male capitalists",
-                                      "Female workers", "Female managers", "Female petite bourgeoisie", "Female capitalists")),
-         V4=factor(V4, levels=c("disc_haras", "trustman_bin", "wkfreedm_bin", "safehlth_bin", 
-                                "respect_bin", "manvsemp_bin", "wkdecide_bin", "safefrst_bin"))) -> binded
+#format matrix
+binded <- formatted(c("Male managers", "Male petite bourgeoisie", "Male capitalists", "Female workers", "Female managers", "Female petite bourgeoisie", "Female capitalists"), 8, 
+                    c("disc_haras", "trustman_bin", "wkfreedm_bin", "safehlth_bin", "respect_bin", "manvsemp_bin", "wkdecide_bin", "safefrst_bin"), 
+                    "Male workers",
+                    c("Male workers", "Male managers", "Male petite bourgeoisie", "Male capitalists","Female workers", "Female managers", "Female petite bourgeoisie", "Female capitalists"))
 
-#plot
+#plot of estimates
 plotted(xaxis=Class, limitsvec=c(0.017, 2.1), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
         cols=c(brewer.pal(8, "Blues")[c(5,6,7,8)], brewer.pal(8, "Purples")[c(5,6,7,8)]), 
         shapes=c(15,16,17,18,0,1,2,5), xlabbed="Class & gender (ref: male workers)", nrow=2)
+
+#table of estimates
+tabled(1:56)
 ```
 
 ### Race interaction (white/POC)
@@ -476,30 +490,22 @@ Cell sizes too small among Black capitalists to divide up race variable even fur
 #run min. adjusted regression
 less_adj <- mysvy(dat, c(125:128,131:134), "~class_poc + rcs(age, 3) + rcs(year, 3)", design = svy_dat)
 
-#pull intro matrix
-regs_less_poc = NULL
-for(i in 1:8){
-  cbind(exp(less_adj[[i]]$coefficients[2:8]), exp(confint(less_adj[[i]])[2:8,])) -> bind
-  rbind(regs_less_poc, cbind(bind, names(dat)[c(125:128,131:134)][i])) -> regs_less_poc
-}
+#pull into matrix
+regs_less <- matrix_func(8, 8, c(125:128, 131:134))
 
-#format
-as.data.frame(regs_less_poc) %>%
-  mutate(Class=rep(c("White managers", "White petite bourgeoisie", "White capitalists", "POC workers", "POC managers", "POC petite bourgeoisie", "POC capitalists"), 8),
-         PR=as.numeric(V1),
-         Lower=as.numeric(`2.5 %`),
-         Upper=as.numeric(`97.5 %`)) %>%
-  bind_rows(data.frame(V4=c("disc_haras", "trustman_bin", "wkfreedm_bin", "safehlth_bin", "respect_bin", "manvsemp_bin", "wkdecide_bin", "safefrst_bin"), 
-             Class=rep("White workers", 8), PR=rep(1, 8), Lower=rep(NA, 8), Upper=rep(NA, 8))) %>% #worker dummy row
-  mutate(Class=factor(Class, levels=c("White workers", "White managers", "White petite bourgeoisie", "White capitalists",
-                                      "POC workers", "POC managers", "POC petite bourgeoisie", "POC capitalists")),
-         V4=factor(V4, levels=c("disc_haras", "trustman_bin", "suphelp_bin", "wkfreedm_bin", "safehlth_bin",
-                                "respect_bin", "manvsemp_bin", "supcares_bin", "wkdecide_bin", "safefrst_bin"))) -> binded
+#format matrix
+binded <- formatted(c("White managers", "White petite bourgeoisie", "White capitalists", "POC workers", "POC managers", "POC petite bourgeoisie", "POC capitalists"), 8, 
+                    c("disc_haras", "trustman_bin", "wkfreedm_bin", "safehlth_bin", "respect_bin", "manvsemp_bin", "wkdecide_bin", "safefrst_bin"), 
+                    "White workers",
+                    c("White workers", "White managers", "White petite bourgeoisie", "White capitalists", "POC workers", "POC managers", "POC petite bourgeoisie", "POC capitalists"))
 
-#plot
+#plot of estimates
 plotted(xaxis=Class, limitsvec=c(0.0165, 3.35), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
         cols=c(brewer.pal(8, "Blues")[c(5,6,7,8)], brewer.pal(8, "Purples")[c(5,6,7,8)]),
         shapes=c(15,16,17,18,0,1,2,5), xlabbed="Class & race (ref: white workers)", nrow=2)
+
+#table of estimates
+tabled(1:56)
 ```
 
 ## Race and QWL among workers
@@ -512,29 +518,22 @@ Prevalence of bad category of each binary QWL variable among Black or "other" wo
 #less adjusted
 less_adj <- mysvy(dat, 125:134, "~race + rcs(age, 3) + rcs(year, 3)", design = subset(svy_dat, class=="Workers"))
 
-regs_less = NULL
-for(i in 1:10){
-  cbind(exp(less_adj[[i]]$coefficients[2:3]), exp(confint(less_adj[[i]])[2:3,])) -> bind
-  rbind(regs_less, cbind(bind, names(dat)[125:134][i])) -> regs_less
-}
+#pull into matrix
+regs_less <- matrix_func(10, 3, c(125:134))
   
-#format
-as.data.frame(regs_less) %>%
-  mutate(Race=rep(c("Black", "Other"), 10),
-         PR=as.numeric(V1),
-         Lower=as.numeric(`2.5 %`),
-         Upper=as.numeric(`97.5 %`)) %>%
-  bind_rows(data.frame(V4=c("disc_haras", "trustman_bin", "suphelp_bin", "wkfreedm_bin", "safehlth_bin", "respect_bin", "manvsemp_bin", "supcares_bin", "wkdecide_bin", "safefrst_bin"), 
-             Race=rep("White", 10), PR=rep(1, 10), Lower=rep(NA, 10), Upper=rep(NA, 10))) %>% #white dummy row
-  mutate(Race=factor(Race, levels=c("White", "Black", "Other")),
-         V4=factor(V4, levels=c("disc_haras", "trustman_bin", "suphelp_bin", "wkfreedm_bin", "safehlth_bin",
-                                "respect_bin", "manvsemp_bin", "supcares_bin", "wkdecide_bin", "safefrst_bin"))) -> binded
+#format matrix
+binded <- formatted(c("Black", "Other"), 10, 
+                    c("disc_haras", "trustman_bin", "suphelp_bin", "wkfreedm_bin", "safehlth_bin", "respect_bin", "manvsemp_bin", "supcares_bin", "wkdecide_bin", "safefrst_bin"), 
+                    "White",
+                    c("White", "Black", "Other"))
 
-
-#plot
-plotted(xaxis=Race, limitsvec=c(0.3, 2.5), breaksvec=c(0.6, 1, 1.666667, 1.666667^2),
+#plot of estimates
+plotted(xaxis=Class, limitsvec=c(0.3, 2.5), breaksvec=c(0.6, 1, 1.666667, 1.666667^2),
         cols=c(brewer.pal(8, "Blues")[c(6)], brewer.pal(8, "Purples")[c(6)], brewer.pal(8, "Greens")[c(6)]), 
         shapes=c(15, 0, 12), xlabbed="Race (ref: white)")
+
+#table of estimates
+tabled(1:20)
 ```
 
 ### Gender interaction
@@ -543,29 +542,22 @@ plotted(xaxis=Race, limitsvec=c(0.3, 2.5), breaksvec=c(0.6, 1, 1.666667, 1.66666
 #less adjusted
 less_adj <- mysvy(dat, 125:134, "~race_gender + rcs(age, 3) + rcs(year, 3)", design = subset(svy_dat, class=="Workers"))
 
-regs_less = NULL
-for(i in 1:10){
-  cbind(exp(less_adj[[i]]$coefficients[2:6]), exp(confint(less_adj[[i]])[2:6,])) -> bind
-  rbind(regs_less, cbind(bind, names(dat)[125:134][i])) -> regs_less
-}
-  
-#format
-regs_less %>%
-  as.data.frame() %>%
-  mutate(race_gender=rep(c("White female", "Black male", "Black female", "Other male", "Other female"), 10),
-         PR=as.numeric(V1),
-         Lower=as.numeric(`2.5 %`),
-         Upper=as.numeric(`97.5 %`)) %>%
-  bind_rows(data.frame(V4=c("disc_haras", "trustman_bin", "suphelp_bin", "wkfreedm_bin", "safehlth_bin", "respect_bin", "manvsemp_bin", "supcares_bin", "wkdecide_bin", "safefrst_bin"), 
-             race_gender=rep("White male", 10), PR=rep(1, 10), Lower=rep(NA, 10), Upper=rep(NA, 10))) %>% #white dummy row
-  mutate(race_gender=factor(race_gender, levels=c("White male", "White female", "Black male", "Black female", "Other male", "Other female")),
-         V4=factor(V4, levels=c("disc_haras", "trustman_bin", "suphelp_bin", "wkfreedm_bin", "safehlth_bin",
-                                "respect_bin", "manvsemp_bin", "supcares_bin", "wkdecide_bin", "safefrst_bin"))) -> binded
+#pull into matrix
+regs_less <- matrix_func(10, 6, c(125:134))
+
+#format matrix
+binded <- formatted(c("White female", "Black male", "Black female", "Other male", "Other female"), 10, 
+                    c("disc_haras", "trustman_bin", "suphelp_bin", "wkfreedm_bin", "safehlth_bin", "respect_bin", "manvsemp_bin", "supcares_bin", "wkdecide_bin", "safefrst_bin"), 
+                    "White male",
+                    c("White male", "White female", "Black male", "Black female", "Other male", "Other female"))
 
 #plot
-plotted(xaxis=race_gender, limitsvec=c(0.1, 3.1), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
+plotted(xaxis=Class, limitsvec=c(0.1, 3.1), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
         cols=c(brewer.pal(8, "Blues")[c(6,8)], brewer.pal(8, "Purples")[c(6,8)], brewer.pal(8, "Greens")[c(6,8)]), 
         shapes=c(15, 16, 0, 1, 12, 10), xlabbed="Race & gender (ref: white male)", nrow=1)
+
+#table of estimates
+tabled(1:20)
 ```
 
 # Appendix
@@ -586,3 +578,7 @@ dat %>%
   kable_styling("striped") %>%
   scroll_box(width = "100%", height = "250px")
 ```
+
+## How do more-adjusted regressions compare to less-adjusted regressions?
+
+TBD

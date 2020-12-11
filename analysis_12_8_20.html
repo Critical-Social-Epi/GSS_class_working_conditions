@@ -1787,8 +1787,7 @@ div.tocify {
 <ul>
 <li><p>Decide on the final variables we want to analyze</p></li>
 <li><p>Do multiple imputation</p></li>
-<li><p>Make tables of the regression estimates, in addition to the plots</p></li>
-<li><p>Add more-adjusted results to the appendix</p></li>
+<li><p>Add more-adjusted regressions to the appendix</p></li>
 </ul>
 <p><strong>General notes</strong></p>
 <ul>
@@ -4260,6 +4259,30 @@ mysvy &lt;- function(data, columns, adjvars, ...) {
   return(model)
 }
 
+#regression matrix function
+matrix_func &lt;- function(nums, coefs, cols){
+  regs_less = NULL
+  for(i in 1:nums){
+    cbind(exp(less_adj[[i]]$coefficients[2:coefs]), exp(confint(less_adj[[i]])[2:coefs,])) -&gt; bind
+    rbind(regs_less, cbind(bind, names(dat)[c(cols)][i])) -&gt; regs_less
+  }
+  return(regs_less)
+}
+
+#format matrix
+formatted &lt;- function(classvec, rows, qwlvec, dummy, facvec){
+  as.data.frame(regs_less) %&gt;%
+  mutate(Class=rep(classvec, rows),
+         PR=as.numeric(V1),
+         Lower=as.numeric(`2.5 %`),
+         Upper=as.numeric(`97.5 %`)) %&gt;%
+  bind_rows(data.frame(V4=qwlvec, 
+             Class=rep(dummy, rows), PR=rep(1, rows), Lower=rep(NA, rows), Upper=rep(NA, rows))) %&gt;% #worker dummy row
+  mutate(Class=factor(Class, levels=facvec),
+         V4=factor(V4, levels=qwlvec)) -&gt; binded
+  return(binded)
+}
+
 #plot function
 plotted &lt;- function(xaxis, limitsvec, breaksvec, cols, shapes, xlabbed, nrow=1){
   xaxis &lt;- enquo(xaxis)
@@ -4277,6 +4300,13 @@ plotted &lt;- function(xaxis, limitsvec, breaksvec, cols, shapes, xlabbed, nrow=
     theme(strip.background = element_rect(fill=NA, color=&#39;grey&#39;), strip.text = element_text(colour = &quot;black&quot;), 
           legend.position=&#39;bottom&#39;, legend.title=element_blank(), axis.text.x = element_blank(), axis.ticks.x=element_blank()) +
     guides(color=guide_legend(nrow=nrow, byrow=T, label.position=&quot;bottom&quot;, keywidth=7, keyheight=0.5)) 
+}
+
+#kable function
+tabled &lt;- function(rows){
+  kable(binded[rows,4:8], digits=2, col.names=c(&quot;QWL variable&quot;, &quot;Class&quot;, &quot;PR&quot;, &quot;Lower&quot;, &quot;Upper&quot;)) %&gt;%
+  kable_styling(&quot;striped&quot;) %&gt;%
+  scroll_box(width = &quot;100%&quot;, height = &quot;250px&quot;)
 }</code></pre>
 </div>
 <div id="class-and-qwl" class="section level2">
@@ -4289,29 +4319,454 @@ plotted &lt;- function(xaxis, limitsvec, breaksvec, cols, shapes, xlabbed, nrow=
 less_adj &lt;- mysvy(dat, c(125:128,131:134), &quot;~class + rcs(age, 3) + rcs(year, 3)&quot;, design = svy_dat)
 
 #pull into matrix
-regs_less = NULL
-for(i in 1:8){
-  cbind(exp(less_adj[[i]]$coefficients[2:4]), exp(confint(less_adj[[i]])[2:4,])) -&gt; bind
-  rbind(regs_less, cbind(bind, names(dat)[c(125:128,131:134)][i])) -&gt; regs_less
-}
+regs_less &lt;- matrix_func(8, 4, c(125:128, 131:134))
 
-#format
-as.data.frame(regs_less) %&gt;%
-  mutate(Class=rep(c(&quot;Managers&quot;, &quot;Petite bourgeoisie&quot;, &quot;Capitalists&quot;), 8),
-         PR=as.numeric(V1),
-         Lower=as.numeric(`2.5 %`),
-         Upper=as.numeric(`97.5 %`)) %&gt;%
-  bind_rows(data.frame(V4=c(&quot;disc_haras&quot;, &quot;trustman_bin&quot;, &quot;wkfreedm_bin&quot;, &quot;safehlth_bin&quot;, &quot;respect_bin&quot;, &quot;manvsemp_bin&quot;, &quot;wkdecide_bin&quot;, &quot;safefrst_bin&quot;), 
-             Class=rep(&quot;Workers&quot;, 8), PR=rep(1, 8), Lower=rep(NA, 8), Upper=rep(NA, 8))) %&gt;% #worker dummy row
-  mutate(Class=factor(Class, levels=c(&quot;Workers&quot;, &quot;Managers&quot;, &quot;Petite bourgeoisie&quot;, &quot;Capitalists&quot;)),
-         V4=factor(V4, levels=c(&quot;disc_haras&quot;, &quot;trustman_bin&quot;, &quot;wkfreedm_bin&quot;, &quot;safehlth_bin&quot;, 
-                                &quot;respect_bin&quot;, &quot;manvsemp_bin&quot;, &quot;wkdecide_bin&quot;, &quot;safefrst_bin&quot;))) -&gt; binded
+#format matrix
+binded &lt;- formatted(c(&quot;Managers&quot;, &quot;Petite bourgeoisie&quot;, &quot;Capitalists&quot;), 8,
+                    c(&quot;disc_haras&quot;, &quot;trustman_bin&quot;, &quot;wkfreedm_bin&quot;, &quot;safehlth_bin&quot;, &quot;respect_bin&quot;, &quot;manvsemp_bin&quot;, &quot;wkdecide_bin&quot;, &quot;safefrst_bin&quot;), 
+                    &quot;Workers&quot;,
+                    c(&quot;Workers&quot;, &quot;Managers&quot;, &quot;Petite bourgeoisie&quot;, &quot;Capitalists&quot;))
 
-#plot
+#plot of estimates
 plotted(xaxis=Class, limitsvec=c(0.041, 1.81), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
         cols=brewer.pal(8, &quot;Blues&quot;)[c(5,6,7,8)], 
         shapes=c(15,16,17,18), xlabbed=&quot;Class (ref: workers)&quot;)</code></pre>
 <p><img src="data:image/png;base64,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" /><!-- --></p>
+<pre class="r"><code>#table of estimates
+tabled(1:24)</code></pre>
+<div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:250px; overflow-x: scroll; width:100%; ">
+<table class="table table-striped" style="margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+QWL variable
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+Class
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+PR
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+Lower
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+Upper
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+disc_haras
+</td>
+<td style="text-align:left;">
+Managers
+</td>
+<td style="text-align:right;">
+1.17
+</td>
+<td style="text-align:right;">
+1.04
+</td>
+<td style="text-align:right;">
+1.31
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+disc_haras
+</td>
+<td style="text-align:left;">
+Petite bourgeoisie
+</td>
+<td style="text-align:right;">
+0.72
+</td>
+<td style="text-align:right;">
+0.56
+</td>
+<td style="text-align:right;">
+0.93
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+disc_haras
+</td>
+<td style="text-align:left;">
+Capitalists
+</td>
+<td style="text-align:right;">
+0.88
+</td>
+<td style="text-align:right;">
+0.68
+</td>
+<td style="text-align:right;">
+1.15
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+respect_bin
+</td>
+<td style="text-align:left;">
+Managers
+</td>
+<td style="text-align:right;">
+0.71
+</td>
+<td style="text-align:right;">
+0.56
+</td>
+<td style="text-align:right;">
+0.91
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+respect_bin
+</td>
+<td style="text-align:left;">
+Petite bourgeoisie
+</td>
+<td style="text-align:right;">
+0.52
+</td>
+<td style="text-align:right;">
+0.32
+</td>
+<td style="text-align:right;">
+0.83
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+respect_bin
+</td>
+<td style="text-align:left;">
+Capitalists
+</td>
+<td style="text-align:right;">
+0.35
+</td>
+<td style="text-align:right;">
+0.19
+</td>
+<td style="text-align:right;">
+0.65
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+trustman_bin
+</td>
+<td style="text-align:left;">
+Managers
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+<td style="text-align:right;">
+0.75
+</td>
+<td style="text-align:right;">
+0.96
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+trustman_bin
+</td>
+<td style="text-align:left;">
+Petite bourgeoisie
+</td>
+<td style="text-align:right;">
+0.25
+</td>
+<td style="text-align:right;">
+0.16
+</td>
+<td style="text-align:right;">
+0.37
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+trustman_bin
+</td>
+<td style="text-align:left;">
+Capitalists
+</td>
+<td style="text-align:right;">
+0.23
+</td>
+<td style="text-align:right;">
+0.14
+</td>
+<td style="text-align:right;">
+0.36
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+manvsemp_bin
+</td>
+<td style="text-align:left;">
+Managers
+</td>
+<td style="text-align:right;">
+0.77
+</td>
+<td style="text-align:right;">
+0.62
+</td>
+<td style="text-align:right;">
+0.95
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+manvsemp_bin
+</td>
+<td style="text-align:left;">
+Petite bourgeoisie
+</td>
+<td style="text-align:right;">
+0.28
+</td>
+<td style="text-align:right;">
+0.15
+</td>
+<td style="text-align:right;">
+0.54
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+manvsemp_bin
+</td>
+<td style="text-align:left;">
+Capitalists
+</td>
+<td style="text-align:right;">
+0.23
+</td>
+<td style="text-align:right;">
+0.11
+</td>
+<td style="text-align:right;">
+0.51
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+wkfreedm_bin
+</td>
+<td style="text-align:left;">
+Managers
+</td>
+<td style="text-align:right;">
+0.60
+</td>
+<td style="text-align:right;">
+0.51
+</td>
+<td style="text-align:right;">
+0.72
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+wkfreedm_bin
+</td>
+<td style="text-align:left;">
+Petite bourgeoisie
+</td>
+<td style="text-align:right;">
+0.25
+</td>
+<td style="text-align:right;">
+0.16
+</td>
+<td style="text-align:right;">
+0.40
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+wkfreedm_bin
+</td>
+<td style="text-align:left;">
+Capitalists
+</td>
+<td style="text-align:right;">
+0.11
+</td>
+<td style="text-align:right;">
+0.05
+</td>
+<td style="text-align:right;">
+0.24
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+wkdecide_bin
+</td>
+<td style="text-align:left;">
+Managers
+</td>
+<td style="text-align:right;">
+0.39
+</td>
+<td style="text-align:right;">
+0.33
+</td>
+<td style="text-align:right;">
+0.45
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+wkdecide_bin
+</td>
+<td style="text-align:left;">
+Petite bourgeoisie
+</td>
+<td style="text-align:right;">
+1.38
+</td>
+<td style="text-align:right;">
+1.19
+</td>
+<td style="text-align:right;">
+1.59
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+wkdecide_bin
+</td>
+<td style="text-align:left;">
+Capitalists
+</td>
+<td style="text-align:right;">
+0.52
+</td>
+<td style="text-align:right;">
+0.40
+</td>
+<td style="text-align:right;">
+0.68
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+safehlth_bin
+</td>
+<td style="text-align:left;">
+Managers
+</td>
+<td style="text-align:right;">
+0.76
+</td>
+<td style="text-align:right;">
+0.59
+</td>
+<td style="text-align:right;">
+0.98
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+safehlth_bin
+</td>
+<td style="text-align:left;">
+Petite bourgeoisie
+</td>
+<td style="text-align:right;">
+0.59
+</td>
+<td style="text-align:right;">
+0.34
+</td>
+<td style="text-align:right;">
+1.02
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+safehlth_bin
+</td>
+<td style="text-align:left;">
+Capitalists
+</td>
+<td style="text-align:right;">
+0.63
+</td>
+<td style="text-align:right;">
+0.32
+</td>
+<td style="text-align:right;">
+1.27
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+safefrst_bin
+</td>
+<td style="text-align:left;">
+Managers
+</td>
+<td style="text-align:right;">
+0.88
+</td>
+<td style="text-align:right;">
+0.72
+</td>
+<td style="text-align:right;">
+1.06
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+safefrst_bin
+</td>
+<td style="text-align:left;">
+Petite bourgeoisie
+</td>
+<td style="text-align:right;">
+0.42
+</td>
+<td style="text-align:right;">
+0.25
+</td>
+<td style="text-align:right;">
+0.71
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+safefrst_bin
+</td>
+<td style="text-align:left;">
+Capitalists
+</td>
+<td style="text-align:right;">
+0.70
+</td>
+<td style="text-align:right;">
+0.42
+</td>
+<td style="text-align:right;">
+1.17
+</td>
+</tr>
+</tbody>
+</table>
+</div>
 </div>
 <div id="gender-interaction" class="section level3">
 <h3>Gender interaction</h3>
@@ -4319,30 +4774,998 @@ plotted(xaxis=Class, limitsvec=c(0.041, 1.81), breaksvec=c(0.125, 0.25, 0.5, 1, 
 less_adj &lt;- mysvy(dat, c(125:128,131:134), &quot;~class_gender + rcs(age, 3) + rcs(year, 3)&quot;, design = svy_dat)
 
 #pull into matrix
-regs_less_gender = NULL
-for(i in 1:8){
-  cbind(exp(less_adj[[i]]$coefficients[2:8]), exp(confint(less_adj[[i]])[2:8,])) -&gt; bind
-  rbind(regs_less_gender, cbind(bind, names(dat)[c(125:128,131:134)][i])) -&gt; regs_less_gender
-}
+regs_less &lt;- matrix_func(8, 8, c(125:128, 131:134))
 
-#format
-as.data.frame(regs_less_gender) %&gt;%
-  mutate(Class=rep(c(&quot;Male managers&quot;, &quot;Male petite bourgeoisie&quot;, &quot;Male capitalists&quot;, &quot;Female workers&quot;, &quot;Female managers&quot;, &quot;Female petite bourgeoisie&quot;, &quot;Female capitalists&quot;), 8),
-         PR=as.numeric(V1),
-         Lower=as.numeric(`2.5 %`),
-         Upper=as.numeric(`97.5 %`)) %&gt;%
-  bind_rows(data.frame(V4=c(&quot;disc_haras&quot;, &quot;trustman_bin&quot;, &quot;wkfreedm_bin&quot;, &quot;safehlth_bin&quot;, &quot;respect_bin&quot;, &quot;manvsemp_bin&quot;, &quot;wkdecide_bin&quot;, &quot;safefrst_bin&quot;), 
-             Class=rep(&quot;Male workers&quot;, 8), PR=rep(1, 8), Lower=rep(NA, 8), Upper=rep(NA, 8))) %&gt;% #worker dummy row
-  mutate(Class=factor(Class, levels=c(&quot;Male workers&quot;, &quot;Male managers&quot;, &quot;Male petite bourgeoisie&quot;, &quot;Male capitalists&quot;,
-                                      &quot;Female workers&quot;, &quot;Female managers&quot;, &quot;Female petite bourgeoisie&quot;, &quot;Female capitalists&quot;)),
-         V4=factor(V4, levels=c(&quot;disc_haras&quot;, &quot;trustman_bin&quot;, &quot;wkfreedm_bin&quot;, &quot;safehlth_bin&quot;, 
-                                &quot;respect_bin&quot;, &quot;manvsemp_bin&quot;, &quot;wkdecide_bin&quot;, &quot;safefrst_bin&quot;))) -&gt; binded
+#format matrix
+binded &lt;- formatted(c(&quot;Male managers&quot;, &quot;Male petite bourgeoisie&quot;, &quot;Male capitalists&quot;, &quot;Female workers&quot;, &quot;Female managers&quot;, &quot;Female petite bourgeoisie&quot;, &quot;Female capitalists&quot;), 8, 
+                    c(&quot;disc_haras&quot;, &quot;trustman_bin&quot;, &quot;wkfreedm_bin&quot;, &quot;safehlth_bin&quot;, &quot;respect_bin&quot;, &quot;manvsemp_bin&quot;, &quot;wkdecide_bin&quot;, &quot;safefrst_bin&quot;), 
+                    &quot;Male workers&quot;,
+                    c(&quot;Male workers&quot;, &quot;Male managers&quot;, &quot;Male petite bourgeoisie&quot;, &quot;Male capitalists&quot;,&quot;Female workers&quot;, &quot;Female managers&quot;, &quot;Female petite bourgeoisie&quot;, &quot;Female capitalists&quot;))
 
-#plot
+#plot of estimates
 plotted(xaxis=Class, limitsvec=c(0.017, 2.1), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
         cols=c(brewer.pal(8, &quot;Blues&quot;)[c(5,6,7,8)], brewer.pal(8, &quot;Purples&quot;)[c(5,6,7,8)]), 
         shapes=c(15,16,17,18,0,1,2,5), xlabbed=&quot;Class &amp; gender (ref: male workers)&quot;, nrow=2)</code></pre>
 <p><img src="data:image/png;base64,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" /><!-- --></p>
+<pre class="r"><code>#table of estimates
+tabled(1:56)</code></pre>
+<div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:250px; overflow-x: scroll; width:100%; ">
+<table class="table table-striped" style="margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+QWL variable
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+Class
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+PR
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+Lower
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+Upper
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+disc_haras
+</td>
+<td style="text-align:left;">
+Male managers
+</td>
+<td style="text-align:right;">
+1.17
+</td>
+<td style="text-align:right;">
+0.98
+</td>
+<td style="text-align:right;">
+1.38
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+disc_haras
+</td>
+<td style="text-align:left;">
+Male petite bourgeoisie
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+0.71
+</td>
+<td style="text-align:right;">
+1.40
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+disc_haras
+</td>
+<td style="text-align:left;">
+Male capitalists
+</td>
+<td style="text-align:right;">
+1.03
+</td>
+<td style="text-align:right;">
+0.73
+</td>
+<td style="text-align:right;">
+1.44
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+disc_haras
+</td>
+<td style="text-align:left;">
+Female workers
+</td>
+<td style="text-align:right;">
+1.38
+</td>
+<td style="text-align:right;">
+1.20
+</td>
+<td style="text-align:right;">
+1.59
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+disc_haras
+</td>
+<td style="text-align:left;">
+Female managers
+</td>
+<td style="text-align:right;">
+1.69
+</td>
+<td style="text-align:right;">
+1.44
+</td>
+<td style="text-align:right;">
+1.99
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+disc_haras
+</td>
+<td style="text-align:left;">
+Female petite bourgeoisie
+</td>
+<td style="text-align:right;">
+0.76
+</td>
+<td style="text-align:right;">
+0.51
+</td>
+<td style="text-align:right;">
+1.13
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+disc_haras
+</td>
+<td style="text-align:left;">
+Female capitalists
+</td>
+<td style="text-align:right;">
+1.21
+</td>
+<td style="text-align:right;">
+0.78
+</td>
+<td style="text-align:right;">
+1.87
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+respect_bin
+</td>
+<td style="text-align:left;">
+Male managers
+</td>
+<td style="text-align:right;">
+0.58
+</td>
+<td style="text-align:right;">
+0.39
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+respect_bin
+</td>
+<td style="text-align:left;">
+Male petite bourgeoisie
+</td>
+<td style="text-align:right;">
+0.59
+</td>
+<td style="text-align:right;">
+0.30
+</td>
+<td style="text-align:right;">
+1.13
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+respect_bin
+</td>
+<td style="text-align:left;">
+Male capitalists
+</td>
+<td style="text-align:right;">
+0.38
+</td>
+<td style="text-align:right;">
+0.19
+</td>
+<td style="text-align:right;">
+0.77
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+respect_bin
+</td>
+<td style="text-align:left;">
+Female workers
+</td>
+<td style="text-align:right;">
+1.14
+</td>
+<td style="text-align:right;">
+0.90
+</td>
+<td style="text-align:right;">
+1.43
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+respect_bin
+</td>
+<td style="text-align:left;">
+Female managers
+</td>
+<td style="text-align:right;">
+0.97
+</td>
+<td style="text-align:right;">
+0.71
+</td>
+<td style="text-align:right;">
+1.32
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+respect_bin
+</td>
+<td style="text-align:left;">
+Female petite bourgeoisie
+</td>
+<td style="text-align:right;">
+0.53
+</td>
+<td style="text-align:right;">
+0.27
+</td>
+<td style="text-align:right;">
+1.04
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+respect_bin
+</td>
+<td style="text-align:left;">
+Female capitalists
+</td>
+<td style="text-align:right;">
+0.35
+</td>
+<td style="text-align:right;">
+0.09
+</td>
+<td style="text-align:right;">
+1.40
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+trustman_bin
+</td>
+<td style="text-align:left;">
+Male managers
+</td>
+<td style="text-align:right;">
+0.83
+</td>
+<td style="text-align:right;">
+0.69
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+trustman_bin
+</td>
+<td style="text-align:left;">
+Male petite bourgeoisie
+</td>
+<td style="text-align:right;">
+0.27
+</td>
+<td style="text-align:right;">
+0.16
+</td>
+<td style="text-align:right;">
+0.46
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+trustman_bin
+</td>
+<td style="text-align:left;">
+Male capitalists
+</td>
+<td style="text-align:right;">
+0.23
+</td>
+<td style="text-align:right;">
+0.13
+</td>
+<td style="text-align:right;">
+0.39
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+trustman_bin
+</td>
+<td style="text-align:left;">
+Female workers
+</td>
+<td style="text-align:right;">
+0.98
+</td>
+<td style="text-align:right;">
+0.86
+</td>
+<td style="text-align:right;">
+1.13
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+trustman_bin
+</td>
+<td style="text-align:left;">
+Female managers
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+<td style="text-align:right;">
+0.72
+</td>
+<td style="text-align:right;">
+1.02
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+trustman_bin
+</td>
+<td style="text-align:left;">
+Female petite bourgeoisie
+</td>
+<td style="text-align:right;">
+0.21
+</td>
+<td style="text-align:right;">
+0.11
+</td>
+<td style="text-align:right;">
+0.43
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+trustman_bin
+</td>
+<td style="text-align:left;">
+Female capitalists
+</td>
+<td style="text-align:right;">
+0.21
+</td>
+<td style="text-align:right;">
+0.07
+</td>
+<td style="text-align:right;">
+0.60
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+manvsemp_bin
+</td>
+<td style="text-align:left;">
+Male managers
+</td>
+<td style="text-align:right;">
+0.73
+</td>
+<td style="text-align:right;">
+0.53
+</td>
+<td style="text-align:right;">
+1.02
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+manvsemp_bin
+</td>
+<td style="text-align:left;">
+Male petite bourgeoisie
+</td>
+<td style="text-align:right;">
+0.37
+</td>
+<td style="text-align:right;">
+0.15
+</td>
+<td style="text-align:right;">
+0.88
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+manvsemp_bin
+</td>
+<td style="text-align:left;">
+Male capitalists
+</td>
+<td style="text-align:right;">
+0.28
+</td>
+<td style="text-align:right;">
+0.12
+</td>
+<td style="text-align:right;">
+0.67
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+manvsemp_bin
+</td>
+<td style="text-align:left;">
+Female workers
+</td>
+<td style="text-align:right;">
+1.09
+</td>
+<td style="text-align:right;">
+0.84
+</td>
+<td style="text-align:right;">
+1.40
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+manvsemp_bin
+</td>
+<td style="text-align:left;">
+Female managers
+</td>
+<td style="text-align:right;">
+0.88
+</td>
+<td style="text-align:right;">
+0.64
+</td>
+<td style="text-align:right;">
+1.19
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+manvsemp_bin
+</td>
+<td style="text-align:left;">
+Female petite bourgeoisie
+</td>
+<td style="text-align:right;">
+0.23
+</td>
+<td style="text-align:right;">
+0.08
+</td>
+<td style="text-align:right;">
+0.63
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+manvsemp_bin
+</td>
+<td style="text-align:left;">
+Female capitalists
+</td>
+<td style="text-align:right;">
+0.12
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.83
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+wkfreedm_bin
+</td>
+<td style="text-align:left;">
+Male managers
+</td>
+<td style="text-align:right;">
+0.59
+</td>
+<td style="text-align:right;">
+0.46
+</td>
+<td style="text-align:right;">
+0.76
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+wkfreedm_bin
+</td>
+<td style="text-align:left;">
+Male petite bourgeoisie
+</td>
+<td style="text-align:right;">
+0.24
+</td>
+<td style="text-align:right;">
+0.13
+</td>
+<td style="text-align:right;">
+0.43
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+wkfreedm_bin
+</td>
+<td style="text-align:left;">
+Male capitalists
+</td>
+<td style="text-align:right;">
+0.11
+</td>
+<td style="text-align:right;">
+0.04
+</td>
+<td style="text-align:right;">
+0.27
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+wkfreedm_bin
+</td>
+<td style="text-align:left;">
+Female workers
+</td>
+<td style="text-align:right;">
+0.99
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+<td style="text-align:right;">
+1.16
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+wkfreedm_bin
+</td>
+<td style="text-align:left;">
+Female managers
+</td>
+<td style="text-align:right;">
+0.62
+</td>
+<td style="text-align:right;">
+0.48
+</td>
+<td style="text-align:right;">
+0.79
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+wkfreedm_bin
+</td>
+<td style="text-align:left;">
+Female petite bourgeoisie
+</td>
+<td style="text-align:right;">
+0.27
+</td>
+<td style="text-align:right;">
+0.14
+</td>
+<td style="text-align:right;">
+0.52
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+wkfreedm_bin
+</td>
+<td style="text-align:left;">
+Female capitalists
+</td>
+<td style="text-align:right;">
+0.11
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+0.51
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+wkdecide_bin
+</td>
+<td style="text-align:left;">
+Male managers
+</td>
+<td style="text-align:right;">
+0.37
+</td>
+<td style="text-align:right;">
+0.30
+</td>
+<td style="text-align:right;">
+0.46
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+wkdecide_bin
+</td>
+<td style="text-align:left;">
+Male petite bourgeoisie
+</td>
+<td style="text-align:right;">
+1.14
+</td>
+<td style="text-align:right;">
+0.91
+</td>
+<td style="text-align:right;">
+1.43
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+wkdecide_bin
+</td>
+<td style="text-align:left;">
+Male capitalists
+</td>
+<td style="text-align:right;">
+0.55
+</td>
+<td style="text-align:right;">
+0.40
+</td>
+<td style="text-align:right;">
+0.76
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+wkdecide_bin
+</td>
+<td style="text-align:left;">
+Female workers
+</td>
+<td style="text-align:right;">
+1.02
+</td>
+<td style="text-align:right;">
+0.91
+</td>
+<td style="text-align:right;">
+1.15
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+wkdecide_bin
+</td>
+<td style="text-align:left;">
+Female managers
+</td>
+<td style="text-align:right;">
+0.41
+</td>
+<td style="text-align:right;">
+0.33
+</td>
+<td style="text-align:right;">
+0.52
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+wkdecide_bin
+</td>
+<td style="text-align:left;">
+Female petite bourgeoisie
+</td>
+<td style="text-align:right;">
+1.65
+</td>
+<td style="text-align:right;">
+1.38
+</td>
+<td style="text-align:right;">
+1.98
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+wkdecide_bin
+</td>
+<td style="text-align:left;">
+Female capitalists
+</td>
+<td style="text-align:right;">
+0.46
+</td>
+<td style="text-align:right;">
+0.27
+</td>
+<td style="text-align:right;">
+0.78
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+safehlth_bin
+</td>
+<td style="text-align:left;">
+Male managers
+</td>
+<td style="text-align:right;">
+0.76
+</td>
+<td style="text-align:right;">
+0.54
+</td>
+<td style="text-align:right;">
+1.07
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+safehlth_bin
+</td>
+<td style="text-align:left;">
+Male petite bourgeoisie
+</td>
+<td style="text-align:right;">
+0.83
+</td>
+<td style="text-align:right;">
+0.43
+</td>
+<td style="text-align:right;">
+1.62
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+safehlth_bin
+</td>
+<td style="text-align:left;">
+Male capitalists
+</td>
+<td style="text-align:right;">
+0.74
+</td>
+<td style="text-align:right;">
+0.33
+</td>
+<td style="text-align:right;">
+1.65
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+safehlth_bin
+</td>
+<td style="text-align:left;">
+Female workers
+</td>
+<td style="text-align:right;">
+1.10
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+<td style="text-align:right;">
+1.42
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+safehlth_bin
+</td>
+<td style="text-align:left;">
+Female managers
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+<td style="text-align:right;">
+0.59
+</td>
+<td style="text-align:right;">
+1.21
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+safehlth_bin
+</td>
+<td style="text-align:left;">
+Female petite bourgeoisie
+</td>
+<td style="text-align:right;">
+0.41
+</td>
+<td style="text-align:right;">
+0.14
+</td>
+<td style="text-align:right;">
+1.16
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+safehlth_bin
+</td>
+<td style="text-align:left;">
+Female capitalists
+</td>
+<td style="text-align:right;">
+0.45
+</td>
+<td style="text-align:right;">
+0.13
+</td>
+<td style="text-align:right;">
+1.58
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+safefrst_bin
+</td>
+<td style="text-align:left;">
+Male managers
+</td>
+<td style="text-align:right;">
+0.78
+</td>
+<td style="text-align:right;">
+0.60
+</td>
+<td style="text-align:right;">
+1.02
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+safefrst_bin
+</td>
+<td style="text-align:left;">
+Male petite bourgeoisie
+</td>
+<td style="text-align:right;">
+0.63
+</td>
+<td style="text-align:right;">
+0.33
+</td>
+<td style="text-align:right;">
+1.20
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+safefrst_bin
+</td>
+<td style="text-align:left;">
+Male capitalists
+</td>
+<td style="text-align:right;">
+0.71
+</td>
+<td style="text-align:right;">
+0.39
+</td>
+<td style="text-align:right;">
+1.29
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+safefrst_bin
+</td>
+<td style="text-align:left;">
+Female workers
+</td>
+<td style="text-align:right;">
+0.96
+</td>
+<td style="text-align:right;">
+0.79
+</td>
+<td style="text-align:right;">
+1.18
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+safefrst_bin
+</td>
+<td style="text-align:left;">
+Female managers
+</td>
+<td style="text-align:right;">
+0.94
+</td>
+<td style="text-align:right;">
+0.72
+</td>
+<td style="text-align:right;">
+1.23
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+safefrst_bin
+</td>
+<td style="text-align:left;">
+Female petite bourgeoisie
+</td>
+<td style="text-align:right;">
+0.20
+</td>
+<td style="text-align:right;">
+0.09
+</td>
+<td style="text-align:right;">
+0.44
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+safefrst_bin
+</td>
+<td style="text-align:left;">
+Female capitalists
+</td>
+<td style="text-align:right;">
+0.59
+</td>
+<td style="text-align:right;">
+0.27
+</td>
+<td style="text-align:right;">
+1.33
+</td>
+</tr>
+</tbody>
+</table>
+</div>
 </div>
 <div id="race-interaction-whitepoc" class="section level3">
 <h3>Race interaction (white/POC)</h3>
@@ -4350,31 +5773,999 @@ plotted(xaxis=Class, limitsvec=c(0.017, 2.1), breaksvec=c(0.125, 0.25, 0.5, 1, 2
 <pre class="r"><code>#run min. adjusted regression
 less_adj &lt;- mysvy(dat, c(125:128,131:134), &quot;~class_poc + rcs(age, 3) + rcs(year, 3)&quot;, design = svy_dat)
 
-#pull intro matrix
-regs_less_poc = NULL
-for(i in 1:8){
-  cbind(exp(less_adj[[i]]$coefficients[2:8]), exp(confint(less_adj[[i]])[2:8,])) -&gt; bind
-  rbind(regs_less_poc, cbind(bind, names(dat)[c(125:128,131:134)][i])) -&gt; regs_less_poc
-}
+#pull into matrix
+regs_less &lt;- matrix_func(8, 8, c(125:128, 131:134))
 
-#format
-as.data.frame(regs_less_poc) %&gt;%
-  mutate(Class=rep(c(&quot;White managers&quot;, &quot;White petite bourgeoisie&quot;, &quot;White capitalists&quot;, &quot;POC workers&quot;, &quot;POC managers&quot;, &quot;POC petite bourgeoisie&quot;, &quot;POC capitalists&quot;), 8),
-         PR=as.numeric(V1),
-         Lower=as.numeric(`2.5 %`),
-         Upper=as.numeric(`97.5 %`)) %&gt;%
-  bind_rows(data.frame(V4=c(&quot;disc_haras&quot;, &quot;trustman_bin&quot;, &quot;wkfreedm_bin&quot;, &quot;safehlth_bin&quot;, &quot;respect_bin&quot;, &quot;manvsemp_bin&quot;, &quot;wkdecide_bin&quot;, &quot;safefrst_bin&quot;), 
-             Class=rep(&quot;White workers&quot;, 8), PR=rep(1, 8), Lower=rep(NA, 8), Upper=rep(NA, 8))) %&gt;% #worker dummy row
-  mutate(Class=factor(Class, levels=c(&quot;White workers&quot;, &quot;White managers&quot;, &quot;White petite bourgeoisie&quot;, &quot;White capitalists&quot;,
-                                      &quot;POC workers&quot;, &quot;POC managers&quot;, &quot;POC petite bourgeoisie&quot;, &quot;POC capitalists&quot;)),
-         V4=factor(V4, levels=c(&quot;disc_haras&quot;, &quot;trustman_bin&quot;, &quot;suphelp_bin&quot;, &quot;wkfreedm_bin&quot;, &quot;safehlth_bin&quot;,
-                                &quot;respect_bin&quot;, &quot;manvsemp_bin&quot;, &quot;supcares_bin&quot;, &quot;wkdecide_bin&quot;, &quot;safefrst_bin&quot;))) -&gt; binded
+#format matrix
+binded &lt;- formatted(c(&quot;White managers&quot;, &quot;White petite bourgeoisie&quot;, &quot;White capitalists&quot;, &quot;POC workers&quot;, &quot;POC managers&quot;, &quot;POC petite bourgeoisie&quot;, &quot;POC capitalists&quot;), 8, 
+                    c(&quot;disc_haras&quot;, &quot;trustman_bin&quot;, &quot;wkfreedm_bin&quot;, &quot;safehlth_bin&quot;, &quot;respect_bin&quot;, &quot;manvsemp_bin&quot;, &quot;wkdecide_bin&quot;, &quot;safefrst_bin&quot;), 
+                    &quot;White workers&quot;,
+                    c(&quot;White workers&quot;, &quot;White managers&quot;, &quot;White petite bourgeoisie&quot;, &quot;White capitalists&quot;, &quot;POC workers&quot;, &quot;POC managers&quot;, &quot;POC petite bourgeoisie&quot;, &quot;POC capitalists&quot;))
 
-#plot
+#plot of estimates
 plotted(xaxis=Class, limitsvec=c(0.0165, 3.35), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
         cols=c(brewer.pal(8, &quot;Blues&quot;)[c(5,6,7,8)], brewer.pal(8, &quot;Purples&quot;)[c(5,6,7,8)]),
         shapes=c(15,16,17,18,0,1,2,5), xlabbed=&quot;Class &amp; race (ref: white workers)&quot;, nrow=2)</code></pre>
 <p><img src="data:image/png;base64,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" /><!-- --></p>
+<pre class="r"><code>#table of estimates
+tabled(1:56)</code></pre>
+<div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:250px; overflow-x: scroll; width:100%; ">
+<table class="table table-striped" style="margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+QWL variable
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+Class
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+PR
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+Lower
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+Upper
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+disc_haras
+</td>
+<td style="text-align:left;">
+White managers
+</td>
+<td style="text-align:right;">
+1.19
+</td>
+<td style="text-align:right;">
+1.04
+</td>
+<td style="text-align:right;">
+1.35
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+disc_haras
+</td>
+<td style="text-align:left;">
+White petite bourgeoisie
+</td>
+<td style="text-align:right;">
+0.62
+</td>
+<td style="text-align:right;">
+0.45
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+disc_haras
+</td>
+<td style="text-align:left;">
+White capitalists
+</td>
+<td style="text-align:right;">
+0.79
+</td>
+<td style="text-align:right;">
+0.57
+</td>
+<td style="text-align:right;">
+1.08
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+disc_haras
+</td>
+<td style="text-align:left;">
+POC workers
+</td>
+<td style="text-align:right;">
+1.15
+</td>
+<td style="text-align:right;">
+0.99
+</td>
+<td style="text-align:right;">
+1.34
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+disc_haras
+</td>
+<td style="text-align:left;">
+POC managers
+</td>
+<td style="text-align:right;">
+1.33
+</td>
+<td style="text-align:right;">
+1.10
+</td>
+<td style="text-align:right;">
+1.60
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+disc_haras
+</td>
+<td style="text-align:left;">
+POC petite bourgeoisie
+</td>
+<td style="text-align:right;">
+1.21
+</td>
+<td style="text-align:right;">
+0.81
+</td>
+<td style="text-align:right;">
+1.80
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+disc_haras
+</td>
+<td style="text-align:left;">
+POC capitalists
+</td>
+<td style="text-align:right;">
+1.50
+</td>
+<td style="text-align:right;">
+0.96
+</td>
+<td style="text-align:right;">
+2.33
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+respect_bin
+</td>
+<td style="text-align:left;">
+White managers
+</td>
+<td style="text-align:right;">
+0.72
+</td>
+<td style="text-align:right;">
+0.56
+</td>
+<td style="text-align:right;">
+0.93
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+respect_bin
+</td>
+<td style="text-align:left;">
+White petite bourgeoisie
+</td>
+<td style="text-align:right;">
+0.53
+</td>
+<td style="text-align:right;">
+0.32
+</td>
+<td style="text-align:right;">
+0.88
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+respect_bin
+</td>
+<td style="text-align:left;">
+White capitalists
+</td>
+<td style="text-align:right;">
+0.31
+</td>
+<td style="text-align:right;">
+0.15
+</td>
+<td style="text-align:right;">
+0.64
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+respect_bin
+</td>
+<td style="text-align:left;">
+POC workers
+</td>
+<td style="text-align:right;">
+0.95
+</td>
+<td style="text-align:right;">
+0.74
+</td>
+<td style="text-align:right;">
+1.24
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+respect_bin
+</td>
+<td style="text-align:left;">
+POC managers
+</td>
+<td style="text-align:right;">
+0.66
+</td>
+<td style="text-align:right;">
+0.39
+</td>
+<td style="text-align:right;">
+1.11
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+respect_bin
+</td>
+<td style="text-align:left;">
+POC petite bourgeoisie
+</td>
+<td style="text-align:right;">
+0.46
+</td>
+<td style="text-align:right;">
+0.14
+</td>
+<td style="text-align:right;">
+1.50
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+respect_bin
+</td>
+<td style="text-align:left;">
+POC capitalists
+</td>
+<td style="text-align:right;">
+0.49
+</td>
+<td style="text-align:right;">
+0.15
+</td>
+<td style="text-align:right;">
+1.64
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+trustman_bin
+</td>
+<td style="text-align:left;">
+White managers
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+<td style="text-align:right;">
+0.74
+</td>
+<td style="text-align:right;">
+0.98
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+trustman_bin
+</td>
+<td style="text-align:left;">
+White petite bourgeoisie
+</td>
+<td style="text-align:right;">
+0.26
+</td>
+<td style="text-align:right;">
+0.16
+</td>
+<td style="text-align:right;">
+0.42
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+trustman_bin
+</td>
+<td style="text-align:left;">
+White capitalists
+</td>
+<td style="text-align:right;">
+0.21
+</td>
+<td style="text-align:right;">
+0.12
+</td>
+<td style="text-align:right;">
+0.36
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+trustman_bin
+</td>
+<td style="text-align:left;">
+POC workers
+</td>
+<td style="text-align:right;">
+1.16
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+1.36
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+trustman_bin
+</td>
+<td style="text-align:left;">
+POC managers
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+0.81
+</td>
+<td style="text-align:right;">
+1.25
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+trustman_bin
+</td>
+<td style="text-align:left;">
+POC petite bourgeoisie
+</td>
+<td style="text-align:right;">
+0.24
+</td>
+<td style="text-align:right;">
+0.10
+</td>
+<td style="text-align:right;">
+0.56
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+trustman_bin
+</td>
+<td style="text-align:left;">
+POC capitalists
+</td>
+<td style="text-align:right;">
+0.38
+</td>
+<td style="text-align:right;">
+0.13
+</td>
+<td style="text-align:right;">
+1.07
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+manvsemp_bin
+</td>
+<td style="text-align:left;">
+White managers
+</td>
+<td style="text-align:right;">
+0.83
+</td>
+<td style="text-align:right;">
+0.65
+</td>
+<td style="text-align:right;">
+1.05
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+manvsemp_bin
+</td>
+<td style="text-align:left;">
+White petite bourgeoisie
+</td>
+<td style="text-align:right;">
+0.33
+</td>
+<td style="text-align:right;">
+0.16
+</td>
+<td style="text-align:right;">
+0.67
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+manvsemp_bin
+</td>
+<td style="text-align:left;">
+White capitalists
+</td>
+<td style="text-align:right;">
+0.25
+</td>
+<td style="text-align:right;">
+0.11
+</td>
+<td style="text-align:right;">
+0.58
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+manvsemp_bin
+</td>
+<td style="text-align:left;">
+POC workers
+</td>
+<td style="text-align:right;">
+1.06
+</td>
+<td style="text-align:right;">
+0.82
+</td>
+<td style="text-align:right;">
+1.36
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+manvsemp_bin
+</td>
+<td style="text-align:left;">
+POC managers
+</td>
+<td style="text-align:right;">
+0.62
+</td>
+<td style="text-align:right;">
+0.40
+</td>
+<td style="text-align:right;">
+0.96
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+manvsemp_bin
+</td>
+<td style="text-align:left;">
+POC petite bourgeoisie
+</td>
+<td style="text-align:right;">
+0.12
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.86
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+manvsemp_bin
+</td>
+<td style="text-align:left;">
+POC capitalists
+</td>
+<td style="text-align:right;">
+0.17
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+1.16
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+wkfreedm_bin
+</td>
+<td style="text-align:left;">
+White managers
+</td>
+<td style="text-align:right;">
+0.59
+</td>
+<td style="text-align:right;">
+0.48
+</td>
+<td style="text-align:right;">
+0.72
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+wkfreedm_bin
+</td>
+<td style="text-align:left;">
+White petite bourgeoisie
+</td>
+<td style="text-align:right;">
+0.23
+</td>
+<td style="text-align:right;">
+0.14
+</td>
+<td style="text-align:right;">
+0.38
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+wkfreedm_bin
+</td>
+<td style="text-align:left;">
+White capitalists
+</td>
+<td style="text-align:right;">
+0.10
+</td>
+<td style="text-align:right;">
+0.04
+</td>
+<td style="text-align:right;">
+0.25
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+wkfreedm_bin
+</td>
+<td style="text-align:left;">
+POC workers
+</td>
+<td style="text-align:right;">
+1.10
+</td>
+<td style="text-align:right;">
+0.91
+</td>
+<td style="text-align:right;">
+1.33
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+wkfreedm_bin
+</td>
+<td style="text-align:left;">
+POC managers
+</td>
+<td style="text-align:right;">
+0.73
+</td>
+<td style="text-align:right;">
+0.52
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+wkfreedm_bin
+</td>
+<td style="text-align:left;">
+POC petite bourgeoisie
+</td>
+<td style="text-align:right;">
+0.38
+</td>
+<td style="text-align:right;">
+0.16
+</td>
+<td style="text-align:right;">
+0.89
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+wkfreedm_bin
+</td>
+<td style="text-align:left;">
+POC capitalists
+</td>
+<td style="text-align:right;">
+0.15
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+1.02
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+wkdecide_bin
+</td>
+<td style="text-align:left;">
+White managers
+</td>
+<td style="text-align:right;">
+0.39
+</td>
+<td style="text-align:right;">
+0.32
+</td>
+<td style="text-align:right;">
+0.47
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+wkdecide_bin
+</td>
+<td style="text-align:left;">
+White petite bourgeoisie
+</td>
+<td style="text-align:right;">
+1.36
+</td>
+<td style="text-align:right;">
+1.14
+</td>
+<td style="text-align:right;">
+1.61
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+wkdecide_bin
+</td>
+<td style="text-align:left;">
+White capitalists
+</td>
+<td style="text-align:right;">
+0.57
+</td>
+<td style="text-align:right;">
+0.43
+</td>
+<td style="text-align:right;">
+0.76
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+wkdecide_bin
+</td>
+<td style="text-align:left;">
+POC workers
+</td>
+<td style="text-align:right;">
+1.31
+</td>
+<td style="text-align:right;">
+1.14
+</td>
+<td style="text-align:right;">
+1.49
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+wkdecide_bin
+</td>
+<td style="text-align:left;">
+POC managers
+</td>
+<td style="text-align:right;">
+0.53
+</td>
+<td style="text-align:right;">
+0.40
+</td>
+<td style="text-align:right;">
+0.70
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+wkdecide_bin
+</td>
+<td style="text-align:left;">
+POC petite bourgeoisie
+</td>
+<td style="text-align:right;">
+1.99
+</td>
+<td style="text-align:right;">
+1.59
+</td>
+<td style="text-align:right;">
+2.49
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+wkdecide_bin
+</td>
+<td style="text-align:left;">
+POC capitalists
+</td>
+<td style="text-align:right;">
+0.52
+</td>
+<td style="text-align:right;">
+0.28
+</td>
+<td style="text-align:right;">
+0.96
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+safehlth_bin
+</td>
+<td style="text-align:left;">
+White managers
+</td>
+<td style="text-align:right;">
+0.83
+</td>
+<td style="text-align:right;">
+0.61
+</td>
+<td style="text-align:right;">
+1.13
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+safehlth_bin
+</td>
+<td style="text-align:left;">
+White petite bourgeoisie
+</td>
+<td style="text-align:right;">
+0.48
+</td>
+<td style="text-align:right;">
+0.23
+</td>
+<td style="text-align:right;">
+0.98
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+safehlth_bin
+</td>
+<td style="text-align:left;">
+White capitalists
+</td>
+<td style="text-align:right;">
+0.73
+</td>
+<td style="text-align:right;">
+0.33
+</td>
+<td style="text-align:right;">
+1.61
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+safehlth_bin
+</td>
+<td style="text-align:left;">
+POC workers
+</td>
+<td style="text-align:right;">
+1.55
+</td>
+<td style="text-align:right;">
+1.19
+</td>
+<td style="text-align:right;">
+2.01
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+safehlth_bin
+</td>
+<td style="text-align:left;">
+POC managers
+</td>
+<td style="text-align:right;">
+1.01
+</td>
+<td style="text-align:right;">
+0.66
+</td>
+<td style="text-align:right;">
+1.54
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+safehlth_bin
+</td>
+<td style="text-align:left;">
+POC petite bourgeoisie
+</td>
+<td style="text-align:right;">
+1.39
+</td>
+<td style="text-align:right;">
+0.58
+</td>
+<td style="text-align:right;">
+3.33
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+safehlth_bin
+</td>
+<td style="text-align:left;">
+POC capitalists
+</td>
+<td style="text-align:right;">
+0.67
+</td>
+<td style="text-align:right;">
+0.21
+</td>
+<td style="text-align:right;">
+2.15
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+safefrst_bin
+</td>
+<td style="text-align:left;">
+White managers
+</td>
+<td style="text-align:right;">
+0.91
+</td>
+<td style="text-align:right;">
+0.73
+</td>
+<td style="text-align:right;">
+1.13
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+safefrst_bin
+</td>
+<td style="text-align:left;">
+White petite bourgeoisie
+</td>
+<td style="text-align:right;">
+0.39
+</td>
+<td style="text-align:right;">
+0.20
+</td>
+<td style="text-align:right;">
+0.74
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+safefrst_bin
+</td>
+<td style="text-align:left;">
+White capitalists
+</td>
+<td style="text-align:right;">
+0.69
+</td>
+<td style="text-align:right;">
+0.38
+</td>
+<td style="text-align:right;">
+1.24
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+safefrst_bin
+</td>
+<td style="text-align:left;">
+POC workers
+</td>
+<td style="text-align:right;">
+1.09
+</td>
+<td style="text-align:right;">
+0.86
+</td>
+<td style="text-align:right;">
+1.39
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+safefrst_bin
+</td>
+<td style="text-align:left;">
+POC managers
+</td>
+<td style="text-align:right;">
+0.86
+</td>
+<td style="text-align:right;">
+0.59
+</td>
+<td style="text-align:right;">
+1.25
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+safefrst_bin
+</td>
+<td style="text-align:left;">
+POC petite bourgeoisie
+</td>
+<td style="text-align:right;">
+0.59
+</td>
+<td style="text-align:right;">
+0.25
+</td>
+<td style="text-align:right;">
+1.40
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+safefrst_bin
+</td>
+<td style="text-align:left;">
+POC capitalists
+</td>
+<td style="text-align:right;">
+0.86
+</td>
+<td style="text-align:right;">
+0.31
+</td>
+<td style="text-align:right;">
+2.37
+</td>
+</tr>
+</tbody>
+</table>
+</div>
 </div>
 </div>
 <div id="race-and-qwl-among-workers" class="section level2">
@@ -4385,60 +6776,774 @@ plotted(xaxis=Class, limitsvec=c(0.0165, 3.35), breaksvec=c(0.125, 0.25, 0.5, 1,
 <pre class="r"><code>#less adjusted
 less_adj &lt;- mysvy(dat, 125:134, &quot;~race + rcs(age, 3) + rcs(year, 3)&quot;, design = subset(svy_dat, class==&quot;Workers&quot;))
 
-regs_less = NULL
-for(i in 1:10){
-  cbind(exp(less_adj[[i]]$coefficients[2:3]), exp(confint(less_adj[[i]])[2:3,])) -&gt; bind
-  rbind(regs_less, cbind(bind, names(dat)[125:134][i])) -&gt; regs_less
-}
+#pull into matrix
+regs_less &lt;- matrix_func(10, 3, c(125:134))
   
-#format
-as.data.frame(regs_less) %&gt;%
-  mutate(Race=rep(c(&quot;Black&quot;, &quot;Other&quot;), 10),
-         PR=as.numeric(V1),
-         Lower=as.numeric(`2.5 %`),
-         Upper=as.numeric(`97.5 %`)) %&gt;%
-  bind_rows(data.frame(V4=c(&quot;disc_haras&quot;, &quot;trustman_bin&quot;, &quot;suphelp_bin&quot;, &quot;wkfreedm_bin&quot;, &quot;safehlth_bin&quot;, &quot;respect_bin&quot;, &quot;manvsemp_bin&quot;, &quot;supcares_bin&quot;, &quot;wkdecide_bin&quot;, &quot;safefrst_bin&quot;), 
-             Race=rep(&quot;White&quot;, 10), PR=rep(1, 10), Lower=rep(NA, 10), Upper=rep(NA, 10))) %&gt;% #white dummy row
-  mutate(Race=factor(Race, levels=c(&quot;White&quot;, &quot;Black&quot;, &quot;Other&quot;)),
-         V4=factor(V4, levels=c(&quot;disc_haras&quot;, &quot;trustman_bin&quot;, &quot;suphelp_bin&quot;, &quot;wkfreedm_bin&quot;, &quot;safehlth_bin&quot;,
-                                &quot;respect_bin&quot;, &quot;manvsemp_bin&quot;, &quot;supcares_bin&quot;, &quot;wkdecide_bin&quot;, &quot;safefrst_bin&quot;))) -&gt; binded
+#format matrix
+binded &lt;- formatted(c(&quot;Black&quot;, &quot;Other&quot;), 10, 
+                    c(&quot;disc_haras&quot;, &quot;trustman_bin&quot;, &quot;suphelp_bin&quot;, &quot;wkfreedm_bin&quot;, &quot;safehlth_bin&quot;, &quot;respect_bin&quot;, &quot;manvsemp_bin&quot;, &quot;supcares_bin&quot;, &quot;wkdecide_bin&quot;, &quot;safefrst_bin&quot;), 
+                    &quot;White&quot;,
+                    c(&quot;White&quot;, &quot;Black&quot;, &quot;Other&quot;))
 
-
-#plot
-plotted(xaxis=Race, limitsvec=c(0.3, 2.5), breaksvec=c(0.6, 1, 1.666667, 1.666667^2),
+#plot of estimates
+plotted(xaxis=Class, limitsvec=c(0.3, 2.5), breaksvec=c(0.6, 1, 1.666667, 1.666667^2),
         cols=c(brewer.pal(8, &quot;Blues&quot;)[c(6)], brewer.pal(8, &quot;Purples&quot;)[c(6)], brewer.pal(8, &quot;Greens&quot;)[c(6)]), 
         shapes=c(15, 0, 12), xlabbed=&quot;Race (ref: white)&quot;)</code></pre>
 <p><img src="data:image/png;base64,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" /><!-- --></p>
+<pre class="r"><code>#table of estimates
+tabled(1:20)</code></pre>
+<div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:250px; overflow-x: scroll; width:100%; ">
+<table class="table table-striped" style="margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+QWL variable
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+Class
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+PR
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+Lower
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+Upper
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+disc_haras
+</td>
+<td style="text-align:left;">
+Black
+</td>
+<td style="text-align:right;">
+1.29
+</td>
+<td style="text-align:right;">
+1.10
+</td>
+<td style="text-align:right;">
+1.52
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+disc_haras
+</td>
+<td style="text-align:left;">
+Other
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+0.79
+</td>
+<td style="text-align:right;">
+1.28
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+respect_bin
+</td>
+<td style="text-align:left;">
+Black
+</td>
+<td style="text-align:right;">
+1.21
+</td>
+<td style="text-align:right;">
+0.92
+</td>
+<td style="text-align:right;">
+1.59
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+respect_bin
+</td>
+<td style="text-align:left;">
+Other
+</td>
+<td style="text-align:right;">
+0.65
+</td>
+<td style="text-align:right;">
+0.39
+</td>
+<td style="text-align:right;">
+1.07
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+trustman_bin
+</td>
+<td style="text-align:left;">
+Black
+</td>
+<td style="text-align:right;">
+1.39
+</td>
+<td style="text-align:right;">
+1.19
+</td>
+<td style="text-align:right;">
+1.63
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+trustman_bin
+</td>
+<td style="text-align:left;">
+Other
+</td>
+<td style="text-align:right;">
+0.84
+</td>
+<td style="text-align:right;">
+0.62
+</td>
+<td style="text-align:right;">
+1.14
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+manvsemp_bin
+</td>
+<td style="text-align:left;">
+Black
+</td>
+<td style="text-align:right;">
+1.32
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+1.75
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+manvsemp_bin
+</td>
+<td style="text-align:left;">
+Other
+</td>
+<td style="text-align:right;">
+0.68
+</td>
+<td style="text-align:right;">
+0.41
+</td>
+<td style="text-align:right;">
+1.10
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+suphelp_bin
+</td>
+<td style="text-align:left;">
+Black
+</td>
+<td style="text-align:right;">
+1.17
+</td>
+<td style="text-align:right;">
+0.94
+</td>
+<td style="text-align:right;">
+1.47
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+suphelp_bin
+</td>
+<td style="text-align:left;">
+Other
+</td>
+<td style="text-align:right;">
+1.35
+</td>
+<td style="text-align:right;">
+1.01
+</td>
+<td style="text-align:right;">
+1.80
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+supcares_bin
+</td>
+<td style="text-align:left;">
+Black
+</td>
+<td style="text-align:right;">
+1.44
+</td>
+<td style="text-align:right;">
+1.18
+</td>
+<td style="text-align:right;">
+1.75
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+supcares_bin
+</td>
+<td style="text-align:left;">
+Other
+</td>
+<td style="text-align:right;">
+1.52
+</td>
+<td style="text-align:right;">
+1.16
+</td>
+<td style="text-align:right;">
+1.99
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+wkfreedm_bin
+</td>
+<td style="text-align:left;">
+Black
+</td>
+<td style="text-align:right;">
+1.12
+</td>
+<td style="text-align:right;">
+0.90
+</td>
+<td style="text-align:right;">
+1.39
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+wkfreedm_bin
+</td>
+<td style="text-align:left;">
+Other
+</td>
+<td style="text-align:right;">
+1.12
+</td>
+<td style="text-align:right;">
+0.86
+</td>
+<td style="text-align:right;">
+1.47
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+wkdecide_bin
+</td>
+<td style="text-align:left;">
+Black
+</td>
+<td style="text-align:right;">
+1.26
+</td>
+<td style="text-align:right;">
+1.08
+</td>
+<td style="text-align:right;">
+1.48
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+wkdecide_bin
+</td>
+<td style="text-align:left;">
+Other
+</td>
+<td style="text-align:right;">
+1.39
+</td>
+<td style="text-align:right;">
+1.16
+</td>
+<td style="text-align:right;">
+1.67
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+safehlth_bin
+</td>
+<td style="text-align:left;">
+Black
+</td>
+<td style="text-align:right;">
+1.85
+</td>
+<td style="text-align:right;">
+1.39
+</td>
+<td style="text-align:right;">
+2.47
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+safehlth_bin
+</td>
+<td style="text-align:left;">
+Other
+</td>
+<td style="text-align:right;">
+1.18
+</td>
+<td style="text-align:right;">
+0.74
+</td>
+<td style="text-align:right;">
+1.88
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+safefrst_bin
+</td>
+<td style="text-align:left;">
+Black
+</td>
+<td style="text-align:right;">
+1.23
+</td>
+<td style="text-align:right;">
+0.95
+</td>
+<td style="text-align:right;">
+1.59
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+safefrst_bin
+</td>
+<td style="text-align:left;">
+Other
+</td>
+<td style="text-align:right;">
+0.92
+</td>
+<td style="text-align:right;">
+0.62
+</td>
+<td style="text-align:right;">
+1.38
+</td>
+</tr>
+</tbody>
+</table>
+</div>
 </div>
 <div id="gender-interaction-1" class="section level3">
 <h3>Gender interaction</h3>
 <pre class="r"><code>#less adjusted
 less_adj &lt;- mysvy(dat, 125:134, &quot;~race_gender + rcs(age, 3) + rcs(year, 3)&quot;, design = subset(svy_dat, class==&quot;Workers&quot;))
 
-regs_less = NULL
-for(i in 1:10){
-  cbind(exp(less_adj[[i]]$coefficients[2:6]), exp(confint(less_adj[[i]])[2:6,])) -&gt; bind
-  rbind(regs_less, cbind(bind, names(dat)[125:134][i])) -&gt; regs_less
-}
-  
-#format
-regs_less %&gt;%
-  as.data.frame() %&gt;%
-  mutate(race_gender=rep(c(&quot;White female&quot;, &quot;Black male&quot;, &quot;Black female&quot;, &quot;Other male&quot;, &quot;Other female&quot;), 10),
-         PR=as.numeric(V1),
-         Lower=as.numeric(`2.5 %`),
-         Upper=as.numeric(`97.5 %`)) %&gt;%
-  bind_rows(data.frame(V4=c(&quot;disc_haras&quot;, &quot;trustman_bin&quot;, &quot;suphelp_bin&quot;, &quot;wkfreedm_bin&quot;, &quot;safehlth_bin&quot;, &quot;respect_bin&quot;, &quot;manvsemp_bin&quot;, &quot;supcares_bin&quot;, &quot;wkdecide_bin&quot;, &quot;safefrst_bin&quot;), 
-             race_gender=rep(&quot;White male&quot;, 10), PR=rep(1, 10), Lower=rep(NA, 10), Upper=rep(NA, 10))) %&gt;% #white dummy row
-  mutate(race_gender=factor(race_gender, levels=c(&quot;White male&quot;, &quot;White female&quot;, &quot;Black male&quot;, &quot;Black female&quot;, &quot;Other male&quot;, &quot;Other female&quot;)),
-         V4=factor(V4, levels=c(&quot;disc_haras&quot;, &quot;trustman_bin&quot;, &quot;suphelp_bin&quot;, &quot;wkfreedm_bin&quot;, &quot;safehlth_bin&quot;,
-                                &quot;respect_bin&quot;, &quot;manvsemp_bin&quot;, &quot;supcares_bin&quot;, &quot;wkdecide_bin&quot;, &quot;safefrst_bin&quot;))) -&gt; binded
+#pull into matrix
+regs_less &lt;- matrix_func(10, 6, c(125:134))
+
+#format matrix
+binded &lt;- formatted(c(&quot;White female&quot;, &quot;Black male&quot;, &quot;Black female&quot;, &quot;Other male&quot;, &quot;Other female&quot;), 10, 
+                    c(&quot;disc_haras&quot;, &quot;trustman_bin&quot;, &quot;suphelp_bin&quot;, &quot;wkfreedm_bin&quot;, &quot;safehlth_bin&quot;, &quot;respect_bin&quot;, &quot;manvsemp_bin&quot;, &quot;supcares_bin&quot;, &quot;wkdecide_bin&quot;, &quot;safefrst_bin&quot;), 
+                    &quot;White male&quot;,
+                    c(&quot;White male&quot;, &quot;White female&quot;, &quot;Black male&quot;, &quot;Black female&quot;, &quot;Other male&quot;, &quot;Other female&quot;))
 
 #plot
-plotted(xaxis=race_gender, limitsvec=c(0.1, 3.1), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
+plotted(xaxis=Class, limitsvec=c(0.1, 3.1), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
         cols=c(brewer.pal(8, &quot;Blues&quot;)[c(6,8)], brewer.pal(8, &quot;Purples&quot;)[c(6,8)], brewer.pal(8, &quot;Greens&quot;)[c(6,8)]), 
         shapes=c(15, 16, 0, 1, 12, 10), xlabbed=&quot;Race &amp; gender (ref: white male)&quot;, nrow=1)</code></pre>
 <p><img src="data:image/png;base64,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" /><!-- --></p>
+<pre class="r"><code>#table of estimates
+tabled(1:20)</code></pre>
+<div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:250px; overflow-x: scroll; width:100%; ">
+<table class="table table-striped" style="margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+QWL variable
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+Class
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+PR
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+Lower
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+Upper
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+disc_haras
+</td>
+<td style="text-align:left;">
+White female
+</td>
+<td style="text-align:right;">
+1.53
+</td>
+<td style="text-align:right;">
+1.29
+</td>
+<td style="text-align:right;">
+1.81
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+disc_haras
+</td>
+<td style="text-align:left;">
+Black male
+</td>
+<td style="text-align:right;">
+1.45
+</td>
+<td style="text-align:right;">
+1.10
+</td>
+<td style="text-align:right;">
+1.92
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+disc_haras
+</td>
+<td style="text-align:left;">
+Black female
+</td>
+<td style="text-align:right;">
+1.81
+</td>
+<td style="text-align:right;">
+1.45
+</td>
+<td style="text-align:right;">
+2.26
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+disc_haras
+</td>
+<td style="text-align:left;">
+Other male
+</td>
+<td style="text-align:right;">
+1.45
+</td>
+<td style="text-align:right;">
+1.03
+</td>
+<td style="text-align:right;">
+2.06
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+disc_haras
+</td>
+<td style="text-align:left;">
+Other female
+</td>
+<td style="text-align:right;">
+1.12
+</td>
+<td style="text-align:right;">
+0.77
+</td>
+<td style="text-align:right;">
+1.64
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+respect_bin
+</td>
+<td style="text-align:left;">
+White female
+</td>
+<td style="text-align:right;">
+0.90
+</td>
+<td style="text-align:right;">
+0.69
+</td>
+<td style="text-align:right;">
+1.17
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+respect_bin
+</td>
+<td style="text-align:left;">
+Black male
+</td>
+<td style="text-align:right;">
+0.82
+</td>
+<td style="text-align:right;">
+0.52
+</td>
+<td style="text-align:right;">
+1.32
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+respect_bin
+</td>
+<td style="text-align:left;">
+Black female
+</td>
+<td style="text-align:right;">
+1.35
+</td>
+<td style="text-align:right;">
+0.97
+</td>
+<td style="text-align:right;">
+1.89
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+respect_bin
+</td>
+<td style="text-align:left;">
+Other male
+</td>
+<td style="text-align:right;">
+0.26
+</td>
+<td style="text-align:right;">
+0.11
+</td>
+<td style="text-align:right;">
+0.60
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+respect_bin
+</td>
+<td style="text-align:left;">
+Other female
+</td>
+<td style="text-align:right;">
+0.97
+</td>
+<td style="text-align:right;">
+0.53
+</td>
+<td style="text-align:right;">
+1.75
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+trustman_bin
+</td>
+<td style="text-align:left;">
+White female
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+<td style="text-align:right;">
+0.72
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+trustman_bin
+</td>
+<td style="text-align:left;">
+Black male
+</td>
+<td style="text-align:right;">
+1.04
+</td>
+<td style="text-align:right;">
+0.79
+</td>
+<td style="text-align:right;">
+1.37
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+trustman_bin
+</td>
+<td style="text-align:left;">
+Black female
+</td>
+<td style="text-align:right;">
+1.43
+</td>
+<td style="text-align:right;">
+1.19
+</td>
+<td style="text-align:right;">
+1.73
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+trustman_bin
+</td>
+<td style="text-align:left;">
+Other male
+</td>
+<td style="text-align:right;">
+0.72
+</td>
+<td style="text-align:right;">
+0.46
+</td>
+<td style="text-align:right;">
+1.11
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+trustman_bin
+</td>
+<td style="text-align:left;">
+Other female
+</td>
+<td style="text-align:right;">
+0.83
+</td>
+<td style="text-align:right;">
+0.57
+</td>
+<td style="text-align:right;">
+1.21
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+manvsemp_bin
+</td>
+<td style="text-align:left;">
+White female
+</td>
+<td style="text-align:right;">
+0.86
+</td>
+<td style="text-align:right;">
+0.65
+</td>
+<td style="text-align:right;">
+1.15
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+manvsemp_bin
+</td>
+<td style="text-align:left;">
+Black male
+</td>
+<td style="text-align:right;">
+0.97
+</td>
+<td style="text-align:right;">
+0.60
+</td>
+<td style="text-align:right;">
+1.55
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+manvsemp_bin
+</td>
+<td style="text-align:left;">
+Black female
+</td>
+<td style="text-align:right;">
+1.40
+</td>
+<td style="text-align:right;">
+0.97
+</td>
+<td style="text-align:right;">
+2.02
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+manvsemp_bin
+</td>
+<td style="text-align:left;">
+Other male
+</td>
+<td style="text-align:right;">
+0.24
+</td>
+<td style="text-align:right;">
+0.11
+</td>
+<td style="text-align:right;">
+0.53
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+manvsemp_bin
+</td>
+<td style="text-align:left;">
+Other female
+</td>
+<td style="text-align:right;">
+1.02
+</td>
+<td style="text-align:right;">
+0.57
+</td>
+<td style="text-align:right;">
+1.82
+</td>
+</tr>
+</tbody>
+</table>
+</div>
 </div>
 </div>
 </div>
@@ -4516,6 +7621,10 @@ Capitalists
 </tbody>
 </table>
 </div>
+</div>
+<div id="how-do-more-adjusted-regressions-compare-to-less-adjusted-regressions" class="section level2">
+<h2>How do more-adjusted regressions compare to less-adjusted regressions?</h2>
+<p>TBD</p>
 </div>
 </div>
 
