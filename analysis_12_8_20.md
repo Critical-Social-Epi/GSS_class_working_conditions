@@ -1,7 +1,7 @@
 ---
 title: "Class and QWL analysis"
 author: "Jerzy Eisenberg-Guyot"
-date: "12/08/2020"
+date: "12/15/2020"
 output: 
   html_document:
     code_folding: hide
@@ -18,8 +18,6 @@ always_allow_html: true
 * Decide on the final variables we want to analyze
 
 * Do multiple imputation
-
-* Add more-adjusted regressions to the appendix
 
 **General notes**
 
@@ -2470,11 +2468,199 @@ tabled(1:56, "Ref: white workers")
 </tbody>
 </table></div>
 
-## Race and QWL among workers
+## Gender, race, and QWL among workers
 
-Prevalence of bad category of each binary QWL variable among Black or "other" workers relative to the prevalence among (all or male) white workers adjusted for age and year with restricted cubic splines.
+Prevalence of bad category of each binary QWL variable among each minoritized gender, racial, or gender-racial group of workers relative to the prevalence among male, white, or white male workers adjusted for age and year with restricted cubic splines.
 
-### No gender interaction
+### Gender
+
+
+```r
+#run regression
+less_adj <- mysvy(dat, 125:134, "~relevel(as.factor(sex), ref='male') + rcs(age, 3) + rcs(year, 3)", design = subset(svy_dat, class=="Workers"))
+
+#pull into matrix
+regs_less <- matrix_func(10, 3, c(125:134))
+
+#for some reason function doesn't work properly when only extract one coefficient so we need to delete every other row from regs_les
+nth.delete <- function(dataframe, n)dataframe[-(seq(n,to=nrow(dataframe),by=n)),]
+regs_less <- nth.delete(regs_less, 2)
+  
+#format matrix
+binded <- formatted(c("Female"), 10, 
+                    c("disc_haras", "trustman_bin", "suphelp_bin", "wkfreedm_bin", "safehlth_bin", "respect_bin", "manvsemp_bin", "supcares_bin", "wkdecide_bin", "safefrst_bin"), 
+                    "Male",
+                    c("Male", "Female"))
+
+#plot of estimates
+plotted(xaxis=Class, limitsvec=c(0.3, 2.5), breaksvec=c(0.6, 1, 1.666667, 1.666667^2),
+        cols=c(brewer.pal(8, "Blues")[c(6)], brewer.pal(8, "Purples")[c(6)]), 
+        shapes=c(15, 0), xlabbed="Gender (ref: male)")
+```
+
+![](analysis_12_8_20_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
+
+```r
+#table of estimates
+tabled(1:20, "Ref: white")
+```
+
+<div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:250px; overflow-x: scroll; width:100%; "><table class="table table-striped" style="margin-left: auto; margin-right: auto;">
+<caption>Ref: white</caption>
+ <thead>
+  <tr>
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> QWL variable </th>
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> Class </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> PR </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> Lower </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> Upper </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> disc_haras </td>
+   <td style="text-align:left;"> Female </td>
+   <td style="text-align:right;"> 1.37 </td>
+   <td style="text-align:right;"> 1.19 </td>
+   <td style="text-align:right;"> 1.58 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> respect_bin </td>
+   <td style="text-align:left;"> Female </td>
+   <td style="text-align:right;"> 1.12 </td>
+   <td style="text-align:right;"> 0.89 </td>
+   <td style="text-align:right;"> 1.40 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> trustman_bin </td>
+   <td style="text-align:left;"> Female </td>
+   <td style="text-align:right;"> 0.98 </td>
+   <td style="text-align:right;"> 0.86 </td>
+   <td style="text-align:right;"> 1.12 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> manvsemp_bin </td>
+   <td style="text-align:left;"> Female </td>
+   <td style="text-align:right;"> 1.08 </td>
+   <td style="text-align:right;"> 0.84 </td>
+   <td style="text-align:right;"> 1.39 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> suphelp_bin </td>
+   <td style="text-align:left;"> Female </td>
+   <td style="text-align:right;"> 0.91 </td>
+   <td style="text-align:right;"> 0.75 </td>
+   <td style="text-align:right;"> 1.11 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> supcares_bin </td>
+   <td style="text-align:left;"> Female </td>
+   <td style="text-align:right;"> 0.90 </td>
+   <td style="text-align:right;"> 0.77 </td>
+   <td style="text-align:right;"> 1.06 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> wkfreedm_bin </td>
+   <td style="text-align:left;"> Female </td>
+   <td style="text-align:right;"> 0.98 </td>
+   <td style="text-align:right;"> 0.84 </td>
+   <td style="text-align:right;"> 1.14 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> wkdecide_bin </td>
+   <td style="text-align:left;"> Female </td>
+   <td style="text-align:right;"> 1.02 </td>
+   <td style="text-align:right;"> 0.91 </td>
+   <td style="text-align:right;"> 1.14 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> safehlth_bin </td>
+   <td style="text-align:left;"> Female </td>
+   <td style="text-align:right;"> 1.08 </td>
+   <td style="text-align:right;"> 0.84 </td>
+   <td style="text-align:right;"> 1.40 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> safefrst_bin </td>
+   <td style="text-align:left;"> Female </td>
+   <td style="text-align:right;"> 0.95 </td>
+   <td style="text-align:right;"> 0.78 </td>
+   <td style="text-align:right;"> 1.17 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> disc_haras </td>
+   <td style="text-align:left;"> Male </td>
+   <td style="text-align:right;"> 1.00 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> trustman_bin </td>
+   <td style="text-align:left;"> Male </td>
+   <td style="text-align:right;"> 1.00 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> suphelp_bin </td>
+   <td style="text-align:left;"> Male </td>
+   <td style="text-align:right;"> 1.00 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> wkfreedm_bin </td>
+   <td style="text-align:left;"> Male </td>
+   <td style="text-align:right;"> 1.00 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> safehlth_bin </td>
+   <td style="text-align:left;"> Male </td>
+   <td style="text-align:right;"> 1.00 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> respect_bin </td>
+   <td style="text-align:left;"> Male </td>
+   <td style="text-align:right;"> 1.00 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> manvsemp_bin </td>
+   <td style="text-align:left;"> Male </td>
+   <td style="text-align:right;"> 1.00 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> supcares_bin </td>
+   <td style="text-align:left;"> Male </td>
+   <td style="text-align:right;"> 1.00 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> wkdecide_bin </td>
+   <td style="text-align:left;"> Male </td>
+   <td style="text-align:right;"> 1.00 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> safefrst_bin </td>
+   <td style="text-align:left;"> Male </td>
+   <td style="text-align:right;"> 1.00 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+  </tr>
+</tbody>
+</table></div>
+
+### Race
 
 
 ```r
@@ -2496,7 +2682,7 @@ plotted(xaxis=Class, limitsvec=c(0.3, 2.5), breaksvec=c(0.6, 1, 1.666667, 1.6666
         shapes=c(15, 0, 12), xlabbed="Race (ref: white)")
 ```
 
-![](analysis_12_8_20_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
+![](analysis_12_8_20_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
 
 ```r
 #table of estimates
@@ -2658,7 +2844,7 @@ tabled(1:20, "Ref: white")
 </tbody>
 </table></div>
 
-### Gender interaction
+### Gender-race interaction
 
 
 ```r
@@ -2680,7 +2866,7 @@ plotted(xaxis=Class, limitsvec=c(0.1, 3.1), breaksvec=c(0.125, 0.25, 0.5, 1, 2),
         shapes=c(15, 16, 0, 1, 12, 10), xlabbed="Race & gender (ref: white male)", nrow=1)
 ```
 
-![](analysis_12_8_20_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
+![](analysis_12_8_20_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
 
 ```r
 #table of estimates
@@ -2892,4 +3078,1656 @@ dat %>%
 
 ## How do more-adjusted regressions compare to less-adjusted regressions?
 
-TBD
+Models adjusted for age, year, gender, race, education, region, and marital status
+
+### Class and QWL 
+
+Prevalence of bad category of each binary QWL variable among each class relative to the prevalence among (all, white, or male) workers adjusted for age and year with restricted cubic splines.
+
+Excluded 'suphelp_bin' and 'supcares_bin'  for these regressions since PBs and caps shouldn't have supervisors (at least in theory).
+
+#### No interaction
+
+
+```r
+#run regression
+less_adj <- mysvy(dat, c(125:128,131:134), "~class + rcs(age, 3) + rcs(year, 3) + sex + educ + region + marital_tri", design = svy_dat)
+
+#pull into matrix
+regs_less <- matrix_func(8, 4, c(125:128, 131:134))
+
+#format matrix
+binded <- formatted(c("Managers", "Petite bourgeoisie", "Capitalists"), 8,
+                    c("disc_haras", "trustman_bin", "wkfreedm_bin", "safehlth_bin", "respect_bin", "manvsemp_bin", "wkdecide_bin", "safefrst_bin"), 
+                    "Workers",
+                    c("Workers", "Managers", "Petite bourgeoisie", "Capitalists"))
+
+#plot of estimates
+plotted(xaxis=Class, limitsvec=c(0.1, 1.81), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
+        cols=brewer.pal(8, "Blues")[c(5,6,7,8)], 
+        shapes=c(15,16,17,18), xlabbed="Class (ref: workers)")
+```
+
+![](analysis_12_8_20_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
+
+```r
+#table of estimates
+tabled(1:24, "Ref: workers")
+```
+
+<div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:250px; overflow-x: scroll; width:100%; "><table class="table table-striped" style="margin-left: auto; margin-right: auto;">
+<caption>Ref: workers</caption>
+ <thead>
+  <tr>
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> QWL variable </th>
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> Class </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> PR </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> Lower </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> Upper </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> disc_haras </td>
+   <td style="text-align:left;"> Managers </td>
+   <td style="text-align:right;"> 1.20 </td>
+   <td style="text-align:right;"> 1.07 </td>
+   <td style="text-align:right;"> 1.34 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> disc_haras </td>
+   <td style="text-align:left;"> Petite bourgeoisie </td>
+   <td style="text-align:right;"> 0.74 </td>
+   <td style="text-align:right;"> 0.57 </td>
+   <td style="text-align:right;"> 0.95 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> disc_haras </td>
+   <td style="text-align:left;"> Capitalists </td>
+   <td style="text-align:right;"> 0.99 </td>
+   <td style="text-align:right;"> 0.76 </td>
+   <td style="text-align:right;"> 1.29 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> respect_bin </td>
+   <td style="text-align:left;"> Managers </td>
+   <td style="text-align:right;"> 0.77 </td>
+   <td style="text-align:right;"> 0.61 </td>
+   <td style="text-align:right;"> 0.97 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> respect_bin </td>
+   <td style="text-align:left;"> Petite bourgeoisie </td>
+   <td style="text-align:right;"> 0.55 </td>
+   <td style="text-align:right;"> 0.34 </td>
+   <td style="text-align:right;"> 0.88 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> respect_bin </td>
+   <td style="text-align:left;"> Capitalists </td>
+   <td style="text-align:right;"> 0.43 </td>
+   <td style="text-align:right;"> 0.23 </td>
+   <td style="text-align:right;"> 0.80 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> trustman_bin </td>
+   <td style="text-align:left;"> Managers </td>
+   <td style="text-align:right;"> 0.87 </td>
+   <td style="text-align:right;"> 0.77 </td>
+   <td style="text-align:right;"> 0.98 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> trustman_bin </td>
+   <td style="text-align:left;"> Petite bourgeoisie </td>
+   <td style="text-align:right;"> 0.25 </td>
+   <td style="text-align:right;"> 0.17 </td>
+   <td style="text-align:right;"> 0.38 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> trustman_bin </td>
+   <td style="text-align:left;"> Capitalists </td>
+   <td style="text-align:right;"> 0.23 </td>
+   <td style="text-align:right;"> 0.15 </td>
+   <td style="text-align:right;"> 0.38 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> manvsemp_bin </td>
+   <td style="text-align:left;"> Managers </td>
+   <td style="text-align:right;"> 0.79 </td>
+   <td style="text-align:right;"> 0.64 </td>
+   <td style="text-align:right;"> 0.98 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> manvsemp_bin </td>
+   <td style="text-align:left;"> Petite bourgeoisie </td>
+   <td style="text-align:right;"> 0.29 </td>
+   <td style="text-align:right;"> 0.15 </td>
+   <td style="text-align:right;"> 0.57 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> manvsemp_bin </td>
+   <td style="text-align:left;"> Capitalists </td>
+   <td style="text-align:right;"> 0.25 </td>
+   <td style="text-align:right;"> 0.12 </td>
+   <td style="text-align:right;"> 0.56 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> wkfreedm_bin </td>
+   <td style="text-align:left;"> Managers </td>
+   <td style="text-align:right;"> 0.64 </td>
+   <td style="text-align:right;"> 0.53 </td>
+   <td style="text-align:right;"> 0.76 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> wkfreedm_bin </td>
+   <td style="text-align:left;"> Petite bourgeoisie </td>
+   <td style="text-align:right;"> 0.26 </td>
+   <td style="text-align:right;"> 0.17 </td>
+   <td style="text-align:right;"> 0.41 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> wkfreedm_bin </td>
+   <td style="text-align:left;"> Capitalists </td>
+   <td style="text-align:right;"> 0.12 </td>
+   <td style="text-align:right;"> 0.06 </td>
+   <td style="text-align:right;"> 0.27 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> wkdecide_bin </td>
+   <td style="text-align:left;"> Managers </td>
+   <td style="text-align:right;"> 0.41 </td>
+   <td style="text-align:right;"> 0.35 </td>
+   <td style="text-align:right;"> 0.48 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> wkdecide_bin </td>
+   <td style="text-align:left;"> Petite bourgeoisie </td>
+   <td style="text-align:right;"> 1.39 </td>
+   <td style="text-align:right;"> 1.21 </td>
+   <td style="text-align:right;"> 1.60 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> wkdecide_bin </td>
+   <td style="text-align:left;"> Capitalists </td>
+   <td style="text-align:right;"> 0.59 </td>
+   <td style="text-align:right;"> 0.45 </td>
+   <td style="text-align:right;"> 0.77 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> safehlth_bin </td>
+   <td style="text-align:left;"> Managers </td>
+   <td style="text-align:right;"> 0.81 </td>
+   <td style="text-align:right;"> 0.63 </td>
+   <td style="text-align:right;"> 1.03 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> safehlth_bin </td>
+   <td style="text-align:left;"> Petite bourgeoisie </td>
+   <td style="text-align:right;"> 0.61 </td>
+   <td style="text-align:right;"> 0.35 </td>
+   <td style="text-align:right;"> 1.06 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> safehlth_bin </td>
+   <td style="text-align:left;"> Capitalists </td>
+   <td style="text-align:right;"> 0.72 </td>
+   <td style="text-align:right;"> 0.36 </td>
+   <td style="text-align:right;"> 1.43 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> safefrst_bin </td>
+   <td style="text-align:left;"> Managers </td>
+   <td style="text-align:right;"> 0.90 </td>
+   <td style="text-align:right;"> 0.75 </td>
+   <td style="text-align:right;"> 1.10 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> safefrst_bin </td>
+   <td style="text-align:left;"> Petite bourgeoisie </td>
+   <td style="text-align:right;"> 0.44 </td>
+   <td style="text-align:right;"> 0.26 </td>
+   <td style="text-align:right;"> 0.73 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> safefrst_bin </td>
+   <td style="text-align:left;"> Capitalists </td>
+   <td style="text-align:right;"> 0.75 </td>
+   <td style="text-align:right;"> 0.45 </td>
+   <td style="text-align:right;"> 1.26 </td>
+  </tr>
+</tbody>
+</table></div>
+
+#### Gender interaction
+
+
+```r
+#run regression
+less_adj <- mysvy(dat, c(125:128,131:134), "~class_gender + rcs(age, 3) + rcs(year, 3) + educ + region + marital_tri", design = svy_dat)
+
+#pull into matrix
+regs_less <- matrix_func(8, 8, c(125:128, 131:134))
+
+#format matrix
+binded <- formatted(c("Male managers", "Male petite bourgeoisie", "Male capitalists", "Female workers", "Female managers", "Female petite bourgeoisie", "Female capitalists"), 8, 
+                    c("disc_haras", "trustman_bin", "wkfreedm_bin", "safehlth_bin", "respect_bin", "manvsemp_bin", "wkdecide_bin", "safefrst_bin"), 
+                    "Male workers",
+                    c("Male workers", "Male managers", "Male petite bourgeoisie", "Male capitalists","Female workers", "Female managers", "Female petite bourgeoisie", "Female capitalists"))
+
+#plot of estimates
+plotted(xaxis=Class, limitsvec=c(0.017, 2.1), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
+        cols=c(brewer.pal(8, "Blues")[c(5,6,7,8)], brewer.pal(8, "Purples")[c(5,6,7,8)]), 
+        shapes=c(15,16,17,18,0,1,2,5), xlabbed="Class & gender (ref: male workers)", nrow=2)
+```
+
+![](analysis_12_8_20_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
+
+```r
+#table of estimates
+tabled(1:56, "Ref: male workers")
+```
+
+<div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:250px; overflow-x: scroll; width:100%; "><table class="table table-striped" style="margin-left: auto; margin-right: auto;">
+<caption>Ref: male workers</caption>
+ <thead>
+  <tr>
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> QWL variable </th>
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> Class </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> PR </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> Lower </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> Upper </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> disc_haras </td>
+   <td style="text-align:left;"> Male managers </td>
+   <td style="text-align:right;"> 1.17 </td>
+   <td style="text-align:right;"> 0.99 </td>
+   <td style="text-align:right;"> 1.39 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> disc_haras </td>
+   <td style="text-align:left;"> Male petite bourgeoisie </td>
+   <td style="text-align:right;"> 0.98 </td>
+   <td style="text-align:right;"> 0.70 </td>
+   <td style="text-align:right;"> 1.38 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> disc_haras </td>
+   <td style="text-align:left;"> Male capitalists </td>
+   <td style="text-align:right;"> 1.05 </td>
+   <td style="text-align:right;"> 0.74 </td>
+   <td style="text-align:right;"> 1.47 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> disc_haras </td>
+   <td style="text-align:left;"> Female workers </td>
+   <td style="text-align:right;"> 1.38 </td>
+   <td style="text-align:right;"> 1.20 </td>
+   <td style="text-align:right;"> 1.59 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> disc_haras </td>
+   <td style="text-align:left;"> Female managers </td>
+   <td style="text-align:right;"> 1.68 </td>
+   <td style="text-align:right;"> 1.43 </td>
+   <td style="text-align:right;"> 1.98 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> disc_haras </td>
+   <td style="text-align:left;"> Female petite bourgeoisie </td>
+   <td style="text-align:right;"> 0.76 </td>
+   <td style="text-align:right;"> 0.51 </td>
+   <td style="text-align:right;"> 1.13 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> disc_haras </td>
+   <td style="text-align:left;"> Female capitalists </td>
+   <td style="text-align:right;"> 1.23 </td>
+   <td style="text-align:right;"> 0.80 </td>
+   <td style="text-align:right;"> 1.89 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> respect_bin </td>
+   <td style="text-align:left;"> Male managers </td>
+   <td style="text-align:right;"> 0.62 </td>
+   <td style="text-align:right;"> 0.43 </td>
+   <td style="text-align:right;"> 0.92 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> respect_bin </td>
+   <td style="text-align:left;"> Male petite bourgeoisie </td>
+   <td style="text-align:right;"> 0.62 </td>
+   <td style="text-align:right;"> 0.32 </td>
+   <td style="text-align:right;"> 1.19 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> respect_bin </td>
+   <td style="text-align:left;"> Male capitalists </td>
+   <td style="text-align:right;"> 0.44 </td>
+   <td style="text-align:right;"> 0.22 </td>
+   <td style="text-align:right;"> 0.89 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> respect_bin </td>
+   <td style="text-align:left;"> Female workers </td>
+   <td style="text-align:right;"> 1.16 </td>
+   <td style="text-align:right;"> 0.92 </td>
+   <td style="text-align:right;"> 1.46 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> respect_bin </td>
+   <td style="text-align:left;"> Female managers </td>
+   <td style="text-align:right;"> 1.04 </td>
+   <td style="text-align:right;"> 0.76 </td>
+   <td style="text-align:right;"> 1.42 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> respect_bin </td>
+   <td style="text-align:left;"> Female petite bourgeoisie </td>
+   <td style="text-align:right;"> 0.56 </td>
+   <td style="text-align:right;"> 0.29 </td>
+   <td style="text-align:right;"> 1.11 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> respect_bin </td>
+   <td style="text-align:left;"> Female capitalists </td>
+   <td style="text-align:right;"> 0.40 </td>
+   <td style="text-align:right;"> 0.10 </td>
+   <td style="text-align:right;"> 1.62 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> trustman_bin </td>
+   <td style="text-align:left;"> Male managers </td>
+   <td style="text-align:right;"> 0.85 </td>
+   <td style="text-align:right;"> 0.71 </td>
+   <td style="text-align:right;"> 1.03 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> trustman_bin </td>
+   <td style="text-align:left;"> Male petite bourgeoisie </td>
+   <td style="text-align:right;"> 0.28 </td>
+   <td style="text-align:right;"> 0.17 </td>
+   <td style="text-align:right;"> 0.47 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> trustman_bin </td>
+   <td style="text-align:left;"> Male capitalists </td>
+   <td style="text-align:right;"> 0.24 </td>
+   <td style="text-align:right;"> 0.14 </td>
+   <td style="text-align:right;"> 0.42 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> trustman_bin </td>
+   <td style="text-align:left;"> Female workers </td>
+   <td style="text-align:right;"> 0.97 </td>
+   <td style="text-align:right;"> 0.85 </td>
+   <td style="text-align:right;"> 1.11 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> trustman_bin </td>
+   <td style="text-align:left;"> Female managers </td>
+   <td style="text-align:right;"> 0.86 </td>
+   <td style="text-align:right;"> 0.72 </td>
+   <td style="text-align:right;"> 1.02 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> trustman_bin </td>
+   <td style="text-align:left;"> Female petite bourgeoisie </td>
+   <td style="text-align:right;"> 0.22 </td>
+   <td style="text-align:right;"> 0.11 </td>
+   <td style="text-align:right;"> 0.43 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> trustman_bin </td>
+   <td style="text-align:left;"> Female capitalists </td>
+   <td style="text-align:right;"> 0.21 </td>
+   <td style="text-align:right;"> 0.07 </td>
+   <td style="text-align:right;"> 0.60 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> manvsemp_bin </td>
+   <td style="text-align:left;"> Male managers </td>
+   <td style="text-align:right;"> 0.76 </td>
+   <td style="text-align:right;"> 0.55 </td>
+   <td style="text-align:right;"> 1.05 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> manvsemp_bin </td>
+   <td style="text-align:left;"> Male petite bourgeoisie </td>
+   <td style="text-align:right;"> 0.38 </td>
+   <td style="text-align:right;"> 0.16 </td>
+   <td style="text-align:right;"> 0.91 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> manvsemp_bin </td>
+   <td style="text-align:left;"> Male capitalists </td>
+   <td style="text-align:right;"> 0.30 </td>
+   <td style="text-align:right;"> 0.13 </td>
+   <td style="text-align:right;"> 0.72 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> manvsemp_bin </td>
+   <td style="text-align:left;"> Female workers </td>
+   <td style="text-align:right;"> 1.06 </td>
+   <td style="text-align:right;"> 0.83 </td>
+   <td style="text-align:right;"> 1.36 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> manvsemp_bin </td>
+   <td style="text-align:left;"> Female managers </td>
+   <td style="text-align:right;"> 0.87 </td>
+   <td style="text-align:right;"> 0.64 </td>
+   <td style="text-align:right;"> 1.18 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> manvsemp_bin </td>
+   <td style="text-align:left;"> Female petite bourgeoisie </td>
+   <td style="text-align:right;"> 0.23 </td>
+   <td style="text-align:right;"> 0.08 </td>
+   <td style="text-align:right;"> 0.65 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> manvsemp_bin </td>
+   <td style="text-align:left;"> Female capitalists </td>
+   <td style="text-align:right;"> 0.12 </td>
+   <td style="text-align:right;"> 0.02 </td>
+   <td style="text-align:right;"> 0.85 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> wkfreedm_bin </td>
+   <td style="text-align:left;"> Male managers </td>
+   <td style="text-align:right;"> 0.62 </td>
+   <td style="text-align:right;"> 0.49 </td>
+   <td style="text-align:right;"> 0.80 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> wkfreedm_bin </td>
+   <td style="text-align:left;"> Male petite bourgeoisie </td>
+   <td style="text-align:right;"> 0.25 </td>
+   <td style="text-align:right;"> 0.14 </td>
+   <td style="text-align:right;"> 0.46 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> wkfreedm_bin </td>
+   <td style="text-align:left;"> Male capitalists </td>
+   <td style="text-align:right;"> 0.12 </td>
+   <td style="text-align:right;"> 0.05 </td>
+   <td style="text-align:right;"> 0.30 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> wkfreedm_bin </td>
+   <td style="text-align:left;"> Female workers </td>
+   <td style="text-align:right;"> 1.01 </td>
+   <td style="text-align:right;"> 0.86 </td>
+   <td style="text-align:right;"> 1.18 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> wkfreedm_bin </td>
+   <td style="text-align:left;"> Female managers </td>
+   <td style="text-align:right;"> 0.66 </td>
+   <td style="text-align:right;"> 0.51 </td>
+   <td style="text-align:right;"> 0.84 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> wkfreedm_bin </td>
+   <td style="text-align:left;"> Female petite bourgeoisie </td>
+   <td style="text-align:right;"> 0.28 </td>
+   <td style="text-align:right;"> 0.14 </td>
+   <td style="text-align:right;"> 0.54 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> wkfreedm_bin </td>
+   <td style="text-align:left;"> Female capitalists </td>
+   <td style="text-align:right;"> 0.12 </td>
+   <td style="text-align:right;"> 0.03 </td>
+   <td style="text-align:right;"> 0.54 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> wkdecide_bin </td>
+   <td style="text-align:left;"> Male managers </td>
+   <td style="text-align:right;"> 0.39 </td>
+   <td style="text-align:right;"> 0.31 </td>
+   <td style="text-align:right;"> 0.49 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> wkdecide_bin </td>
+   <td style="text-align:left;"> Male petite bourgeoisie </td>
+   <td style="text-align:right;"> 1.16 </td>
+   <td style="text-align:right;"> 0.93 </td>
+   <td style="text-align:right;"> 1.46 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> wkdecide_bin </td>
+   <td style="text-align:left;"> Male capitalists </td>
+   <td style="text-align:right;"> 0.60 </td>
+   <td style="text-align:right;"> 0.44 </td>
+   <td style="text-align:right;"> 0.84 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> wkdecide_bin </td>
+   <td style="text-align:left;"> Female workers </td>
+   <td style="text-align:right;"> 1.05 </td>
+   <td style="text-align:right;"> 0.93 </td>
+   <td style="text-align:right;"> 1.18 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> wkdecide_bin </td>
+   <td style="text-align:left;"> Female managers </td>
+   <td style="text-align:right;"> 0.44 </td>
+   <td style="text-align:right;"> 0.35 </td>
+   <td style="text-align:right;"> 0.56 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> wkdecide_bin </td>
+   <td style="text-align:left;"> Female petite bourgeoisie </td>
+   <td style="text-align:right;"> 1.69 </td>
+   <td style="text-align:right;"> 1.42 </td>
+   <td style="text-align:right;"> 2.02 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> wkdecide_bin </td>
+   <td style="text-align:left;"> Female capitalists </td>
+   <td style="text-align:right;"> 0.51 </td>
+   <td style="text-align:right;"> 0.30 </td>
+   <td style="text-align:right;"> 0.86 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> safehlth_bin </td>
+   <td style="text-align:left;"> Male managers </td>
+   <td style="text-align:right;"> 0.81 </td>
+   <td style="text-align:right;"> 0.58 </td>
+   <td style="text-align:right;"> 1.14 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> safehlth_bin </td>
+   <td style="text-align:left;"> Male petite bourgeoisie </td>
+   <td style="text-align:right;"> 0.87 </td>
+   <td style="text-align:right;"> 0.45 </td>
+   <td style="text-align:right;"> 1.69 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> safehlth_bin </td>
+   <td style="text-align:left;"> Male capitalists </td>
+   <td style="text-align:right;"> 0.83 </td>
+   <td style="text-align:right;"> 0.37 </td>
+   <td style="text-align:right;"> 1.83 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> safehlth_bin </td>
+   <td style="text-align:left;"> Female workers </td>
+   <td style="text-align:right;"> 1.11 </td>
+   <td style="text-align:right;"> 0.86 </td>
+   <td style="text-align:right;"> 1.43 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> safehlth_bin </td>
+   <td style="text-align:left;"> Female managers </td>
+   <td style="text-align:right;"> 0.90 </td>
+   <td style="text-align:right;"> 0.63 </td>
+   <td style="text-align:right;"> 1.28 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> safehlth_bin </td>
+   <td style="text-align:left;"> Female petite bourgeoisie </td>
+   <td style="text-align:right;"> 0.42 </td>
+   <td style="text-align:right;"> 0.15 </td>
+   <td style="text-align:right;"> 1.20 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> safehlth_bin </td>
+   <td style="text-align:left;"> Female capitalists </td>
+   <td style="text-align:right;"> 0.52 </td>
+   <td style="text-align:right;"> 0.15 </td>
+   <td style="text-align:right;"> 1.81 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> safefrst_bin </td>
+   <td style="text-align:left;"> Male managers </td>
+   <td style="text-align:right;"> 0.81 </td>
+   <td style="text-align:right;"> 0.62 </td>
+   <td style="text-align:right;"> 1.06 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> safefrst_bin </td>
+   <td style="text-align:left;"> Male petite bourgeoisie </td>
+   <td style="text-align:right;"> 0.65 </td>
+   <td style="text-align:right;"> 0.34 </td>
+   <td style="text-align:right;"> 1.24 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> safefrst_bin </td>
+   <td style="text-align:left;"> Male capitalists </td>
+   <td style="text-align:right;"> 0.77 </td>
+   <td style="text-align:right;"> 0.42 </td>
+   <td style="text-align:right;"> 1.40 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> safefrst_bin </td>
+   <td style="text-align:left;"> Female workers </td>
+   <td style="text-align:right;"> 0.96 </td>
+   <td style="text-align:right;"> 0.78 </td>
+   <td style="text-align:right;"> 1.17 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> safefrst_bin </td>
+   <td style="text-align:left;"> Female managers </td>
+   <td style="text-align:right;"> 0.96 </td>
+   <td style="text-align:right;"> 0.74 </td>
+   <td style="text-align:right;"> 1.25 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> safefrst_bin </td>
+   <td style="text-align:left;"> Female petite bourgeoisie </td>
+   <td style="text-align:right;"> 0.21 </td>
+   <td style="text-align:right;"> 0.09 </td>
+   <td style="text-align:right;"> 0.45 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> safefrst_bin </td>
+   <td style="text-align:left;"> Female capitalists </td>
+   <td style="text-align:right;"> 0.62 </td>
+   <td style="text-align:right;"> 0.28 </td>
+   <td style="text-align:right;"> 1.41 </td>
+  </tr>
+</tbody>
+</table></div>
+
+#### Race interaction (white/POC)
+
+Cell sizes too small among Black capitalists to divide up race variable even further. 
+
+
+```r
+#run regression
+less_adj <- mysvy(dat, c(125:128,131:134), "~class_poc + rcs(age, 3) + rcs(year, 3) + sex + educ + region + marital_tri", design = svy_dat)
+
+#pull into matrix
+regs_less <- matrix_func(8, 8, c(125:128, 131:134))
+
+#format matrix
+binded <- formatted(c("White managers", "White petite bourgeoisie", "White capitalists", "POC workers", "POC managers", "POC petite bourgeoisie", "POC capitalists"), 8, 
+                    c("disc_haras", "trustman_bin", "wkfreedm_bin", "safehlth_bin", "respect_bin", "manvsemp_bin", "wkdecide_bin", "safefrst_bin"), 
+                    "White workers",
+                    c("White workers", "White managers", "White petite bourgeoisie", "White capitalists", "POC workers", "POC managers", "POC petite bourgeoisie", "POC capitalists"))
+
+#plot of estimates
+plotted(xaxis=Class, limitsvec=c(0.0165, 3.35), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
+        cols=c(brewer.pal(8, "Blues")[c(5,6,7,8)], brewer.pal(8, "Purples")[c(5,6,7,8)]),
+        shapes=c(15,16,17,18,0,1,2,5), xlabbed="Class & race (ref: white workers)", nrow=2)
+```
+
+![](analysis_12_8_20_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
+
+```r
+#table of estimates
+tabled(1:56, "Ref: white workers")
+```
+
+<div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:250px; overflow-x: scroll; width:100%; "><table class="table table-striped" style="margin-left: auto; margin-right: auto;">
+<caption>Ref: white workers</caption>
+ <thead>
+  <tr>
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> QWL variable </th>
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> Class </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> PR </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> Lower </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> Upper </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> disc_haras </td>
+   <td style="text-align:left;"> White managers </td>
+   <td style="text-align:right;"> 1.22 </td>
+   <td style="text-align:right;"> 1.07 </td>
+   <td style="text-align:right;"> 1.40 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> disc_haras </td>
+   <td style="text-align:left;"> White petite bourgeoisie </td>
+   <td style="text-align:right;"> 0.64 </td>
+   <td style="text-align:right;"> 0.46 </td>
+   <td style="text-align:right;"> 0.87 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> disc_haras </td>
+   <td style="text-align:left;"> White capitalists </td>
+   <td style="text-align:right;"> 0.88 </td>
+   <td style="text-align:right;"> 0.64 </td>
+   <td style="text-align:right;"> 1.21 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> disc_haras </td>
+   <td style="text-align:left;"> POC workers </td>
+   <td style="text-align:right;"> 1.11 </td>
+   <td style="text-align:right;"> 0.96 </td>
+   <td style="text-align:right;"> 1.29 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> disc_haras </td>
+   <td style="text-align:left;"> POC managers </td>
+   <td style="text-align:right;"> 1.27 </td>
+   <td style="text-align:right;"> 1.05 </td>
+   <td style="text-align:right;"> 1.53 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> disc_haras </td>
+   <td style="text-align:left;"> POC petite bourgeoisie </td>
+   <td style="text-align:right;"> 1.19 </td>
+   <td style="text-align:right;"> 0.79 </td>
+   <td style="text-align:right;"> 1.79 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> disc_haras </td>
+   <td style="text-align:left;"> POC capitalists </td>
+   <td style="text-align:right;"> 1.60 </td>
+   <td style="text-align:right;"> 1.02 </td>
+   <td style="text-align:right;"> 2.52 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> respect_bin </td>
+   <td style="text-align:left;"> White managers </td>
+   <td style="text-align:right;"> 0.77 </td>
+   <td style="text-align:right;"> 0.59 </td>
+   <td style="text-align:right;"> 0.99 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> respect_bin </td>
+   <td style="text-align:left;"> White petite bourgeoisie </td>
+   <td style="text-align:right;"> 0.55 </td>
+   <td style="text-align:right;"> 0.33 </td>
+   <td style="text-align:right;"> 0.91 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> respect_bin </td>
+   <td style="text-align:left;"> White capitalists </td>
+   <td style="text-align:right;"> 0.38 </td>
+   <td style="text-align:right;"> 0.18 </td>
+   <td style="text-align:right;"> 0.78 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> respect_bin </td>
+   <td style="text-align:left;"> POC workers </td>
+   <td style="text-align:right;"> 0.85 </td>
+   <td style="text-align:right;"> 0.65 </td>
+   <td style="text-align:right;"> 1.11 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> respect_bin </td>
+   <td style="text-align:left;"> POC managers </td>
+   <td style="text-align:right;"> 0.64 </td>
+   <td style="text-align:right;"> 0.38 </td>
+   <td style="text-align:right;"> 1.06 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> respect_bin </td>
+   <td style="text-align:left;"> POC petite bourgeoisie </td>
+   <td style="text-align:right;"> 0.46 </td>
+   <td style="text-align:right;"> 0.14 </td>
+   <td style="text-align:right;"> 1.51 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> respect_bin </td>
+   <td style="text-align:left;"> POC capitalists </td>
+   <td style="text-align:right;"> 0.58 </td>
+   <td style="text-align:right;"> 0.18 </td>
+   <td style="text-align:right;"> 1.95 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> trustman_bin </td>
+   <td style="text-align:left;"> White managers </td>
+   <td style="text-align:right;"> 0.86 </td>
+   <td style="text-align:right;"> 0.75 </td>
+   <td style="text-align:right;"> 0.99 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> trustman_bin </td>
+   <td style="text-align:left;"> White petite bourgeoisie </td>
+   <td style="text-align:right;"> 0.26 </td>
+   <td style="text-align:right;"> 0.16 </td>
+   <td style="text-align:right;"> 0.43 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> trustman_bin </td>
+   <td style="text-align:left;"> White capitalists </td>
+   <td style="text-align:right;"> 0.21 </td>
+   <td style="text-align:right;"> 0.12 </td>
+   <td style="text-align:right;"> 0.37 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> trustman_bin </td>
+   <td style="text-align:left;"> POC workers </td>
+   <td style="text-align:right;"> 1.13 </td>
+   <td style="text-align:right;"> 0.96 </td>
+   <td style="text-align:right;"> 1.32 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> trustman_bin </td>
+   <td style="text-align:left;"> POC managers </td>
+   <td style="text-align:right;"> 1.00 </td>
+   <td style="text-align:right;"> 0.81 </td>
+   <td style="text-align:right;"> 1.23 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> trustman_bin </td>
+   <td style="text-align:left;"> POC petite bourgeoisie </td>
+   <td style="text-align:right;"> 0.25 </td>
+   <td style="text-align:right;"> 0.11 </td>
+   <td style="text-align:right;"> 0.58 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> trustman_bin </td>
+   <td style="text-align:left;"> POC capitalists </td>
+   <td style="text-align:right;"> 0.40 </td>
+   <td style="text-align:right;"> 0.14 </td>
+   <td style="text-align:right;"> 1.13 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> manvsemp_bin </td>
+   <td style="text-align:left;"> White managers </td>
+   <td style="text-align:right;"> 0.85 </td>
+   <td style="text-align:right;"> 0.67 </td>
+   <td style="text-align:right;"> 1.08 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> manvsemp_bin </td>
+   <td style="text-align:left;"> White petite bourgeoisie </td>
+   <td style="text-align:right;"> 0.34 </td>
+   <td style="text-align:right;"> 0.17 </td>
+   <td style="text-align:right;"> 0.69 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> manvsemp_bin </td>
+   <td style="text-align:left;"> White capitalists </td>
+   <td style="text-align:right;"> 0.27 </td>
+   <td style="text-align:right;"> 0.11 </td>
+   <td style="text-align:right;"> 0.62 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> manvsemp_bin </td>
+   <td style="text-align:left;"> POC workers </td>
+   <td style="text-align:right;"> 1.00 </td>
+   <td style="text-align:right;"> 0.77 </td>
+   <td style="text-align:right;"> 1.29 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> manvsemp_bin </td>
+   <td style="text-align:left;"> POC managers </td>
+   <td style="text-align:right;"> 0.61 </td>
+   <td style="text-align:right;"> 0.39 </td>
+   <td style="text-align:right;"> 0.93 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> manvsemp_bin </td>
+   <td style="text-align:left;"> POC petite bourgeoisie </td>
+   <td style="text-align:right;"> 0.12 </td>
+   <td style="text-align:right;"> 0.02 </td>
+   <td style="text-align:right;"> 0.88 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> manvsemp_bin </td>
+   <td style="text-align:left;"> POC capitalists </td>
+   <td style="text-align:right;"> 0.20 </td>
+   <td style="text-align:right;"> 0.03 </td>
+   <td style="text-align:right;"> 1.32 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> wkfreedm_bin </td>
+   <td style="text-align:left;"> White managers </td>
+   <td style="text-align:right;"> 0.61 </td>
+   <td style="text-align:right;"> 0.50 </td>
+   <td style="text-align:right;"> 0.75 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> wkfreedm_bin </td>
+   <td style="text-align:left;"> White petite bourgeoisie </td>
+   <td style="text-align:right;"> 0.23 </td>
+   <td style="text-align:right;"> 0.14 </td>
+   <td style="text-align:right;"> 0.39 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> wkfreedm_bin </td>
+   <td style="text-align:left;"> White capitalists </td>
+   <td style="text-align:right;"> 0.11 </td>
+   <td style="text-align:right;"> 0.05 </td>
+   <td style="text-align:right;"> 0.27 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> wkfreedm_bin </td>
+   <td style="text-align:left;"> POC workers </td>
+   <td style="text-align:right;"> 1.03 </td>
+   <td style="text-align:right;"> 0.85 </td>
+   <td style="text-align:right;"> 1.26 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> wkfreedm_bin </td>
+   <td style="text-align:left;"> POC managers </td>
+   <td style="text-align:right;"> 0.74 </td>
+   <td style="text-align:right;"> 0.53 </td>
+   <td style="text-align:right;"> 1.02 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> wkfreedm_bin </td>
+   <td style="text-align:left;"> POC petite bourgeoisie </td>
+   <td style="text-align:right;"> 0.38 </td>
+   <td style="text-align:right;"> 0.16 </td>
+   <td style="text-align:right;"> 0.91 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> wkfreedm_bin </td>
+   <td style="text-align:left;"> POC capitalists </td>
+   <td style="text-align:right;"> 0.17 </td>
+   <td style="text-align:right;"> 0.02 </td>
+   <td style="text-align:right;"> 1.12 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> wkdecide_bin </td>
+   <td style="text-align:left;"> White managers </td>
+   <td style="text-align:right;"> 0.40 </td>
+   <td style="text-align:right;"> 0.33 </td>
+   <td style="text-align:right;"> 0.49 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> wkdecide_bin </td>
+   <td style="text-align:left;"> White petite bourgeoisie </td>
+   <td style="text-align:right;"> 1.36 </td>
+   <td style="text-align:right;"> 1.15 </td>
+   <td style="text-align:right;"> 1.60 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> wkdecide_bin </td>
+   <td style="text-align:left;"> White capitalists </td>
+   <td style="text-align:right;"> 0.63 </td>
+   <td style="text-align:right;"> 0.47 </td>
+   <td style="text-align:right;"> 0.85 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> wkdecide_bin </td>
+   <td style="text-align:left;"> POC workers </td>
+   <td style="text-align:right;"> 1.21 </td>
+   <td style="text-align:right;"> 1.06 </td>
+   <td style="text-align:right;"> 1.38 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> wkdecide_bin </td>
+   <td style="text-align:left;"> POC managers </td>
+   <td style="text-align:right;"> 0.52 </td>
+   <td style="text-align:right;"> 0.40 </td>
+   <td style="text-align:right;"> 0.68 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> wkdecide_bin </td>
+   <td style="text-align:left;"> POC petite bourgeoisie </td>
+   <td style="text-align:right;"> 1.88 </td>
+   <td style="text-align:right;"> 1.49 </td>
+   <td style="text-align:right;"> 2.38 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> wkdecide_bin </td>
+   <td style="text-align:left;"> POC capitalists </td>
+   <td style="text-align:right;"> 0.52 </td>
+   <td style="text-align:right;"> 0.28 </td>
+   <td style="text-align:right;"> 0.96 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> safehlth_bin </td>
+   <td style="text-align:left;"> White managers </td>
+   <td style="text-align:right;"> 0.87 </td>
+   <td style="text-align:right;"> 0.64 </td>
+   <td style="text-align:right;"> 1.18 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> safehlth_bin </td>
+   <td style="text-align:left;"> White petite bourgeoisie </td>
+   <td style="text-align:right;"> 0.49 </td>
+   <td style="text-align:right;"> 0.24 </td>
+   <td style="text-align:right;"> 1.00 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> safehlth_bin </td>
+   <td style="text-align:left;"> White capitalists </td>
+   <td style="text-align:right;"> 0.80 </td>
+   <td style="text-align:right;"> 0.37 </td>
+   <td style="text-align:right;"> 1.76 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> safehlth_bin </td>
+   <td style="text-align:left;"> POC workers </td>
+   <td style="text-align:right;"> 1.42 </td>
+   <td style="text-align:right;"> 1.08 </td>
+   <td style="text-align:right;"> 1.87 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> safehlth_bin </td>
+   <td style="text-align:left;"> POC managers </td>
+   <td style="text-align:right;"> 0.99 </td>
+   <td style="text-align:right;"> 0.64 </td>
+   <td style="text-align:right;"> 1.51 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> safehlth_bin </td>
+   <td style="text-align:left;"> POC petite bourgeoisie </td>
+   <td style="text-align:right;"> 1.37 </td>
+   <td style="text-align:right;"> 0.57 </td>
+   <td style="text-align:right;"> 3.33 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> safehlth_bin </td>
+   <td style="text-align:left;"> POC capitalists </td>
+   <td style="text-align:right;"> 0.73 </td>
+   <td style="text-align:right;"> 0.23 </td>
+   <td style="text-align:right;"> 2.28 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> safefrst_bin </td>
+   <td style="text-align:left;"> White managers </td>
+   <td style="text-align:right;"> 0.93 </td>
+   <td style="text-align:right;"> 0.75 </td>
+   <td style="text-align:right;"> 1.16 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> safefrst_bin </td>
+   <td style="text-align:left;"> White petite bourgeoisie </td>
+   <td style="text-align:right;"> 0.40 </td>
+   <td style="text-align:right;"> 0.21 </td>
+   <td style="text-align:right;"> 0.76 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> safefrst_bin </td>
+   <td style="text-align:left;"> White capitalists </td>
+   <td style="text-align:right;"> 0.72 </td>
+   <td style="text-align:right;"> 0.40 </td>
+   <td style="text-align:right;"> 1.31 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> safefrst_bin </td>
+   <td style="text-align:left;"> POC workers </td>
+   <td style="text-align:right;"> 1.03 </td>
+   <td style="text-align:right;"> 0.81 </td>
+   <td style="text-align:right;"> 1.32 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> safefrst_bin </td>
+   <td style="text-align:left;"> POC managers </td>
+   <td style="text-align:right;"> 0.85 </td>
+   <td style="text-align:right;"> 0.59 </td>
+   <td style="text-align:right;"> 1.24 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> safefrst_bin </td>
+   <td style="text-align:left;"> POC petite bourgeoisie </td>
+   <td style="text-align:right;"> 0.60 </td>
+   <td style="text-align:right;"> 0.25 </td>
+   <td style="text-align:right;"> 1.43 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> safefrst_bin </td>
+   <td style="text-align:left;"> POC capitalists </td>
+   <td style="text-align:right;"> 0.92 </td>
+   <td style="text-align:right;"> 0.33 </td>
+   <td style="text-align:right;"> 2.54 </td>
+  </tr>
+</tbody>
+</table></div>
+
+### Gender, race, and QWL among workers
+
+Prevalence of bad category of each binary QWL variable among each minoritized gender, racial, or gender-racial group of workers relative to the prevalence among male, white, or white male workers adjusted for age and year with restricted cubic splines.
+
+#### Gender
+
+
+```r
+#run regression
+less_adj <- mysvy(dat, 125:134, "~relevel(as.factor(sex), ref='male') + rcs(age, 3) + rcs(year, 3) + race + educ + region + marital_tri", design = subset(svy_dat, class=="Workers"))
+
+#pull into matrix
+regs_less <- matrix_func(10, 3, c(125:134))
+
+#for some reason function doesn't work properly when only extract one coefficient so we need to delete every other row from regs_les
+regs_less <- nth.delete(regs_less, 2)
+  
+#format matrix
+binded <- formatted(c("Female"), 10, 
+                    c("disc_haras", "trustman_bin", "suphelp_bin", "wkfreedm_bin", "safehlth_bin", "respect_bin", "manvsemp_bin", "supcares_bin", "wkdecide_bin", "safefrst_bin"), 
+                    "Male",
+                    c("Male", "Female"))
+
+#plot of estimates
+plotted(xaxis=Class, limitsvec=c(0.3, 2.5), breaksvec=c(0.6, 1, 1.666667, 1.666667^2),
+        cols=c(brewer.pal(8, "Blues")[c(6)], brewer.pal(8, "Purples")[c(6)]), 
+        shapes=c(15, 0), xlabbed="Gender (ref: male)")
+```
+
+![](analysis_12_8_20_files/figure-html/unnamed-chunk-19-1.png)<!-- -->
+
+```r
+#table of estimates
+tabled(1:20, "Ref: white")
+```
+
+<div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:250px; overflow-x: scroll; width:100%; "><table class="table table-striped" style="margin-left: auto; margin-right: auto;">
+<caption>Ref: white</caption>
+ <thead>
+  <tr>
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> QWL variable </th>
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> Class </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> PR </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> Lower </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> Upper </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> disc_haras </td>
+   <td style="text-align:left;"> Female </td>
+   <td style="text-align:right;"> 1.35 </td>
+   <td style="text-align:right;"> 1.17 </td>
+   <td style="text-align:right;"> 1.56 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> respect_bin </td>
+   <td style="text-align:left;"> Female </td>
+   <td style="text-align:right;"> 1.12 </td>
+   <td style="text-align:right;"> 0.89 </td>
+   <td style="text-align:right;"> 1.42 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> trustman_bin </td>
+   <td style="text-align:left;"> Female </td>
+   <td style="text-align:right;"> 0.96 </td>
+   <td style="text-align:right;"> 0.83 </td>
+   <td style="text-align:right;"> 1.10 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> manvsemp_bin </td>
+   <td style="text-align:left;"> Female </td>
+   <td style="text-align:right;"> 1.05 </td>
+   <td style="text-align:right;"> 0.81 </td>
+   <td style="text-align:right;"> 1.34 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> suphelp_bin </td>
+   <td style="text-align:left;"> Female </td>
+   <td style="text-align:right;"> 0.93 </td>
+   <td style="text-align:right;"> 0.76 </td>
+   <td style="text-align:right;"> 1.13 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> supcares_bin </td>
+   <td style="text-align:left;"> Female </td>
+   <td style="text-align:right;"> 0.91 </td>
+   <td style="text-align:right;"> 0.78 </td>
+   <td style="text-align:right;"> 1.07 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> wkfreedm_bin </td>
+   <td style="text-align:left;"> Female </td>
+   <td style="text-align:right;"> 0.99 </td>
+   <td style="text-align:right;"> 0.85 </td>
+   <td style="text-align:right;"> 1.15 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> wkdecide_bin </td>
+   <td style="text-align:left;"> Female </td>
+   <td style="text-align:right;"> 1.05 </td>
+   <td style="text-align:right;"> 0.93 </td>
+   <td style="text-align:right;"> 1.19 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> safehlth_bin </td>
+   <td style="text-align:left;"> Female </td>
+   <td style="text-align:right;"> 1.08 </td>
+   <td style="text-align:right;"> 0.84 </td>
+   <td style="text-align:right;"> 1.39 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> safefrst_bin </td>
+   <td style="text-align:left;"> Female </td>
+   <td style="text-align:right;"> 0.95 </td>
+   <td style="text-align:right;"> 0.78 </td>
+   <td style="text-align:right;"> 1.16 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> disc_haras </td>
+   <td style="text-align:left;"> Male </td>
+   <td style="text-align:right;"> 1.00 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> trustman_bin </td>
+   <td style="text-align:left;"> Male </td>
+   <td style="text-align:right;"> 1.00 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> suphelp_bin </td>
+   <td style="text-align:left;"> Male </td>
+   <td style="text-align:right;"> 1.00 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> wkfreedm_bin </td>
+   <td style="text-align:left;"> Male </td>
+   <td style="text-align:right;"> 1.00 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> safehlth_bin </td>
+   <td style="text-align:left;"> Male </td>
+   <td style="text-align:right;"> 1.00 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> respect_bin </td>
+   <td style="text-align:left;"> Male </td>
+   <td style="text-align:right;"> 1.00 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> manvsemp_bin </td>
+   <td style="text-align:left;"> Male </td>
+   <td style="text-align:right;"> 1.00 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> supcares_bin </td>
+   <td style="text-align:left;"> Male </td>
+   <td style="text-align:right;"> 1.00 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> wkdecide_bin </td>
+   <td style="text-align:left;"> Male </td>
+   <td style="text-align:right;"> 1.00 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> safefrst_bin </td>
+   <td style="text-align:left;"> Male </td>
+   <td style="text-align:right;"> 1.00 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+  </tr>
+</tbody>
+</table></div>
+
+#### Race 
+
+
+```r
+#run regression
+less_adj <- mysvy(dat, 125:134, "~race + rcs(age, 3) + rcs(year, 3) + sex + educ + region + marital_tri", design = subset(svy_dat, class=="Workers"))
+
+#pull into matrix
+regs_less <- matrix_func(10, 3, c(125:134))
+  
+#format matrix
+binded <- formatted(c("Black", "Other"), 10, 
+                    c("disc_haras", "trustman_bin", "suphelp_bin", "wkfreedm_bin", "safehlth_bin", "respect_bin", "manvsemp_bin", "supcares_bin", "wkdecide_bin", "safefrst_bin"), 
+                    "White",
+                    c("White", "Black", "Other"))
+
+#plot of estimates
+plotted(xaxis=Class, limitsvec=c(0.3, 2.5), breaksvec=c(0.6, 1, 1.666667, 1.666667^2),
+        cols=c(brewer.pal(8, "Blues")[c(6)], brewer.pal(8, "Purples")[c(6)], brewer.pal(8, "Greens")[c(6)]), 
+        shapes=c(15, 0, 12), xlabbed="Race (ref: white)")
+```
+
+![](analysis_12_8_20_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
+
+```r
+#table of estimates
+tabled(1:20, "Ref: white")
+```
+
+<div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:250px; overflow-x: scroll; width:100%; "><table class="table table-striped" style="margin-left: auto; margin-right: auto;">
+<caption>Ref: white</caption>
+ <thead>
+  <tr>
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> QWL variable </th>
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> Class </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> PR </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> Lower </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> Upper </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> disc_haras </td>
+   <td style="text-align:left;"> Black </td>
+   <td style="text-align:right;"> 1.20 </td>
+   <td style="text-align:right;"> 1.01 </td>
+   <td style="text-align:right;"> 1.43 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> disc_haras </td>
+   <td style="text-align:left;"> Other </td>
+   <td style="text-align:right;"> 1.02 </td>
+   <td style="text-align:right;"> 0.80 </td>
+   <td style="text-align:right;"> 1.31 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> respect_bin </td>
+   <td style="text-align:left;"> Black </td>
+   <td style="text-align:right;"> 1.04 </td>
+   <td style="text-align:right;"> 0.78 </td>
+   <td style="text-align:right;"> 1.38 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> respect_bin </td>
+   <td style="text-align:left;"> Other </td>
+   <td style="text-align:right;"> 0.63 </td>
+   <td style="text-align:right;"> 0.37 </td>
+   <td style="text-align:right;"> 1.06 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> trustman_bin </td>
+   <td style="text-align:left;"> Black </td>
+   <td style="text-align:right;"> 1.32 </td>
+   <td style="text-align:right;"> 1.11 </td>
+   <td style="text-align:right;"> 1.56 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> trustman_bin </td>
+   <td style="text-align:left;"> Other </td>
+   <td style="text-align:right;"> 0.86 </td>
+   <td style="text-align:right;"> 0.63 </td>
+   <td style="text-align:right;"> 1.17 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> manvsemp_bin </td>
+   <td style="text-align:left;"> Black </td>
+   <td style="text-align:right;"> 1.22 </td>
+   <td style="text-align:right;"> 0.91 </td>
+   <td style="text-align:right;"> 1.64 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> manvsemp_bin </td>
+   <td style="text-align:left;"> Other </td>
+   <td style="text-align:right;"> 0.69 </td>
+   <td style="text-align:right;"> 0.41 </td>
+   <td style="text-align:right;"> 1.16 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> suphelp_bin </td>
+   <td style="text-align:left;"> Black </td>
+   <td style="text-align:right;"> 1.13 </td>
+   <td style="text-align:right;"> 0.89 </td>
+   <td style="text-align:right;"> 1.44 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> suphelp_bin </td>
+   <td style="text-align:left;"> Other </td>
+   <td style="text-align:right;"> 1.29 </td>
+   <td style="text-align:right;"> 0.95 </td>
+   <td style="text-align:right;"> 1.75 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> supcares_bin </td>
+   <td style="text-align:left;"> Black </td>
+   <td style="text-align:right;"> 1.30 </td>
+   <td style="text-align:right;"> 1.07 </td>
+   <td style="text-align:right;"> 1.59 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> supcares_bin </td>
+   <td style="text-align:left;"> Other </td>
+   <td style="text-align:right;"> 1.48 </td>
+   <td style="text-align:right;"> 1.12 </td>
+   <td style="text-align:right;"> 1.96 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> wkfreedm_bin </td>
+   <td style="text-align:left;"> Black </td>
+   <td style="text-align:right;"> 1.02 </td>
+   <td style="text-align:right;"> 0.81 </td>
+   <td style="text-align:right;"> 1.29 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> wkfreedm_bin </td>
+   <td style="text-align:left;"> Other </td>
+   <td style="text-align:right;"> 1.13 </td>
+   <td style="text-align:right;"> 0.86 </td>
+   <td style="text-align:right;"> 1.50 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> wkdecide_bin </td>
+   <td style="text-align:left;"> Black </td>
+   <td style="text-align:right;"> 1.16 </td>
+   <td style="text-align:right;"> 0.99 </td>
+   <td style="text-align:right;"> 1.36 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> wkdecide_bin </td>
+   <td style="text-align:left;"> Other </td>
+   <td style="text-align:right;"> 1.26 </td>
+   <td style="text-align:right;"> 1.05 </td>
+   <td style="text-align:right;"> 1.53 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> safehlth_bin </td>
+   <td style="text-align:left;"> Black </td>
+   <td style="text-align:right;"> 1.60 </td>
+   <td style="text-align:right;"> 1.14 </td>
+   <td style="text-align:right;"> 2.25 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> safehlth_bin </td>
+   <td style="text-align:left;"> Other </td>
+   <td style="text-align:right;"> 1.25 </td>
+   <td style="text-align:right;"> 0.79 </td>
+   <td style="text-align:right;"> 1.99 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> safefrst_bin </td>
+   <td style="text-align:left;"> Black </td>
+   <td style="text-align:right;"> 1.19 </td>
+   <td style="text-align:right;"> 0.91 </td>
+   <td style="text-align:right;"> 1.56 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> safefrst_bin </td>
+   <td style="text-align:left;"> Other </td>
+   <td style="text-align:right;"> 0.93 </td>
+   <td style="text-align:right;"> 0.62 </td>
+   <td style="text-align:right;"> 1.39 </td>
+  </tr>
+</tbody>
+</table></div>
+
+#### Gender-race interaction
+
+
+```r
+#run regression
+less_adj <- mysvy(dat, 125:134, "~race_gender + rcs(age, 3) + rcs(year, 3) + educ + region + marital_tri", design = subset(svy_dat, class=="Workers"))
+
+#pull into matrix
+regs_less <- matrix_func(10, 6, c(125:134))
+
+#format matrix
+binded <- formatted(c("White female", "Black male", "Black female", "Other male", "Other female"), 10, 
+                    c("disc_haras", "trustman_bin", "suphelp_bin", "wkfreedm_bin", "safehlth_bin", "respect_bin", "manvsemp_bin", "supcares_bin", "wkdecide_bin", "safefrst_bin"), 
+                    "White male",
+                    c("White male", "White female", "Black male", "Black female", "Other male", "Other female"))
+
+#plot
+plotted(xaxis=Class, limitsvec=c(0.1, 3.1), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
+        cols=c(brewer.pal(8, "Blues")[c(6,8)], brewer.pal(8, "Purples")[c(6,8)], brewer.pal(8, "Greens")[c(6,8)]), 
+        shapes=c(15, 16, 0, 1, 12, 10), xlabbed="Race & gender (ref: white male)", nrow=1)
+```
+
+![](analysis_12_8_20_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
+
+```r
+#table of estimates
+tabled(1:20, "Ref: white male")
+```
+
+<div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:250px; overflow-x: scroll; width:100%; "><table class="table table-striped" style="margin-left: auto; margin-right: auto;">
+<caption>Ref: white male</caption>
+ <thead>
+  <tr>
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> QWL variable </th>
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> Class </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> PR </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> Lower </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> Upper </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> disc_haras </td>
+   <td style="text-align:left;"> White female </td>
+   <td style="text-align:right;"> 1.52 </td>
+   <td style="text-align:right;"> 1.28 </td>
+   <td style="text-align:right;"> 1.81 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> disc_haras </td>
+   <td style="text-align:left;"> Black male </td>
+   <td style="text-align:right;"> 1.38 </td>
+   <td style="text-align:right;"> 1.03 </td>
+   <td style="text-align:right;"> 1.85 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> disc_haras </td>
+   <td style="text-align:left;"> Black female </td>
+   <td style="text-align:right;"> 1.69 </td>
+   <td style="text-align:right;"> 1.34 </td>
+   <td style="text-align:right;"> 2.12 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> disc_haras </td>
+   <td style="text-align:left;"> Other male </td>
+   <td style="text-align:right;"> 1.47 </td>
+   <td style="text-align:right;"> 1.04 </td>
+   <td style="text-align:right;"> 2.07 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> disc_haras </td>
+   <td style="text-align:left;"> Other female </td>
+   <td style="text-align:right;"> 1.13 </td>
+   <td style="text-align:right;"> 0.77 </td>
+   <td style="text-align:right;"> 1.67 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> respect_bin </td>
+   <td style="text-align:left;"> White female </td>
+   <td style="text-align:right;"> 0.92 </td>
+   <td style="text-align:right;"> 0.70 </td>
+   <td style="text-align:right;"> 1.19 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> respect_bin </td>
+   <td style="text-align:left;"> Black male </td>
+   <td style="text-align:right;"> 0.71 </td>
+   <td style="text-align:right;"> 0.45 </td>
+   <td style="text-align:right;"> 1.13 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> respect_bin </td>
+   <td style="text-align:left;"> Black female </td>
+   <td style="text-align:right;"> 1.20 </td>
+   <td style="text-align:right;"> 0.85 </td>
+   <td style="text-align:right;"> 1.70 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> respect_bin </td>
+   <td style="text-align:left;"> Other male </td>
+   <td style="text-align:right;"> 0.25 </td>
+   <td style="text-align:right;"> 0.11 </td>
+   <td style="text-align:right;"> 0.58 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> respect_bin </td>
+   <td style="text-align:left;"> Other female </td>
+   <td style="text-align:right;"> 0.95 </td>
+   <td style="text-align:right;"> 0.51 </td>
+   <td style="text-align:right;"> 1.76 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> trustman_bin </td>
+   <td style="text-align:left;"> White female </td>
+   <td style="text-align:right;"> 0.84 </td>
+   <td style="text-align:right;"> 0.71 </td>
+   <td style="text-align:right;"> 1.00 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> trustman_bin </td>
+   <td style="text-align:left;"> Black male </td>
+   <td style="text-align:right;"> 0.98 </td>
+   <td style="text-align:right;"> 0.74 </td>
+   <td style="text-align:right;"> 1.30 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> trustman_bin </td>
+   <td style="text-align:left;"> Black female </td>
+   <td style="text-align:right;"> 1.35 </td>
+   <td style="text-align:right;"> 1.11 </td>
+   <td style="text-align:right;"> 1.65 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> trustman_bin </td>
+   <td style="text-align:left;"> Other male </td>
+   <td style="text-align:right;"> 0.74 </td>
+   <td style="text-align:right;"> 0.48 </td>
+   <td style="text-align:right;"> 1.14 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> trustman_bin </td>
+   <td style="text-align:left;"> Other female </td>
+   <td style="text-align:right;"> 0.83 </td>
+   <td style="text-align:right;"> 0.56 </td>
+   <td style="text-align:right;"> 1.22 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> manvsemp_bin </td>
+   <td style="text-align:left;"> White female </td>
+   <td style="text-align:right;"> 0.85 </td>
+   <td style="text-align:right;"> 0.64 </td>
+   <td style="text-align:right;"> 1.13 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> manvsemp_bin </td>
+   <td style="text-align:left;"> Black male </td>
+   <td style="text-align:right;"> 0.90 </td>
+   <td style="text-align:right;"> 0.55 </td>
+   <td style="text-align:right;"> 1.46 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> manvsemp_bin </td>
+   <td style="text-align:left;"> Black female </td>
+   <td style="text-align:right;"> 1.27 </td>
+   <td style="text-align:right;"> 0.87 </td>
+   <td style="text-align:right;"> 1.86 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> manvsemp_bin </td>
+   <td style="text-align:left;"> Other male </td>
+   <td style="text-align:right;"> 0.24 </td>
+   <td style="text-align:right;"> 0.11 </td>
+   <td style="text-align:right;"> 0.54 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> manvsemp_bin </td>
+   <td style="text-align:left;"> Other female </td>
+   <td style="text-align:right;"> 1.01 </td>
+   <td style="text-align:right;"> 0.55 </td>
+   <td style="text-align:right;"> 1.85 </td>
+  </tr>
+</tbody>
+</table></div>
+
