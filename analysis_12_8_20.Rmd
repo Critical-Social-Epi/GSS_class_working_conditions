@@ -535,7 +535,7 @@ plotted(xaxis=Class, limitsvec=c(0.3, 2.5), breaksvec=c(0.6, 1, 1.666667, 1.6666
         shapes=c(15, 0), xlabbed="Gender (ref: male)")
 
 #table of estimates
-tabled(1:20, "Ref: white")
+tabled(1:10, "Ref: male")
 ```
 
 ### Race
@@ -717,7 +717,7 @@ plotted(xaxis=Class, limitsvec=c(0.3, 2.5), breaksvec=c(0.6, 1, 1.666667, 1.6666
         shapes=c(15, 0), xlabbed="Gender (ref: male)")
 
 #table of estimates
-tabled(1:20, "Ref: white")
+tabled(1:10, "Ref: male")
 ```
 
 #### Race 

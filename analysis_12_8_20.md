@@ -2502,11 +2502,11 @@ plotted(xaxis=Class, limitsvec=c(0.3, 2.5), breaksvec=c(0.6, 1, 1.666667, 1.6666
 
 ```r
 #table of estimates
-tabled(1:20, "Ref: white")
+tabled(1:10, "Ref: male")
 ```
 
 <div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:250px; overflow-x: scroll; width:100%; "><table class="table table-striped" style="margin-left: auto; margin-right: auto;">
-<caption>Ref: white</caption>
+<caption>Ref: male</caption>
  <thead>
   <tr>
    <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> QWL variable </th>
@@ -2586,76 +2586,6 @@ tabled(1:20, "Ref: white")
    <td style="text-align:right;"> 0.95 </td>
    <td style="text-align:right;"> 0.78 </td>
    <td style="text-align:right;"> 1.17 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> disc_haras </td>
-   <td style="text-align:left;"> Male </td>
-   <td style="text-align:right;"> 1.00 </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:right;"> NA </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> trustman_bin </td>
-   <td style="text-align:left;"> Male </td>
-   <td style="text-align:right;"> 1.00 </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:right;"> NA </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> suphelp_bin </td>
-   <td style="text-align:left;"> Male </td>
-   <td style="text-align:right;"> 1.00 </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:right;"> NA </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> wkfreedm_bin </td>
-   <td style="text-align:left;"> Male </td>
-   <td style="text-align:right;"> 1.00 </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:right;"> NA </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> safehlth_bin </td>
-   <td style="text-align:left;"> Male </td>
-   <td style="text-align:right;"> 1.00 </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:right;"> NA </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> respect_bin </td>
-   <td style="text-align:left;"> Male </td>
-   <td style="text-align:right;"> 1.00 </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:right;"> NA </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> manvsemp_bin </td>
-   <td style="text-align:left;"> Male </td>
-   <td style="text-align:right;"> 1.00 </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:right;"> NA </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> supcares_bin </td>
-   <td style="text-align:left;"> Male </td>
-   <td style="text-align:right;"> 1.00 </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:right;"> NA </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> wkdecide_bin </td>
-   <td style="text-align:left;"> Male </td>
-   <td style="text-align:right;"> 1.00 </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:right;"> NA </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> safefrst_bin </td>
-   <td style="text-align:left;"> Male </td>
-   <td style="text-align:right;"> 1.00 </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:right;"> NA </td>
   </tr>
 </tbody>
 </table></div>
@@ -4205,11 +4135,11 @@ plotted(xaxis=Class, limitsvec=c(0.3, 2.5), breaksvec=c(0.6, 1, 1.666667, 1.6666
 
 ```r
 #table of estimates
-tabled(1:20, "Ref: white")
+tabled(1:10, "Ref: male")
 ```
 
 <div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:250px; overflow-x: scroll; width:100%; "><table class="table table-striped" style="margin-left: auto; margin-right: auto;">
-<caption>Ref: white</caption>
+<caption>Ref: male</caption>
  <thead>
   <tr>
    <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> QWL variable </th>
@@ -4289,76 +4219,6 @@ tabled(1:20, "Ref: white")
    <td style="text-align:right;"> 0.95 </td>
    <td style="text-align:right;"> 0.78 </td>
    <td style="text-align:right;"> 1.16 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> disc_haras </td>
-   <td style="text-align:left;"> Male </td>
-   <td style="text-align:right;"> 1.00 </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:right;"> NA </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> trustman_bin </td>
-   <td style="text-align:left;"> Male </td>
-   <td style="text-align:right;"> 1.00 </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:right;"> NA </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> suphelp_bin </td>
-   <td style="text-align:left;"> Male </td>
-   <td style="text-align:right;"> 1.00 </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:right;"> NA </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> wkfreedm_bin </td>
-   <td style="text-align:left;"> Male </td>
-   <td style="text-align:right;"> 1.00 </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:right;"> NA </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> safehlth_bin </td>
-   <td style="text-align:left;"> Male </td>
-   <td style="text-align:right;"> 1.00 </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:right;"> NA </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> respect_bin </td>
-   <td style="text-align:left;"> Male </td>
-   <td style="text-align:right;"> 1.00 </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:right;"> NA </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> manvsemp_bin </td>
-   <td style="text-align:left;"> Male </td>
-   <td style="text-align:right;"> 1.00 </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:right;"> NA </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> supcares_bin </td>
-   <td style="text-align:left;"> Male </td>
-   <td style="text-align:right;"> 1.00 </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:right;"> NA </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> wkdecide_bin </td>
-   <td style="text-align:left;"> Male </td>
-   <td style="text-align:right;"> 1.00 </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:right;"> NA </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> safefrst_bin </td>
-   <td style="text-align:left;"> Male </td>
-   <td style="text-align:right;"> 1.00 </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:right;"> NA </td>
   </tr>
 </tbody>
 </table></div>
