@@ -1,0 +1,1166 @@
+---
+title: "Class inequities in health and mortality"
+author: "-"
+date: "August 30, 2019"
+output: 
+  html_document:
+    number_sections: true
+    code_folding: hide
+    toc: true
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**Code and output from "Relational social class, self-rated health, and mortality in the United States". Data from the class-structure and SRH analyses is publicly available at the GSS website (gss.norc.org), where readers can also find information about applying for access to the GSS-NDI data, which was made restricted-use in 2019.**
+
+```{r,  warning=FALSE, message=FALSE, results="hide"}
+###data preparation
+
+library(survival)
+library(dplyr)
+library(knitr)
+library(ggplot2)
+library(tidyr)
+library(kableExtra)
+library(survey)
+library(tableone)
+library(RColorBrewer)
+library(survey)
+library(VIM)
+library(mice)
+library(parallel)
+library(mitools)
+library(here)
+library(viridis)
+library(survminer)
+library(gridExtra)
+library(stringr)
+library(rms)
+library(patchwork) #download from github: install.packages("devtools"); devtools::install_github("thomasp85/patchwork")
+library(spatstat)
+library(purrr)
+
+########add mortality data to main data
+#####
+#
+
+#load main dat
+dat <- read.csv(here("GSS_non_mortality_dataset.csv"))
+
+#make unique id-year variable (id is only unique within each year)
+dat$id_year <- paste(dat$id, dat$year, sep='')
+
+#load mort dat
+mort <- read.csv(here("GSS_mortality_dataset.csv"))
+
+#make unique id-year variable (id is only unique within each year)
+mort$id_year <- paste(mort$id, mort$year, sep='')
+
+#subset mort dat
+mort <- mort[,c("id_year", "year", "age90", "death", "yeardeath")]
+
+#merge
+dat <- merge(dat, mort, by=c("id_year", "year"), all.x=T)
+
+#########subsetting
+######
+#
+
+#remove black oversamples (recommended when weighting the gss)
+dat <- subset(dat, sample != "1970 fp blk oversamp" & sample != "1980 bfp blk oversamp" & sample != "1980 fp blk oversamp")
+
+##remove observations where wksup and wksups were not on ballot (those data are MCAR)
+#wksup and wksups were not asked in 1975, 1978, 1983, 1986 ('.i' in those years)
+dat <- subset(dat, !(year == 1975 | year == 1978 | year == 1983 | year == 1986))
+
+#wksup and wksups were not asked of ballot b from 1988-2004 ('.i' in those years)
+dat <- subset(dat, !(year >= 1988 & year <= 2004 & ballot == "ballot b"))
+
+#remove those not in the laborforce since they can't have a class. keep those with NA wrkstat to impute
+dat <- subset(dat, wrkstat == "working fulltime" | wrkstat == "working parttime" | wrkstat == "unempl, laid off" | is.na(wrkstat))
+
+#########make variables
+######
+#
+
+dat %>% 
+  mutate(duration = ifelse(death=="alive", 2014 - year, yeardeath - year), #for survival analysis
+         age = ifelse(age=="89 or older", 89,
+                      ifelse(age==".d", NA, as.numeric(as.character(age)))), #make numeric age variable
+         
+         educ = factor(ifelse(degree == "bachelor" | degree == "graduate", "College +", 
+                              ifelse(degree== "high school", "HS", 
+                                     ifelse(degree == "junior college", "JuCo", 
+                                            ifelse(degree == "lt high school", "<HS", NA)))),
+                       levels=c("<HS", "HS", "JuCo", "College +")), 
+         region = factor(ifelse(region == "new england" | region == "middle atlantic", "Northeast",
+                                   ifelse(region == "e. sou. central" | region == "south atlantic" | region == "w. sou. central", "South",
+                                          ifelse(region == "e. nor. central" | region == "w. nor. central", "Midwest", "West")))),
+         decade = ifelse(year < 1980, "1970s", 
+                         ifelse(year >= 1980 & year < 1990, "1980s",
+                                ifelse(year >= 1990 & year < 2000, "1990s",
+                                       ifelse(year >= 2000 & year < 2010, "2000s", "2010s")))),
+         srh = ifelse(health == "DK" | health == "IAP" | health == ".n", NA, health),
+         srh_bin = ifelse(srh == 4 | srh == 7, 1, 0),
+         income = as.numeric(as.character(coninc)) * 1.393728223, #adjust income to 2016 dollars from 2000 dollars
+         prestg10 = ifelse(prestg10 == "IAP,DK,NA", NA, as.numeric(as.character(prestg10))),
+         prestg10_bin = ifelse(prestg10 < weighted.median(prestg10, w=wtssall, na.rm=T), "low prestige", "high prestige"),  #prestige below median
+         employ_3_cat = ifelse(wrkstat == "working fulltime", "Fulltime",
+                               ifelse(wrkstat == "working parttime", "Parttime",
+                                      ifelse(wrkstat == "unempl, laid off", "Unemployed", NA))),
+         wksups = ifelse(year == 2014 & is.na(wksups), '.i', as.character(wksups)), #per advice from GSS help desk, NAs in wksups in 2014 should be '.i'
+         #now let's make all ".d"'s (i.e 'don't know) in wksup and wksups NA instead of '.d'.
+         wksup = factor(ifelse(wksup == ".d", NA,
+                                  ifelse(wksup == '.i', '.i',
+                                         ifelse(wksup == "no", "no",
+                                                ifelse(wksup == "yes", "yes", NA))))),
+         wksups = factor(ifelse(wksups == ".d", NA,
+                                   ifelse(wksups == '.i', '.i',
+                                          ifelse(wksups == "no", "no",
+                                                 ifelse(wksups == "yes", "yes", NA))))),
+         wrkslf = factor(ifelse(wrkslf == ".d", NA,
+                                   ifelse(wrkslf == "self-employed", "self-employed",
+                                          ifelse(wrkslf == "someone else", "someone else",
+                                                 ifelse(wrkslf == ".i", ".i",  NA))))),
+         #most detailed class without chief exec criteria
+         capital_det_skill=factor(ifelse(wksup == "yes" & wksups == "yes" & wrkslf == "self-employed" & wrkstat != "unempl, laid off", "Large capitalists", 
+                                         ifelse(wksup == "yes" & wksups == "no" & wrkslf == "self-employed" & wrkstat != "unempl, laid off", "Small capitalists",
+                                                ifelse(wksup == "no" & wrkslf == "self-employed" & wrkstat != "unempl, laid off", "Petty bourgeoisie", 
+                                                       ifelse(wksup == "yes" & wksups == "yes" & wrkslf == "someone else" & wrkstat != "unempl, laid off", "High-level managers",
+                                                              ifelse(wksup == "yes" & wksups == "no" & wrkslf == "someone else" & wrkstat != "unempl, laid off", "Low-level managers",
+                                                                     ifelse((wrkstat == "unempl, laid off" ) | (wksup == "no" & wrkslf ==  "someone else" & prestg10_bin == "low prestige" & wrkstat != "unempl, laid off"), "Less-skilled workers", 
+                                                                            ifelse(wksup == "no" & wrkslf ==  "someone else" & prestg10_bin == "high prestige" & wrkstat != "unempl, laid off", "More-skilled workers", NA))))))), 
+                                  levels=c("Less-skilled workers", "More-skilled workers", "Low-level managers", "High-level managers", "Petty bourgeoisie", "Small capitalists", "Large capitalists")),
+         #most detailed class with chief executives (census code 10) criteria,
+         capital_det_skill_chief_exec=factor(ifelse((wksup == "yes" & wksups == "yes" & wrkslf == "self-employed" & wrkstat != "unempl, laid off") | (wksup == "yes" & wksups == "yes" & wrkslf == "someone else" & occ10 == "chief executives" & wrkstat != "unempl, laid off"), "Large capitalists", 
+                                                    ifelse((wksup == "yes" & wksups == "no" & wrkslf == "self-employed" & wrkstat != "unempl, laid off") | (wksup == "yes" & wksups == "no" & wrkslf == "someone else" & occ10 == "chief executives" & wrkstat != "unempl, laid off"), "Small capitalists",
+                                                           ifelse((wksup == "no" & wrkslf == "self-employed" & wrkstat != "unempl, laid off") | (wksup == "no" & wrkslf == "someone else" & occ10 == "chief executives" & wrkstat != "unempl, laid off"), "Petty bourgeoisie", 
+                                                                  ifelse(wksup == "yes" & wksups == "yes" & wrkslf == "someone else" & occ10 != "chief executives" & wrkstat != "unempl, laid off", "High-level managers",
+                                                                         ifelse(wksup == "yes" & wksups == "no" & wrkslf == "someone else" & occ10 != "chief executives" & wrkstat != "unempl, laid off", "Low-level managers",
+                                                                                ifelse((wrkstat == "unempl, laid off") | (wksup == "no" & wrkslf ==  "someone else" & occ10 != "chief executives" & prestg10_bin == "low prestige" & wrkstat != "unempl, laid off"), "Less-skilled workers", 
+                                                                                       ifelse(wksup == "no" & wrkslf ==  "someone else" & occ10 != "chief executives" & prestg10_bin == "high prestige" & wrkstat != "unempl, laid off", "More-skilled workers", NA))))))), 
+                                             levels=c("Less-skilled workers", "More-skilled workers", "Low-level managers", "High-level managers", "Petty bourgeoisie", "Small capitalists", "Large capitalists")),
+         #broad class without chief exec criteria
+         capital=factor(ifelse(wksup == "yes" & wrkslf == "self-employed" & wrkstat != "unempl, laid off", "Capitalists", 
+                               ifelse(wksup == "no" & wrkslf == "self-employed" & wrkstat != "unempl, laid off", "Petty bourgeoisie", 
+                                      ifelse(wksup == "yes" & wrkslf == "someone else" & wrkstat != "unempl, laid off", "Managers",
+                                             ifelse((wrkstat == "unempl, laid off") | (wksup == "no" & wrkslf ==  "someone else" & wrkstat != "unempl, laid off"), "Workers", NA)))), 
+                        levels=c("Workers", "Managers", "Petty bourgeoisie", "Capitalists")), 
+         #broad class with chief exec criteria
+         capital_chief_exec=factor(ifelse((wksup == "yes" & wrkslf == "self-employed" & wrkstat != "unempl, laid off") | (wksup == "yes" & wrkslf == "someone else" & occ10 == "chief executives" & wrkstat != "unempl, laid off"), "Capitalists", 
+                                          ifelse((wksup == "no" & wrkslf == "self-employed" & wrkstat != "unempl, laid off") | (wksup == "no" & wrkslf == "someone else" & occ10 == "chief executives" & wrkstat != "unempl, laid off"), "Petty bourgeoisie", 
+                                                 ifelse(wksup == "yes" & wrkslf == "someone else" & occ10 != "chief executives" & wrkstat != "unempl, laid off", "Managers", 
+                                                        ifelse((wrkstat == "unempl, laid off") | (wksup == "no" & wrkslf ==  "someone else" & occ10 != "chief executives" & wrkstat != "unempl, laid off"), "Workers", NA)))), 
+                                   levels=c("Workers", "Managers", "Petty bourgeoisie", "Capitalists")),
+         ####make race by class variable: need to make product of factor levels unique
+         #binary race variable,
+         non_white=ifelse(race !="white", 5, 1),
+         capital_chief_exec_non_white=ifelse(is.na(capital_chief_exec), NA,
+                                             as.numeric(capital_chief_exec)* as.numeric(non_white))) -> dat
+```
+
+```{r  warning=FALSE, message=FALSE, results='hide'}
+#####imputation
+
+#make imputation dataset
+data_mice <- dat[,c("capital_chief_exec", "capital_det_skill_chief_exec", "wksup", "wksups", "wrkslf", 'wrkstat', 'prestg10', 'income', 'region', 'race', "non_white", 'age', 'sex', 'educ', 'year', 'decade', 'vpsu', 'vstrat', 'wtssall', 'srh_bin', "age90", "death", "yeardeath", "duration", "capital_chief_exec_non_white")]
+
+##do imputation
+initialize <- mice(data_mice, max=0, print=FALSE) # this creates an empty imputation object that you can manipulate and set options
+
+method <- initialize$method #this creates an object that will contain the imputation method for each variable. let mice choose defaults based on variable class
+
+method[c( "region", "race", "sex", "year", 'decade', "vpsu", 'vstrat', 'wtssall',  'srh_bin', "age90", "death", "yeardeath", "duration")] <- "" # this code tells mice not to impute these variables. not imputing variables with complete data or any of the outcome variables
+
+method["capital_chief_exec_non_white"] <- "~I(as.numeric(capital_chief_exec)*as.numeric(non_white))" #passive imputation of variable that's a combo of other variables
+
+prediction <- initialize$predictorMatrix  #this creates an object that will indicate which variables we actually want to include in predicting missing variables. 
+
+prediction[,c("capital_det_skill_chief_exec", "capital_chief_exec_non_white", 'non_white', 'decade', 'srh_bin',  "age90", "death", "yeardeath", "duration", 'vstrat', 'vpsu')] <- 0 # don't use collinear variables, SRH, or death as predictors (don't use latter two variables because the class variables, SRH, and death are available in different years and on different ballots - to use them, I think we'd have to make three separate sets of imputed datasets, one for the descriptive analyses, one for the SRH analyses, and one for the mortality analyses). Also don't use vstrat, since it has too many levels (models won't fit) and vpsu because it's IAP until 1976 (plus the trace plots for imputations that included VPSU don't look as good as the trace plots for imputations that excluded VPSU)
+
+cores_2_use <- 10 #10 cores times 2 imputations per core = 20 imputations
+cl <- makeCluster(cores_2_use)
+clusterSetRNGStream(cl, 9956)
+clusterExport(cl, list("data_mice", "method", "prediction"), envir=environment())
+clusterEvalQ(cl, library(mice))
+imp_pars <- 
+  parLapply(cl = cl, X = 1:cores_2_use, fun = function(no){
+    mice(data_mice, m=2, meth=method, pred=prediction, print=FALSE, maxit = 20) #no seed because we don't want imputations to be identical across reps
+  })
+stopCluster(cl)
+
+#combine the smaller imputation objects from each core into one imputation object
+imp_merged <- imp_pars[[1]]
+for (n in 2:length(imp_pars)){
+  imp_merged <- 
+    ibind(imp_merged,
+          imp_pars[[n]])
+}
+```
+
+```{r  warning=FALSE, message=FALSE}
+#####make survey objects
+#vstrat and vpsu weren't available before 1975, so we're pooling waves from those years together into a single vstrat and vpsu, which should be conservative 
+
+#make data for the single-PSU stratum centered at the sample grand mean rather than the stratum mean (conservative)
+options(survey.lonely.psu="adjust")
+
+#put data into useable format for survey package
+imp.list <- lapply(1:20, function(x) mice::complete(imp_merged, x))
+MI.Analysis <- imputationList(imp.list)
+
+#make imputed survey design object
+svy <- svydesign(ids = ~ vpsu,
+                 strata = ~ vstrat, 
+                 weights = ~ wtssall,
+                 nest=TRUE, 
+                 data=MI.Analysis)
+
+#restrict to ages 25-64
+svy <- subset(svy, age >= 25 & age < 65)
+
+#####make unimputed survey design object for descriptive stats
+svy_unimp <- svydesign(ids = ~ vpsu,
+                       strata = ~ vstrat,
+                       weights = ~ wtssall, 
+                       nest=TRUE, 
+                       data=dat)
+
+#restrict to ages 25-64 
+svy_unimp <- subset(svy_unimp, age >= 25 & age < 65)
+
+#####subset non-imputed and non-survey design dataset for descriptives in appendix
+#restrict to ages 25-64
+dat <- subset(dat,  age >= 25 & age < 65)
+```
+
+# Descriptives by class (weighted but unimputed dataset)
+```{r,  warning=FALSE, message=FALSE}
+#vars of interest
+vars <- c('sex', 'race', 'educ', 'region', 'income', 'age')
+catvars <- c('sex', 'race', 'educ')
+
+#aggregate
+x <- svyCreateTableOne(vars = vars, factorVars=catvars, data = svy_unimp, strata='capital_chief_exec')
+x <- print(x, printToggle=FALSE, noSpaces=TRUE, nonnormal="income")
+kable(x[,1:4], caption="Simple") %>%
+  kable_styling("striped")
+
+#most disaggregate
+x <- svyCreateTableOne(vars = vars, factorVars=catvars, data = svy_unimp, strata='capital_det_skill_chief_exec')
+x <- print(x, printToggle=FALSE, noSpaces=TRUE, nonnormal="income")
+kable(x[,1:7], caption="Most disaggregate") %>%
+  kable_styling("striped")
+```
+
+# Trends over time (1972-2016)
+## Percent of population in each class by decade
+```{r,  warning=FALSE, message=FALSE, results='hide'}
+#aggregate
+prop_agg <- with(svy, svyby(~capital_chief_exec, ~decade, FUN=svymean, na.rm=TRUE))
+prop_agg <- summary(MIcombine(prop_agg))
+
+prop_agg %>%  
+  mutate(results = results * 100,
+         `(lower`= `(lower` * 100,
+         `upper)`= `upper)` * 100,
+         Class = c(rep("Workers", 5), rep("Managers", 5), rep("Petty bourgeoisie", 5), rep("Capitalists", 5)),
+         Class = factor(Class, levels=c("Workers", "Managers", "Petty bourgeoisie", "Capitalists")),
+         Decade = c(rep(c("1970s", "1980s", "1990s", "2000s", "2010s"), 4)),
+         Type = "Simple class measure") -> prop_agg
+```
+
+```{r,  warning=FALSE, message=FALSE}
+g <- ggplot(data=prop_agg, aes(x=Decade, y=results, group=Class, color=Class, shape=Class)) + 
+  facet_wrap(~Type) +
+  geom_line(linetype=2, position=position_dodge(width=0.5)) +
+  geom_point(size=2.3, position=position_dodge(width=0.5)) + 
+  geom_errorbar(aes(ymin=`(lower`, ymax=`upper)`), width=0.5, position=position_dodge(width=0.5)) +
+  theme_bw() +
+  theme(strip.background = element_rect(colour='black', fill=NA),
+  panel.border = element_rect(fill = NA, color = "black"),  legend.title=element_blank()) +
+  scale_colour_manual(values = viridis(8, direction=-1, option='magma')[c(2,4,6,8)]) +
+  xlab("Decade") +
+  ylab("Percent") +
+  scale_shape_manual(values=c(16,15,18,17)) + 
+  expand_limits(y=c(0,60))
+```
+
+```{r,  warning=FALSE, message=FALSE, results='hide'}
+#most disaggregate
+prop_disagg <- with(svy, svyby(~capital_det_skill_chief_exec, ~decade, FUN=svymean, na.rm=TRUE))
+prop_disagg <- summary(MIcombine(prop_disagg))
+
+prop_disagg %>%  
+  mutate(results = results * 100,
+         `(lower`= `(lower` * 100,
+         `upper)`= `upper)` * 100,
+         Class = c(rep("Less-skilled workers", 5), rep("More-skilled workers", 5), rep("Low-level managers", 5), rep("High-level managers", 5), rep("Petty bourgeoisie", 5), rep("Small capitalists", 5), rep("Large capitalists", 5)),
+         Class = factor(Class, levels=c("Less-skilled workers", "More-skilled workers", "Low-level managers", "High-level managers", "Petty bourgeoisie", "Small capitalists", "Large capitalists")),
+         Decade = c(rep(c("1970s", "1980s", "1990s", "2000s", "2010s"), 7)),
+         Type = "Complex class measure") -> prop_disagg
+```
+
+```{r,  warning=FALSE, message=FALSE}
+g1 <- ggplot(data=prop_disagg, aes(x=Decade, y=results, group=Class, color=Class, shape=Class)) + 
+  facet_wrap(~Type) +
+  geom_line(linetype=2, position=position_dodge(width=0.5)) +
+  geom_point(size=2.3, position=position_dodge(width=0.5)) + 
+  geom_errorbar(aes(ymin=`(lower`, ymax=`upper)`), width=0.5, position=position_dodge(width=0.5)) + 
+  theme_bw() +
+  theme(strip.background = element_rect(colour='black', fill=NA),
+  panel.border = element_rect(fill = NA, color = "black"),  legend.title=element_blank()) +
+  scale_colour_manual(values = viridis(8, direction=-1, option='magma')[2:8]) + 
+  scale_shape_manual(values=c(21,16,22,15,18,24,17)) + 
+  xlab("Decade") + 
+  ylab("Percent") +
+  expand_limits(y=c(0, 60))
+```
+
+```{r,  warning=FALSE, message=FALSE, fig.height=9, fig.width=8}
+#save
+g2 <- g + g1 + plot_layout(ncol=1)
+ggsave(g2, file="overall_trends_9_28.png", width=8, height=9, dpi=800)
+
+#print
+g2
+
+kable(rbind(prop_agg[,c(6,7,1,3,4)], prop_disagg[,c(6,7,1,3,4)]), digits=0, row.names=FALSE, col.names=c("Class", "Decade", "Percent", "Lower", "Upper")) %>%
+  kable_styling("striped") %>%
+  group_rows("Simple", 1, 20) %>%
+  group_rows("Complex", 21, 55) %>%
+  scroll_box(width = "100%", height = "250px")
+```
+
+## Percent of given gender-race group in each class by decade, and percent of given class in each gender-race group by decade
+```{r,  warning=FALSE, message=FALSE,  results='hide'}
+#aggregate
+prop_agg <- with(svy, svyby(~capital_chief_exec, ~decade + non_white + sex, FUN=svymean, na.rm=TRUE))
+prop_agg <- summary(MIcombine(prop_agg))
+
+prop_agg %>%  
+  mutate(results = results * 100,
+         `(lower`= `(lower` * 100,
+         `upper)`= `upper)` * 100,
+         Class = c(rep("Workers", 20), rep("Managers", 20), rep("Petty bourgeoisie", 20), rep("Capitalists", 20)),
+         Class = factor(Class, levels=c("Workers", "Managers", "Petty bourgeoisie", "Capitalists")),
+         Decade = c(rep(c("1970s", "1980s", "1990s", "2000s", "2010s"), 16)),
+         Race = rep(c(rep("White", 5), rep("Non-white", 5)), 8),
+         Gender = rep(c(rep("women", 10), rep("men", 10)), 4),
+         `Race & gender` = ifelse(Race=="White", paste(Race, Gender, sep=' '),
+                                   ifelse(Race=="Non-white" & Gender=="women", "Women of color",
+                                          "Men of color")),
+         `Race & gender` = factor(`Race & gender`, levels=c("Women of color", "Men of color", "White women", "White men"))) -> prop_agg
+```
+
+```{r,  warning=FALSE, message=FALSE}
+g <- ggplot(data=prop_agg, aes(x=Decade, y=results, group=Class, color=Class, shape=Class)) + 
+  geom_line(linetype=2, position=position_dodge(width=0.3)) +
+  geom_point(size=2.3, position=position_dodge(width=0.3)) + 
+  geom_errorbar(aes(ymin=`(lower`, ymax=`upper)`), width=0.3, position=position_dodge(width=0.3)) + 
+  facet_grid(~`Race & gender`) + 
+  theme_bw() + 
+  scale_colour_manual(values = viridis(8, direction=-1, option='magma')[c(2,4,6,8)]) +
+  xlab("Decade") +
+  ylab("Percent") +
+  ggtitle("Percent of given gender-race group in each class") +
+  theme(strip.background = element_rect(colour='black', fill=NA),
+ panel.border = element_rect(fill = NA, color = "black"), plot.title = element_text(hjust = 0.5), legend.title=element_blank()) + 
+  scale_shape_manual(values=c(16,15,18,17)) + 
+  expand_limits(y=c(0, 80))
+```
+
+```{r,  warning=FALSE, message=FALSE,  results='hide'}
+#aggregate
+prop_agg2 <- with(svy, svyby(~(as.factor(as.numeric(non_white)+(as.numeric(sex)*100))), ~decade + capital_chief_exec, FUN=svymean, na.rm=TRUE))  #as.factor*as.numeric part gets us 16 unique levels
+#101=white women
+#105=non-white women
+#101=white men
+#205=non-white men
+prop_agg2 <- summary(MIcombine(prop_agg2))
+
+prop_agg2 %>%  
+  mutate(results = results * 100,
+         `(lower`= `(lower` * 100,
+         `upper)`= `upper)` * 100,
+         Class = rep(c(rep("Workers", 5), rep("Managers", 5), rep("Petty bourgeoisie", 5), rep("Capitalists", 5)),4),
+         Class = factor(Class, levels=c("Workers", "Managers", "Petty bourgeoisie", "Capitalists")),
+         Decade = c(rep(c("1970s", "1980s", "1990s", "2000s", "2010s"), 16)),
+         Race = rep(c(rep("White", 20), rep("Non-white", 20)), 2),
+         Gender = c(rep("women", 40), rep("men", 40)),
+         `Race & gender` = ifelse(Race=="White", paste(Race, Gender, sep=' '),
+                                   ifelse(Race=="Non-white" & Gender=="women", "Women of color",
+                                          "Men of color")),
+         `Race & gender` = factor(`Race & gender`, levels=c("Women of color", "Men of color", "White women", "White men"))) -> prop_agg2
+```
+
+```{r,  warning=FALSE, message=FALSE}
+g1 <- ggplot(data=prop_agg2, aes(x=Decade, y=results, group=`Race & gender`, color=`Race & gender`, shape=`Race & gender`)) + 
+  geom_line(linetype=2, position=position_dodge(width=0.3)) + 
+  geom_point(size=2.3, position=position_dodge(width=0.3)) +
+  geom_errorbar(aes(ymin=`(lower`, ymax=`upper)`), width=0.3, position=position_dodge(width=0.3)) +
+  facet_grid(~Class) + 
+  theme_bw() +
+  scale_colour_manual(values = viridis(8, direction=-1, option='magma')[c(2,4,6,8)]) +
+  xlab("Decade") + 
+  ylab("Percent") +
+  ggtitle("Percent of given class in each gender-race group") +
+  theme(strip.background = element_rect(colour='black', fill=NA),
+ panel.border = element_rect(fill = NA, color = "black"), plot.title = element_text(hjust = 0.5), legend.title=element_blank()) +
+  scale_shape_manual(values=c(16,15,18,17)) + 
+  expand_limits(y=c(0, 80))
+```
+
+
+```{r,  warning=FALSE, message=FALSE, fig.height = 11, fig.width = 11}
+#save
+g2 <- g + g1 + plot_layout(ncol=1)
+ggsave(g2, file="race_gender_trends_9_28.png", width=11, height=11, dpi=800)
+
+#print
+g2
+
+#order 
+binded <- rbind(prop_agg[,c(6,7,10,1,3,4)], prop_agg2[,c(6,7,10,1,3,4)])
+binded$Type <- c(rep(1, 80), rep(2, 80))
+
+binded %>% 
+  arrange(Type, as.numeric(Class), as.numeric(`Race & gender`)) -> binded
+
+kable(binded[,1:6], digits=0, row.names=FALSE, col.names=c("Class", "Decade", "Gender & race", "Percent", "Lower", "Upper")) %>%
+  kable_styling("striped") %>%
+  group_rows("Probability of class given gender-race by decade", 1, 80) %>%
+  group_rows("Probability of gender-race given class by decade", 81, 160) %>%
+  scroll_box(width = "100%", height = "250px")
+```
+
+## Mean family income by class by decade 
+```{r,  warning=FALSE, message=FALSE,  results='hide'}
+#aggregate
+income <- with(svy, svyby(~income, ~decade + capital_chief_exec, FUN=svymean, na.rm=TRUE))
+income <- summary(MIcombine(income))
+
+income %>%  
+  mutate(Class = c(rep("Workers", 5), rep("Managers", 5), rep("Petty bourgeoisie", 5), rep("Capitalists", 5)),
+         Class = factor(Class, levels=c("Workers", "Managers", "Petty bourgeoisie", "Capitalists")),
+         Decade = c(rep(c("1970s", "1980s", "1990s", "2000s", "2010s"), 4)),
+         Type = "Simple class measure") -> income
+```
+
+```{r,  warning=FALSE, message=FALSE}
+g <- ggplot(data=income, aes(x=Decade, y=results, group=Class, color=Class, shape=Class)) +
+  facet_wrap(~Type) +
+  geom_line(linetype=2, position=position_dodge(width=0.3)) + 
+  geom_point(size=2.3, position=position_dodge(width=0.3)) + 
+  geom_errorbar(aes(ymin=`(lower`, ymax=`upper)`), width=0.3, position=position_dodge(width=0.3)) + 
+  theme_bw() + 
+  scale_colour_manual(values = viridis(8, direction=-1, option='magma')[c(2,4,6,8)]) +
+  theme(strip.background = element_rect(colour='black', fill=NA),
+ panel.border = element_rect(fill = NA, color = "black"),  legend.title=element_blank()) +
+  scale_shape_manual(values=c(16,15,18,17)) +
+  ylab("Household income") + 
+  expand_limits(y=c(50000, 180000))
+```
+
+```{r,  warning=FALSE, message=FALSE,  results='hide'}
+#most disaggregate
+income2 <- with(svy, svyby(~income, ~decade+capital_det_skill_chief_exec, FUN=svymean, na.rm=TRUE))
+income2 <-summary(MIcombine(income2))
+
+income2 %>%  
+  mutate(Class = c(rep("Less-skilled workers", 5), rep("More-skilled workers", 5), rep("Low-level managers", 5), rep("High-level managers", 5), rep("Petty bourgeoisie", 5), rep("Small capitalists", 5), rep("Large capitalists", 5)),
+         Class = factor(Class, levels=c("Less-skilled workers", "More-skilled workers", "Low-level managers", "High-level managers", "Petty bourgeoisie", "Small capitalists", "Large capitalists")),
+         Decade = c(rep(c("1970s", "1980s", "1990s", "2000s", "2010s"), 7)),
+         Type = "Complex class measure") -> income2
+```
+
+```{r,  warning=FALSE, message=FALSE}
+g1 <- ggplot(data=income2, aes(x=Decade, y=results, group=Class, color=Class, shape=Class)) +
+  facet_wrap(~Type) +
+  geom_line(linetype=2, position=position_dodge(width=0.5)) + 
+  geom_point(size=2.3, position=position_dodge(width=0.5)) + 
+  geom_errorbar(aes(ymin=`(lower`, ymax=`upper)`), width=0.5, position=position_dodge(width=0.5)) + 
+  theme_bw() + 
+  scale_colour_manual(values = viridis(8, direction=-1, option='magma')[2:8]) +
+  scale_shape_manual(values=c(21,16,22,15,18,24,17)) + 
+  theme(strip.background = element_rect(colour='black', fill=NA), panel.border = element_rect(fill = NA, color = "black"),  legend.title=element_blank()) +
+  ylab("Household income") + 
+  expand_limits(y=c(50000, 180000))
+```
+
+```{r,  warning=FALSE, message=FALSE,  fig.height = 9, fig.width = 8}
+#save
+g2 <- g + g1 + plot_layout(ncol=1)
+ggsave(g2, file="income_9_28.png", width=8, height=9, dpi=800)
+
+#print
+g2
+
+kable(rbind(income[,c(6,7,1,3,4)], income2[,c(6,7,1,3,4)]), digits=1, row.names=FALSE, col.names=c("Class", "Decade", "Income", "Lower", "Upper")) %>%
+  kable_styling("striped") %>%
+  group_rows("Simple", 1, 20) %>%
+  group_rows("Complex", 21, 55) %>%
+  scroll_box(width = "100%", height = "250px")
+```
+
+# Health and class analyses 
+## Poor/fair self-rated health (1972-2016). Poisson models adjusted for age and year as restricted cubic splines with 3 knots.
+### Stratified by gender
+```{r,  warning=FALSE, message=FALSE, results='hide'}
+#aggregate
+srh <- with(subset(svy, sex %in% 'male'), svyglm(srh_bin ~ capital_chief_exec + rcs(age, 3 ) + rcs(year, 3), family=poisson()))
+srh <- summary(MIcombine(srh))
+srh <- exp(srh[2:4, c(1,3:4)])
+colnames(srh) <- c("PR", "Lower", "Upper")
+
+srhf <- with(subset(svy, sex %in% 'female'), svyglm(srh_bin ~ capital_chief_exec + rcs(age, 3 ) + rcs(year, 3), family=poisson()))
+srhf <- summary(MIcombine(srhf))
+srhf <- exp(srhf[2:4, c(1,3:4)])
+colnames(srhf) <- c("PR", "Lower", "Upper")
+
+bind <- cbind(srh, srhf)
+
+rownames(bind) <- c("Managers", "Petty bourgeoisie", "Capitalists")
+```
+
+```{r,  warning=FALSE, message=FALSE}
+kable(bind, caption="Simple (ref: workers)", digits=2) %>%
+  kable_styling("striped") %>%
+  add_header_above(c(" " = 1, "Men" = 3, "Women"=3)) 
+```
+
+```{r,  warning=FALSE, message=FALSE, results='hide'}
+#most disaggregate
+srh <- with(subset(svy, sex %in% 'male'), svyglm(srh_bin ~ capital_det_skill_chief_exec + rcs(age, 3 ) + rcs(year, 3), family=poisson()))
+srh <- summary(MIcombine(srh))
+srh <- exp(srh[2:7, c(1,3:4)])
+colnames(srh) <- c("PR", "Lower", "Upper")
+
+srhf <- with(subset(svy, sex %in% 'female'), svyglm(srh_bin ~ capital_det_skill_chief_exec + rcs(age, 3 ) + rcs(year, 3), family=poisson()))
+srhf <- summary(MIcombine(srhf))
+srhf <- exp(srhf[2:7, c(1,3:4)])
+colnames(srhf) <- c("PR", "Lower", "Upper")
+
+bind <- cbind(srh, srhf)
+
+rownames(bind) <- c("More-skilled workers", "Low-level managers", "High-level managers", "Petty bourgeoisie", "Small capitalists", "Large capitalists")
+```
+
+```{r,  warning=FALSE, message=FALSE}
+kable(bind, caption="Complex (ref: less-skilled workers)", digits=2) %>%
+  kable_styling("striped") %>%
+  add_header_above(c(" " = 1, "Men" = 3, "Women"=3)) 
+```
+
+### Stratified by gender and race (white vs POC)
+```{r,  warning=FALSE, message=FALSE, results='hide'}
+###aggregate men
+#white
+srh <- with(subset(svy, sex %in% 'male' & non_white==1), svyglm(srh_bin ~ capital_chief_exec + rcs(age, 3 ) + rcs(year, 3), family=poisson()))
+srh <- summary(MIcombine(srh))
+srh <- exp(srh[2:4, c(1,3:4)])
+colnames(srh) <- c("PR", "Lower", "Upper")
+
+#non-white
+srh_nw <- with(subset(svy, sex %in% 'male' & non_white==5), svyglm(srh_bin ~ capital_chief_exec + rcs(age, 3 ) + rcs(year, 3), family=poisson()))
+srh_nw <- summary(MIcombine(srh_nw))
+srh_nw <- exp(srh_nw[2:4, c(1,3:4)])
+colnames(srh_nw) <- c("PR", "Lower", "Upper")
+
+bind <- rbind(srh, srh_nw)
+rownames(bind) <- c("White managers", "White petty bourgeoisie", "White capitalists", "POC managers", "POC petty bourgeoisie", "POC capitalists")
+
+###aggregate women
+#white
+srh_w <- with(subset(svy, sex %in% 'female' & non_white==1), svyglm(srh_bin ~ capital_chief_exec + rcs(age, 3 ) + rcs(year, 3), family=poisson()))
+srh_w <- summary(MIcombine(srh_w))
+srh_w <- exp(srh_w[2:4, c(1,3:4)])
+colnames(srh_w) <- c("PR", "Lower", "Upper")
+
+#non-white
+srh_w_nw <- with(subset(svy, sex %in% 'female' & non_white==5), svyglm(srh_bin ~ capital_chief_exec + rcs(age, 3 ) + rcs(year, 3), family=poisson()))
+srh_w_nw <- summary(MIcombine(srh_w_nw))
+srh_w_nw <- exp(srh_w_nw[2:4, c(1,3:4)])
+colnames(srh_w_nw) <- c("PR", "Lower", "Upper")
+
+bind_fem <- rbind(srh_w, srh_w_nw)
+rownames(bind_fem) <- c("White managers", "White petty bourgeoisie", "White capitalists", "POC managers", "POC petty bourgeoisie", "POC capitalists")
+```
+
+```{r,  warning=FALSE, message=FALSE}
+#bind all together and print
+bind_tot <- cbind(bind, bind_fem)
+kable(bind_tot, caption="Simple (ref: race-specific worker)", digits=2) %>%
+  kable_styling("striped") %>%
+  add_header_above(c(" " = 1, "Men" = 3, "Women"=3)) %>%
+  group_rows("White", 1, 3) %>%
+  group_rows("POC", 4, 6)
+```
+
+### Stratified by gender with a class by race interaction term
+```{r,  warning=FALSE, message=FALSE, results='hide'}
+###aggregate men
+srh <- with(subset(svy, sex %in% 'male'), svyglm(srh_bin ~ factor(capital_chief_exec_non_white) + rcs(age, 3 ) + rcs(year, 3), family=poisson()))
+srh <- summary(MIcombine(srh))
+srh <- exp(srh[c(2:8), c(1,3:4)])
+colnames(srh) <- c("PR", "Lower", "Upper")
+
+###aggregate women
+srh_w <- with(subset(svy, sex %in% 'female'), svyglm(srh_bin ~ factor(capital_chief_exec_non_white) + rcs(age, 3 ) + rcs(year, 3), family=poisson()))
+srh_w <- summary(MIcombine(srh_w))
+srh_w <- exp(srh_w[c(2:8), c(1,3:4)])
+colnames(srh_w) <- c("PR", "Lower", "Upper")
+
+#combine
+bind <- cbind(srh, srh_w)
+rownames(bind) <- c("White managers", "White petty bourgeoisie", "White capitalists", "POC workers", "POC managers", "POC petty bourgeoisie", "POC capitalists")
+
+#test signficance of interaction term among men --> to my knowledge, this can't be done with an object that's both a survey object and a mice object, so this is done on just the survey object
+srh_int <- svyglm(srh_bin ~ factor(capital_chief_exec)*non_white + rcs(age, 3 ) + rcs(year, 3), family=poisson(), subset(svy_unimp, sex %in% 'male'))
+
+wald_m <- regTermTest(srh_int, ~factor(capital_chief_exec):non_white)$p
+
+#test signficance of interaction term among women
+srh_int <- svyglm(srh_bin ~ factor(capital_chief_exec)*non_white + rcs(age, 3 ) + rcs(year, 3), family=poisson(), subset(svy_unimp, sex %in% 'female'))
+
+wald_f <- regTermTest(srh_int, ~factor(capital_chief_exec):non_white)$p
+```
+
+```{r,  warning=FALSE, message=FALSE}
+kable(bind, caption="Simple (ref: white workers)", digits=2) %>%
+  kable_styling("striped") %>%
+  add_header_above(c(" " = 1, "Men" = 3, "Women"=3))
+
+kable(cbind(wald_m, wald_f), col.names=c("Men", "Women"), caption="Race*class interaction p-values from Wald test", digits=2) 
+```
+
+## Mortality (1980-2010 GSS waves, mortality through 2014). Cox models adjusted for age and year as restricted cubic splines with 3 knots.
+
+Class question wasn't asked in 1978, the first year of the GSS-NDI.
+
+### Overall follow-up 
+
+3038 events, median f/u 14 yrs, max 34 yrs f/u, P(survival @ end of f/u)=0.60
+
+```{r  warning=FALSE, message=FALSE}
+n_events <- survfit(Surv(duration, death=="dead") ~ 1, data=subset(dat, age90 %in% '0')) #removed the	statistically	immortalized	cases after	90	years	of	age per suggestion in GSS-NDI codebook
+ggsurvplot(n_events, risk.table=TRUE)
+```
+
+### Stratified by gender
+```{r  warning=FALSE, message=FALSE, results='hide'}
+#####aggregate (removed the	statistically	immortalized	cases after	90	years	of	age per suggestion in GSS-NDI codebook)
+#men
+coxph <- with(subset(svy, sex %in% 'male' & age90 %in% '0'), svycoxph(Surv(duration, death=="dead") ~ factor(capital_chief_exec) + rcs(age, 3 ) + rcs(year, 3)))
+coxph <- summary(MIcombine(coxph))
+coxph <- exp(coxph[,c(1,3,4)])
+coxph <- coxph[1:3,]
+
+#women
+coxph_w <- with(subset(svy, sex %in% 'female' & age90 %in% '0'), svycoxph(Surv(duration, death=="dead") ~ factor(capital_chief_exec) + rcs(age, 3 ) + rcs(year, 3)))
+coxph_w <- summary(MIcombine(coxph_w))
+coxph_w <- exp(coxph_w[,c(1,3,4)])
+coxph_w <- coxph_w[1:3,]
+
+bind <- cbind(coxph, coxph_w)
+rownames(bind) <- c("Managers", "Petty bourgeoisie", "Capitalists")
+colnames(bind) <- c("HR", "Lower", "Upper", "HR", "Lower", "Upper")
+```
+
+```{r  warning=FALSE, message=FALSE}
+kable(bind, caption="Simple (ref: workers)", digits=2) %>%
+  kable_styling("striped") %>%
+  add_header_above(c(" " = 1, "Men" = 3, "Women"=3)) 
+```
+
+```{r  warning=FALSE, message=FALSE, results='hide'}
+###most disaggregate
+#men
+coxph <- with(subset(svy, sex %in% 'male' & age90 %in% '0'), svycoxph(Surv(duration, death=="dead") ~ factor(capital_det_skill_chief_exec) + rcs(age, 3 ) + rcs(year, 3)))
+coxph <- summary(MIcombine(coxph))
+coxph <- exp(coxph[,c(1,3,4)])
+coxph <- coxph[1:6,]
+
+#women
+coxph_w <- with(subset(svy, sex %in% 'female' & age90 %in% '0'), svycoxph(Surv(duration, death=="dead") ~ factor(capital_det_skill_chief_exec) + rcs(age, 3 ) + rcs(year, 3)))
+coxph_w <- summary(MIcombine(coxph_w))
+coxph_w <- exp(coxph_w[,c(1,3,4)])
+coxph_w <- coxph_w[1:6,]
+
+bind <- cbind(coxph, coxph_w)
+rownames(bind) <- c("More-skilled workers", "Low-level managers", "High-level managers", "Petty bourgeoisie", "Small capitalists", "Large capitalists")
+colnames(bind) <- c("HR", "Lower", "Upper", "HR", "Lower", "Upper")
+```
+
+```{r  warning=FALSE, message=FALSE}
+kable(bind, caption="Complex (ref: less-skilled workers)", digits=2) %>%
+  kable_styling("striped") %>%
+  add_header_above(c(" " = 1, "Men" = 3, "Women"=3)) 
+```
+
+### Stratified by gender and race
+
+```{r  warning=FALSE, message=FALSE, results='hide'}
+#####men
+#white
+coxph <- with(subset(svy, sex %in% 'male' & age90 %in% '0' & non_white==1), svycoxph(Surv(duration, death=="dead") ~ factor(capital_chief_exec) + rcs(age, 3 ) + rcs(year, 3)))
+coxph <- summary(MIcombine(coxph))
+coxph <- exp(coxph[,c(1,3,4)])
+coxph <- coxph[1:3,]
+
+#non_white
+coxph_nw <- with(subset(svy, sex %in% 'male' & age90 %in% '0' & non_white==5), svycoxph(Surv(duration, death=="dead") ~ factor(capital_chief_exec) + rcs(age, 3 ) + rcs(year, 3)))
+coxph_nw <- summary(MIcombine(coxph_nw))
+coxph_nw <- exp(coxph_nw[,c(1,3,4)])
+coxph_nw <- coxph_nw[1:3,]
+
+bind <- rbind(coxph, coxph_nw)
+
+###women
+#white
+coxph_w <- with(subset(svy, sex %in% 'female' & age90 %in% '0' & non_white==1), svycoxph(Surv(duration, death=="dead") ~ factor(capital_chief_exec) + rcs(age, 3 ) + rcs(year, 3)))
+coxph_w <- summary(MIcombine(coxph_w))
+coxph_w <- exp(coxph_w[,c(1,3,4)])
+coxph_w <- coxph_w[1:3,]
+
+#non_white
+coxph_w_nw <- with(subset(svy, sex %in% 'female' & age90 %in% '0' & non_white==5), svycoxph(Surv(duration, death=="dead") ~ factor(capital_chief_exec) + rcs(age, 3 ) + rcs(year, 3)))
+coxph_w_nw <- summary(MIcombine(coxph_w_nw))
+coxph_w_nw <- exp(coxph_w_nw[,c(1,3,4)])
+coxph_w_nw <- coxph_w_nw[1:3,]
+
+bind_fem <- rbind(coxph_w, coxph_w_nw)
+
+#bind  all together
+bind_tot <- cbind(bind, bind_fem)
+
+rownames(bind_tot) <- c("White managers", "White petty bourgeoisie", "White capitalists", "POC managers", "POC petty bourgeoisie", "POC capitalists")
+colnames(bind_tot) <- c("HR", "Lower", "Upper", "HR", "Lower", "Upper")
+```
+
+```{r  warning=FALSE, message=FALSE}
+kable(bind_tot, caption="Simple (ref: race-specific worker)", digits=2) %>%
+  kable_styling("striped") %>%
+  add_header_above(c(" " = 1, "Men" = 3, "Women"=3)) %>%
+  group_rows("White", 1, 3) %>%
+  group_rows("POC", 4, 6)
+```
+
+### Stratified by gender with a class by race interaction term
+```{r  warning=FALSE, message=FALSE, results='hide'}
+#####aggregate 
+#men
+coxph <- with(subset(svy, sex %in% 'male' & age90 %in% '0'), svycoxph(Surv(duration, death=="dead") ~ factor(capital_chief_exec_non_white) + rcs(age, 3 ) + rcs(year, 3)))
+coxph <- summary(MIcombine(coxph))
+coxph <- exp(coxph[,c(1,3,4)])
+coxph <- coxph[c(1:7),]
+
+#women
+coxph_w <- with(subset(svy, sex %in% 'female' & age90 %in% '0'), svycoxph(Surv(duration, death=="dead") ~ factor(capital_chief_exec_non_white) + rcs(age, 3 ) + rcs(year, 3)))
+coxph_w <- summary(MIcombine(coxph_w))
+coxph_w <- exp(coxph_w[,c(1,3,4)])
+coxph_w <- coxph_w[c(1:7),]
+
+bind <- cbind(coxph, coxph_w)
+rownames(bind) <- c("White managers", "White petty bourgeoisie", "White capitalists", "POC workers", "POC managers", "POC petty bourgeoisie", "POC capitalists")
+colnames(bind) <- c("HR", "Lower", "Upper", "HR", "Lower", "Upper")
+
+#test signficance of men interaction term --> from what I can tell, this can't be done with an object that's both a survey object and a mice object, so this is done on just a svycoxph object
+coxph_int <- svycoxph(Surv(duration, death=="dead") ~ factor(capital_chief_exec)*non_white + rcs(age, 3 ) + rcs(year, 3), subset(svy_unimp, sex %in% 'male' & age90 %in% '0'))
+
+wald_m <- regTermTest(coxph_int, ~factor(capital_chief_exec):non_white)$p
+
+#test signficance of women interaction term 
+coxph_int <- svycoxph(Surv(duration, death=="dead") ~ factor(capital_chief_exec)*non_white + rcs(age, 3 ) + rcs(year, 3), subset(svy_unimp, sex %in% 'female' & age90 %in% '0'))
+
+wald_f <- regTermTest(coxph_int, ~factor(capital_chief_exec):non_white)$p
+```
+
+```{r  warning=FALSE, message=FALSE}
+kable(bind, caption="Simple (ref: white workers)", digits=2) %>%
+  kable_styling("striped") %>%
+  add_header_above(c(" " = 1, "Men" = 3, "Women"=3)) 
+
+kable(cbind(wald_m, wald_f), col.names=c("Men", "Women"), caption="Race*class interaction p-values from Wald test", digits=2)  
+```
+
+# Appendix
+
+## Imputation diagnostics
+```{r  warning=FALSE, message=FALSE}
+#visualize missingness
+aggr(data_mice[,c("capital_chief_exec", "capital_det_skill_chief_exec", "wksup", "wksups", "wrkslf", 'wrkstat', 'prestg10', 'income', 'region', 'race', 'age', 'sex', 'wrkstat', 'educ', 'year', 'srh_bin')], delimiter="_imp", cex.axis = 0.4, numbers=FALSE, prop=TRUE)
+
+#check convergence plots
+plot(imp_merged, y=c("capital_chief_exec", "capital_det_skill_chief_exec", 'wrkstat', 'educ', 'age', 'prestg10', 'income'), main='Convergence plots')
+
+#compare distribution of values for non-imp and imp data
+impL <- complete(imp_merged,"long",include = T)
+impL$wrkstat <- droplevels(impL$wrkstat)
+impL$Imputed <- factor(impL$.imp >0,labels = c("Observed","Imputed"))
+vars <- c("capital_chief_exec", "capital_det_skill_chief_exec", 'wrkstat', 'educ', 'age', 'prestg10', 'income')
+catvars <- c("capital_chief_exec", "capital_det_skill_chief_exec", 'educ')
+x <- CreateTableOne(data=impL, vars=vars, factorVars=catvars, strata='Imputed', includeNA=T)
+x <- print(x, printToggle=FALSE, noSpaces=TRUE)
+kable(x[,1:2], caption="Distribution of non-imputed vs imputed values") %>%
+  kable_styling("striped") %>%
+  scroll_box(width = "100%", height = "250px")
+```
+
+## How does including chief executives in capitalist or petty bourgeois classes affect counts in each category (unweighted and unimputed)?
+```{r,  warning=FALSE, message=FALSE}
+kable(table(dat$capital, dat$capital_chief_exec), bold=F, caption="Class measure that includes CEOs as capitalists or petty bourgeoisie is in columns") %>%
+  kable_styling('striped')
+
+kable(table(dat$capital_det_skill, dat$capital_det_skill_chief_exec), bold=F, caption="Class measure that includes CEOs as capitalists or petty bourgeoisie is in columns") %>%
+  kable_styling('striped') 
+```
+
+## Characteristics of unemployed vs employed (weighted but unimputed dataset)
+```{r,  warning=FALSE, message=FALSE}
+vars <- c('sex', 'race', 'educ', 'region', 'income', 'age')
+catvars <- c('sex', 'race', 'educ')
+
+x <- svyCreateTableOne(vars = vars, factorVars=catvars, data = svy_unimp, strata='employ_3_cat')
+x <- print(x, printToggle=FALSE, noSpaces=TRUE)
+kable(x[,1:3], caption="Simple") %>%
+  kable_styling("striped") %>%
+  scroll_box(width = "100%", height = "250px")
+```
+
+## Characteristics of fulltime vs parttime vs unemployed working class (weighted but unimputed dataset)
+```{r,  warning=FALSE, message=FALSE}
+vars <- c('sex', 'race', 'educ', 'region', 'income', 'age')
+catvars <- c('sex', 'race', 'educ')
+
+x <- svyCreateTableOne(vars = vars, factorVars=catvars, data = subset(svy_unimp, capital_chief_exec %in% "Workers"), strata='employ_3_cat')
+x <- print(x, printToggle=FALSE, noSpaces=TRUE)
+kable(x[,1:3], caption="Simple") %>%
+  kable_styling("striped") %>%
+  scroll_box(width = "100%", height = "250px")
+```
+
+## How many in various race-gender-class groups in poor health?
+```{r,  warning=FALSE, message=FALSE}
+kable(table(dat$sex, ifelse(dat$non_white==5, "POC", "White"), ifelse(dat$srh_bin==1, "Yes", "No"), dat$capital_chief_exec), col.names = c('Gender', "Race", "Poor health", "Class", "Count")) %>%
+  kable_styling('striped') %>%
+  scroll_box(width = "100%", height = "250px")
+```
+
+## How many in various race-gender-class groups who died?
+```{r,  warning=FALSE, message=FALSE}
+kable(table(dat$sex, ifelse(dat$non_white==5, "POC", "White"), dat$death, dat$capital_chief_exec), col.names = c('Gender', "Race", "Survival", "Class", "Count")) %>%
+  kable_styling('striped') %>%
+  scroll_box(width = "100%", height = "250px")
+```
+
+## SRH models not stratifed by race or gender, but progressively adjusted for them (plus age and year)
+```{r,  warning=FALSE, message=FALSE, results='hide'}
+#######include unemployed
+
+#just age and year
+srh <- with(svy, svyglm(srh_bin ~ capital_chief_exec + rcs(age, 3 ) + rcs(year, 3), family=poisson()))
+srh <- summary(MIcombine(srh))
+srh <- exp(srh[2:4, c(1,3:4)])
+colnames(srh) <- c("PR", "Lower", "Upper")
+rownames(srh) <- c("Managers", "Petty bourgeoisie", "Capitalists")
+
+#age, year, and sex
+srh1 <- with(svy, svyglm(srh_bin ~ capital_chief_exec + rcs(age, 3 ) + rcs(year, 3) + sex, family=poisson()))
+srh1 <- summary(MIcombine(srh1))
+srh1 <- exp(srh1[2:4, c(1,3:4)])
+colnames(srh1) <- c("PR", "Lower", "Upper")
+rownames(srh1) <- c("Managers", "Petty bourgeoisie", "Capitalists")
+
+#age, year, and race
+srh2 <- with(svy, svyglm(srh_bin ~ capital_chief_exec + rcs(age, 3 ) + rcs(year, 3) + race, family=poisson()))
+srh2 <- summary(MIcombine(srh2))
+srh2 <- exp(srh2[2:4, c(1,3:4)])
+colnames(srh2) <- c("PR", "Lower", "Upper")
+rownames(srh2) <- c("Managers", "Petty bourgeoisie", "Capitalists")
+
+#age, year, sex, and race
+srh3 <- with(svy, svyglm(srh_bin ~ capital_chief_exec + rcs(age, 3 ) + rcs(year, 3) + sex + race, family=poisson()))
+srh3 <- summary(MIcombine(srh3))
+srh3 <- exp(srh3[2:4, c(1,3:4)])
+colnames(srh3) <- c("PR", "Lower", "Upper")
+rownames(srh3) <- c("Managers", "Petty bourgeoisie", "Capitalists")
+
+bind <- cbind(srh, srh1, srh2, srh3)
+
+#######exclude unemployed
+
+#just age and year
+srh <- with(subset(svy, wrkstat != "unempl, laid off"), svyglm(srh_bin ~ capital_chief_exec + rcs(age, 3 ) + rcs(year, 3), family=poisson()))
+srh <- summary(MIcombine(srh))
+srh <- exp(srh[2:4, c(1,3:4)])
+colnames(srh) <- c("PR", "Lower", "Upper")
+rownames(srh) <- c("Managers", "Petty bourgeoisie", "Capitalists")
+
+#age, year, and sex
+srh1 <- with(subset(svy, wrkstat != "unempl, laid off"), svyglm(srh_bin ~ capital_chief_exec + rcs(age, 3 ) + rcs(year, 3) + sex, family=poisson()))
+srh1 <- summary(MIcombine(srh1))
+srh1 <- exp(srh1[2:4, c(1,3:4)])
+colnames(srh1) <- c("PR", "Lower", "Upper")
+rownames(srh1) <- c("Managers", "Petty bourgeoisie", "Capitalists")
+
+#age, year, and race
+srh2 <- with(subset(svy, wrkstat != "unempl, laid off"), svyglm(srh_bin ~ capital_chief_exec + rcs(age, 3 ) + rcs(year, 3) + race, family=poisson()))
+srh2 <- summary(MIcombine(srh2))
+srh2 <- exp(srh2[2:4, c(1,3:4)])
+colnames(srh2) <- c("PR", "Lower", "Upper")
+rownames(srh2) <- c("Managers", "Petty bourgeoisie", "Capitalists")
+
+#age, year, sex, and race
+srh3 <- with(subset(svy, wrkstat != "unempl, laid off"), svyglm(srh_bin ~ capital_chief_exec + rcs(age, 3 ) + rcs(year, 3) + sex + race, family=poisson()))
+srh3 <- summary(MIcombine(srh3))
+srh3 <- exp(srh3[2:4, c(1,3:4)])
+colnames(srh3) <- c("PR", "Lower", "Upper")
+rownames(srh3) <- c("Managers", "Petty bourgeoisie", "Capitalists")
+
+bind_unemp <- cbind(srh, srh1, srh2, srh3)
+```
+
+```{r,  warning=FALSE, message=FALSE}
+kable(rbind(bind, bind_unemp), caption="Simple (ref: workers)", digits=2) %>%
+  kable_styling("striped") %>%
+  add_header_above(c(" " = 1, "Age, yr" = 3, "Age, yr, gender"=3, "Age, yr, race"=3, "Age, yr, gender, race"=3)) %>%
+  group_rows("Include unemployed", 1, 3) %>%
+  group_rows("Exclude unemployed", 4, 6)
+```
+
+```{r,  warning=FALSE, message=FALSE, results='hide'}
+#just age and year
+srh <- with(svy, svyglm(srh_bin ~ capital_det_skill_chief_exec + rcs(age, 3 ) + rcs(year, 3), family=poisson()))
+srh <- summary(MIcombine(srh))
+srh <- exp(srh[2:7, c(1,3:4)])
+colnames(srh) <- c("PR", "Lower", "Upper")
+rownames(srh) <- c("More-skilled workers", "Low-level managers", "High-level managers", "Petty bourgeoisie", "Small capitalists", "Large capitalists")
+
+#age, year, and sex
+srh1 <- with(svy, svyglm(srh_bin ~ capital_det_skill_chief_exec + rcs(age, 3 ) + rcs(year, 3) + sex, family=poisson()))
+srh1 <- summary(MIcombine(srh1))
+srh1 <- exp(srh1[2:7, c(1,3:4)])
+colnames(srh1) <- c("PR", "Lower", "Upper")
+rownames(srh1) <- c("More-skilled workers", "Low-level managers", "High-level managers", "Petty bourgeoisie", "Small capitalists", "Large capitalists")
+
+#age, year, and race
+srh2 <- with(svy, svyglm(srh_bin ~ capital_det_skill_chief_exec + rcs(age, 3 ) + rcs(year, 3) + race, family=poisson()))
+srh2 <- summary(MIcombine(srh2))
+srh2 <- exp(srh2[2:7, c(1,3:4)])
+colnames(srh2) <- c("PR", "Lower", "Upper")
+rownames(srh2) <- c("More-skilled workers", "Low-level managers", "High-level managers", "Petty bourgeoisie", "Small capitalists", "Large capitalists")
+
+#age, year, sex, and race
+srh3 <- with(svy, svyglm(srh_bin ~ capital_det_skill_chief_exec + rcs(age, 3 ) + rcs(year, 3) + sex + race, family=poisson()))
+srh3 <- summary(MIcombine(srh3))
+srh3 <- exp(srh3[2:7, c(1,3:4)])
+colnames(srh3) <- c("PR", "Lower", "Upper")
+rownames(srh3) <- c("More-skilled workers", "Low-level managers", "High-level managers", "Petty bourgeoisie", "Small capitalists", "Large capitalists")
+
+bind <- cbind(srh, srh1, srh2, srh3)
+
+######excluding unemployed
+
+#just age and year
+srh <- with(subset(svy, wrkstat != "unempl, laid off"), svyglm(srh_bin ~ capital_det_skill_chief_exec + rcs(age, 3 ) + rcs(year, 3), family=poisson()))
+srh <- summary(MIcombine(srh))
+srh <- exp(srh[2:7, c(1,3:4)])
+colnames(srh) <- c("PR", "Lower", "Upper")
+rownames(srh) <- c("More-skilled workers", "Low-level managers", "High-level managers", "Petty bourgeoisie", "Small capitalists", "Large capitalists")
+
+#age, year, and sex
+srh1 <- with(subset(svy, wrkstat != "unempl, laid off"), svyglm(srh_bin ~ capital_det_skill_chief_exec + rcs(age, 3 ) + rcs(year, 3) + sex, family=poisson()))
+srh1 <- summary(MIcombine(srh1))
+srh1 <- exp(srh1[2:7, c(1,3:4)])
+colnames(srh1) <- c("PR", "Lower", "Upper")
+rownames(srh1) <- c("More-skilled workers", "Low-level managers", "High-level managers", "Petty bourgeoisie", "Small capitalists", "Large capitalists")
+
+#age, year, and race
+srh2 <- with(subset(svy, wrkstat != "unempl, laid off"), svyglm(srh_bin ~ capital_det_skill_chief_exec + rcs(age, 3 ) + rcs(year, 3) + race, family=poisson()))
+srh2 <- summary(MIcombine(srh2))
+srh2 <- exp(srh2[2:7, c(1,3:4)])
+colnames(srh2) <- c("PR", "Lower", "Upper")
+rownames(srh2) <- c("More-skilled workers", "Low-level managers", "High-level managers", "Petty bourgeoisie", "Small capitalists", "Large capitalists")
+
+#age, year, sex, and race
+srh3 <- with(subset(svy, wrkstat != "unempl, laid off"), svyglm(srh_bin ~ capital_det_skill_chief_exec + rcs(age, 3 ) + rcs(year, 3) + sex + race, family=poisson()))
+srh3 <- summary(MIcombine(srh3))
+srh3 <- exp(srh3[2:7, c(1,3:4)])
+colnames(srh3) <- c("PR", "Lower", "Upper")
+rownames(srh3) <- c("More-skilled workers", "Low-level managers", "High-level managers", "Petty bourgeoisie", "Small capitalists", "Large capitalists")
+
+bind_unemp <- cbind(srh, srh1, srh2, srh3)
+```
+
+```{r,  warning=FALSE, message=FALSE}
+kable(rbind(bind, bind_unemp), caption="Complex (ref: low-skill worker)", digits=2) %>%
+  kable_styling("striped") %>%
+  add_header_above(c(" " = 1, "Age, yr" = 3, "Age, yr, gender"=3, "Age, yr, race"=3, "Age, yr, gender, race"=3)) %>%
+  group_rows("Include unemployed", 1, 6) %>%
+  group_rows("Exclude unemployed", 7, 12)
+```
+
+## Mortality Cox models not stratifed by race or gender, but progressively adjusted for them (plus age and year as restricted cubic splines with 3 knots)
+```{r  warning=FALSE, message=FALSE, results='hide'}
+#####aggregate: include unemployed
+
+coxph <- with(subset(svy, age90 %in% '0'), svycoxph(Surv(duration, death=="dead") ~ factor(capital_chief_exec) + rcs(age, 3 ) + rcs(year, 3)))
+coxph <- summary(MIcombine(coxph))
+coxph <- exp(coxph[,c(1,3,4)])
+coxph <- coxph[1:3,]
+
+coxph1 <- with(subset(svy, age90 %in% '0'), svycoxph(Surv(duration, death=="dead") ~ factor(capital_chief_exec) + rcs(age, 3 ) + rcs(year, 3) + sex))
+coxph1 <- summary(MIcombine(coxph1))
+coxph1 <- exp(coxph1[,c(1,3,4)])
+coxph1 <- coxph1[1:3,]
+
+coxph2 <- with(subset(svy, age90 %in% '0'), svycoxph(Surv(duration, death=="dead") ~ factor(capital_chief_exec) + rcs(age, 3 ) + rcs(year, 3) + race))
+coxph2 <- summary(MIcombine(coxph2))
+coxph2 <- exp(coxph2[,c(1,3,4)])
+coxph2 <- coxph2[1:3,]
+
+coxph3 <- with(subset(svy, age90 %in% '0'), svycoxph(Surv(duration, death=="dead") ~ factor(capital_chief_exec) + rcs(age, 3 ) + rcs(year, 3) + sex + race))
+coxph3 <- summary(MIcombine(coxph3))
+coxph3 <- exp(coxph3[,c(1,3,4)])
+coxph3 <- coxph3[1:3,]
+
+bind <- cbind(coxph, coxph1, coxph2, coxph3)
+rownames(bind) <- c("Managers", "Petty bourgeoisie", "Capitalists")
+colnames(bind) <- c("HR", "Lower", "Upper", "HR", "Lower", "Upper",  "HR", "Lower", "Upper",  "HR", "Lower", "Upper")
+
+#####aggregate: exclude unemployed
+
+coxph <- with(subset(svy, age90 %in% '0' & wrkstat !="unempl, laid off"), svycoxph(Surv(duration, death=="dead") ~ factor(capital_chief_exec) + rcs(age, 3 ) + rcs(year, 3)))
+coxph <- summary(MIcombine(coxph))
+coxph <- exp(coxph[,c(1,3,4)])
+coxph <- coxph[1:3,]
+
+coxph1 <- with(subset(svy, age90 %in% '0' & wrkstat !="unempl, laid off"), svycoxph(Surv(duration, death=="dead") ~ factor(capital_chief_exec) + rcs(age, 3 ) + rcs(year, 3) + sex))
+coxph1 <- summary(MIcombine(coxph1))
+coxph1 <- exp(coxph1[,c(1,3,4)])
+coxph1 <- coxph1[1:3,]
+
+coxph2 <- with(subset(svy, age90 %in% '0' & wrkstat !="unempl, laid off"), svycoxph(Surv(duration, death=="dead") ~ factor(capital_chief_exec) + rcs(age, 3 ) + rcs(year, 3) + race))
+coxph2 <- summary(MIcombine(coxph2))
+coxph2 <- exp(coxph2[,c(1,3,4)])
+coxph2 <- coxph2[1:3,]
+
+coxph3 <- with(subset(svy, age90 %in% '0' & wrkstat !="unempl, laid off"), svycoxph(Surv(duration, death=="dead") ~ factor(capital_chief_exec) + rcs(age, 3 ) + rcs(year, 3) + sex + race))
+coxph3 <- summary(MIcombine(coxph3))
+coxph3 <- exp(coxph3[,c(1,3,4)])
+coxph3 <- coxph3[1:3,]
+
+bind_unemp <- cbind(coxph, coxph1, coxph2, coxph3)
+rownames(bind_unemp) <- c("Managers", "Petty bourgeoisie", "Capitalists")
+colnames(bind_unemp) <- c("HR", "Lower", "Upper", "HR", "Lower", "Upper",  "HR", "Lower", "Upper",  "HR", "Lower", "Upper")
+```
+
+```{r  warning=FALSE, message=FALSE}
+kable(rbind(bind, bind_unemp), caption="Simple (ref: workers)", digits=2) %>%
+  kable_styling("striped") %>%
+  add_header_above(c(" " = 1, "Age, yr" = 3, "Age, yr, gender"=3, "Age, yr, race"=3, "Age, yr, gender, race"=3)) %>%
+  group_rows("Include unemployed", 1, 3) %>%
+  group_rows("Exclude unemployed", 4, 6) 
+```
+
+```{r  warning=FALSE, message=FALSE, results='hide'}
+#####aggregate: include unemployed
+
+coxph <- with(subset(svy, age90 %in% '0'), svycoxph(Surv(duration, death=="dead") ~ factor(capital_det_skill_chief_exec) + rcs(age, 3 ) + rcs(year, 3)))
+coxph <- summary(MIcombine(coxph))
+coxph <- exp(coxph[,c(1,3,4)])
+coxph <- coxph[1:6,]
+
+coxph1 <- with(subset(svy, age90 %in% '0'), svycoxph(Surv(duration, death=="dead") ~ factor(capital_det_skill_chief_exec) + rcs(age, 3 ) + rcs(year, 3) + sex))
+coxph1 <- summary(MIcombine(coxph1))
+coxph1 <- exp(coxph1[,c(1,3,4)])
+coxph1 <- coxph1[1:6,]
+
+coxph2 <- with(subset(svy, age90 %in% '0'), svycoxph(Surv(duration, death=="dead") ~ factor(capital_det_skill_chief_exec) + rcs(age, 3 ) + rcs(year, 3) + race))
+coxph2 <- summary(MIcombine(coxph2))
+coxph2 <- exp(coxph2[,c(1,3,4)])
+coxph2 <- coxph2[1:6,]
+
+coxph3 <- with(subset(svy, age90 %in% '0'), svycoxph(Surv(duration, death=="dead") ~ factor(capital_det_skill_chief_exec) + rcs(age, 3 ) + rcs(year, 3) + sex + race))
+coxph3 <- summary(MIcombine(coxph3))
+coxph3 <- exp(coxph3[,c(1,3,4)])
+coxph3 <- coxph3[1:6,]
+
+bind <- cbind(coxph, coxph1, coxph2, coxph3)
+rownames(bind) <- c("More-skilled workers", "Low-level managers", "High-level managers", "Petty bourgeoisie", "Small capitalists", "Large capitalists")
+colnames(bind) <- c("HR", "Lower", "Upper", "HR", "Lower", "Upper",  "HR", "Lower", "Upper",  "HR", "Lower", "Upper")
+
+#####aggregate: exclude unemployed
+
+coxph <- with(subset(svy, age90 %in% '0' & wrkstat !="unempl, laid off"), svycoxph(Surv(duration, death=="dead") ~ factor(capital_det_skill_chief_exec) + rcs(age, 3 ) + rcs(year, 3)))
+coxph <- summary(MIcombine(coxph))
+coxph <- exp(coxph[,c(1,3,4)])
+coxph <- coxph[1:6,]
+
+coxph1 <- with(subset(svy, age90 %in% '0' & wrkstat !="unempl, laid off"), svycoxph(Surv(duration, death=="dead") ~ factor(capital_det_skill_chief_exec) + rcs(age, 3 ) + rcs(year, 3) + sex))
+coxph1 <- summary(MIcombine(coxph1))
+coxph1 <- exp(coxph1[,c(1,3,4)])
+coxph1 <- coxph1[1:6,]
+
+coxph2 <- with(subset(svy, age90 %in% '0' & wrkstat !="unempl, laid off"), svycoxph(Surv(duration, death=="dead") ~ factor(capital_det_skill_chief_exec) + rcs(age, 3 ) + rcs(year, 3) + race))
+coxph2 <- summary(MIcombine(coxph2))
+coxph2 <- exp(coxph2[,c(1,3,4)])
+coxph2 <- coxph2[1:6,]
+
+coxph3 <- with(subset(svy, age90 %in% '0' & wrkstat !="unempl, laid off"), svycoxph(Surv(duration, death=="dead") ~ factor(capital_det_skill_chief_exec) + rcs(age, 3 ) + rcs(year, 3) + sex + race))
+coxph3 <- summary(MIcombine(coxph3))
+coxph3 <- exp(coxph3[,c(1,3,4)])
+coxph3 <- coxph3[1:6,]
+
+bind_unemp <- cbind(coxph, coxph1, coxph2, coxph3)
+rownames(bind_unemp) <- c("More-skilled workers", "Low-level managers", "High-level managers", "Petty bourgeoisie", "Small capitalists", "Large capitalists")
+colnames(bind_unemp) <- c("HR", "Lower", "Upper", "HR", "Lower", "Upper",  "HR", "Lower", "Upper",  "HR", "Lower", "Upper")
+```
+
+```{r  warning=FALSE, message=FALSE}
+kable(rbind(bind, bind_unemp), caption="Complex (ref: less-skilled workers)", digits=2) %>%
+  kable_styling("striped") %>%
+  add_header_above(c(" " = 1, "Age, yr" = 3, "Age, yr, gender"=3, "Age, yr, race"=3, "Age, yr, gender, race"=3)) %>%
+  group_rows("Include unemployed", 1, 6) %>%
+  group_rows("Exclude unemployed", 7, 12)
+```
+
+## Testing proportional hazards assumption of primary Cox models via Schoenfeld residuals (non-imputed dataset)
+
+For each regression, plots are ordered left to right and top to bottom by factor level. Regression title at bottom of each set of plots.
+
+```{r  warning=FALSE, message=FALSE, fig.height=8, fig.width=8}
+coxph <- svycoxph(Surv(duration, death=="dead") ~ capital_chief_exec + rcs(age, 3 ) + rcs(year, 3), design=subset(svy_unimp, sex %in% 'male' & age90 %in% '0'))
+ggcoxzph(cox.zph(coxph)[1:3], ylab="Beta(t)", caption="Men: simple", font.main=12)
+
+coxph <- svycoxph(Surv(duration, death=="dead") ~ capital_det_skill_chief_exec + rcs(age, 3 ) + rcs(year, 3), design=subset(svy_unimp, sex %in% 'male' & age90 %in% '0'))
+ggcoxzph(cox.zph(coxph)[1:6], ylab="Beta(t)", caption="Men: complex", font.main=12)
+
+coxph <- svycoxph(Surv(duration, death=="dead") ~ capital_chief_exec + rcs(age, 3 ) + rcs(year, 3), design=subset(svy_unimp, sex %in% 'male' & age90 %in% '0' & non_white==1))
+ggcoxzph(cox.zph(coxph)[1:3], ylab="Beta(t)", caption="Men: simple white workers", font.main=12)
+
+coxph <- svycoxph(Surv(duration, death=="dead") ~ capital_chief_exec + rcs(age, 3 ) + rcs(year, 3), design=subset(svy_unimp, sex %in% 'male' & age90 %in% '0' & non_white==5))
+ggcoxzph(cox.zph(coxph)[1:3], ylab="Beta(t)", caption="Men: simple workers of color", font.main=12)
+
+coxph <- svycoxph(Surv(duration, death=="dead") ~ factor(capital_chief_exec_non_white) + rcs(age, 3 ) + rcs(year, 3), design=subset(svy_unimp, sex %in% 'male' & age90 %in% '0'))
+ggcoxzph(cox.zph(coxph)[1:7], ylab="Beta(t)", caption="Men: simple w/ race*class interaction", font.main=8)
+
+coxph <- svycoxph(Surv(duration, death=="dead") ~ capital_chief_exec + rcs(age, 3 ) + rcs(year, 3), design=subset(svy_unimp, sex %in% 'female' & age90 %in% '0'))
+ggcoxzph(cox.zph(coxph)[1:3], ylab="Beta(t)", caption="Women: simple", font.main=12)
+
+coxph <- svycoxph(Surv(duration, death=="dead") ~ capital_det_skill_chief_exec + rcs(age, 3 ) + rcs(year, 3), design=subset(svy_unimp, sex %in% 'female' & age90 %in% '0'))
+ggcoxzph(cox.zph(coxph)[1:6], ylab="Beta(t)", caption="Women: complex", font.main=12)
+
+coxph <- svycoxph(Surv(duration, death=="dead") ~ capital_chief_exec + rcs(age, 3 ) + rcs(year, 3), design=subset(svy_unimp, sex %in% 'female' & age90 %in% '0' & non_white==1))
+ggcoxzph(cox.zph(coxph)[1:3], ylab="Beta(t)", caption="Women: simple white workers", font.main=12)
+
+coxph <- svycoxph(Surv(duration, death=="dead") ~ capital_chief_exec + rcs(age, 3 ) + rcs(year, 3), design=subset(svy_unimp, sex %in% 'female' & age90 %in% '0' & non_white==5))
+ggcoxzph(cox.zph(coxph)[1:3], ylab="Beta(t)", caption="Women: simple workers of color", font.main=12)
+
+coxph <- svycoxph(Surv(duration, death=="dead") ~ factor(capital_chief_exec_non_white) + rcs(age, 3 ) + rcs(year, 3), design=subset(svy_unimp, sex %in% 'female' & age90 %in% '0'))
+ggcoxzph(cox.zph(coxph)[1:7], ylab="Beta(t)", caption="Women: simple w/ race*class interaction", font.main=8)
+```
