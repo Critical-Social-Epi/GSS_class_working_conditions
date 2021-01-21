@@ -25,6 +25,8 @@ always_allow_html: true
 
 * Should we use numemps instead of wksup to divide PBs and caps? Also, review crosstabs of class and numemps in appendix.
 
+* Which class X gender/race interactions do we want to include in the manuscript?
+
 **Codebook for non-self-explanatory variables**
 
 * Class variables:
@@ -35,39 +37,97 @@ always_allow_html: true
     + depress: whether respondent has ever been diagnosed by a healthcare professional with depression
     + mntlhlth: days of poor mental health in past 30 days
 
-* Select QWL variables:
-    + mustwork: Mandatory to work extra hours
-    + chngtme: How often r allowed change schedule
-    + famwkoff: How hard to take time off
-    + wkvsfam: How often job interferes fam life
-    + secondwk: R has job other than main
-    + learnnew: Job requires r to learn new things
-    + workfast: Job requires r to work fast
-    + wrktime: R has enough time to get the job done
-    + workdiff: R does numerous things on job
-    + toofewwk: How often not enough staff
-    + overwork: R has too much work to do well
-    + myskills: Job allows r use of skills
-    + trainops: R have the training opportunities
-    + opdevel: Opportunity to develop my abilities
-    + respect: R treated with respect at work
-    + trustman: R trust management at work
-    + manvsemp: Relations bw management and employees
-    + suphelp: Supervisor helpful to r in getting job done
-    + supcares: Supervisor concerned about welfare
-    + wkfreedm: A lot of freedom to decide how to do job
-    + lotofsay: R has lot of say in job
-    + wkdecide: How often r take part in decisions
-    + satjob1: 	Job satisfaction in general
-    + fairearn: How fair is what r earn on the job
-    + fringeok: Fringe benefits are good
-    + rincblls: Income alone is enough
-    + laidoff: R was laid off main job last year
-    + jobsecok: The job security is good
-    + any_disc_haras: Any discrimination or harassment on job (created by me from several more specific variables focused separately on racism, sexism, etc.)
-    + safetywk: Worker safety priority at work
-    + safehlth: Safety and health condition good at work
-    + safetywk: No shortcuts on worker safety
+* QWL variables:
+    +	wrktype	  :	Work arrangement at main job
+    +	yearsjob	:	Time at current job
+    +	waypaid	  :	How paid in main job
+    +	wrksched	:	Usual work schedule
+    +	moredays	:	Days per month r work extra hours
+    +	mustwork	:	Mandatory to work extra hours
+    +	chngtme	  :	How often r allowed change schedule
+    +	wrkhome	  :	How often r works at home
+    +	whywkhme	:	Usual reason r work at home
+    +	famwkoff	:	How hard to take time off
+    +	wkvsfam	  :	How often job interferes fam life
+    +	famvswk	  :	How often fam life interfere job
+    +	hrsrelax	:	Hours per day r have to relax
+    +	secondwk	:	R has job other than main
+    +	learnnew	:	Job requires r to learn new things
+    +	workfast	:	Job requires r to work fast
+    +	workdiff	:	R does numerous things on job
+    +	lotofsay	:	R has lot of say in job
+    +	wktopsat	:	Satisfaction comes from work
+    +	overwork	:	R has too much work to do well
+    +	knowwhat	:	R knows what's expected on job
+    +	myskills	:	Job allows r use of skills
+    +	respect	  :	R treated with respect at work
+    +	trustman	:	R trust management at work
+    +	safetywk	:	Worker safety priority at work
+    +	safefrst	:	No shortcuts on worker safety
+    +	teamsafe	:	Mgt and employees work together re safety
+    +	safehlth	:	Safety and health condition good at work
+    +	proudemp	:	R proud to work for employer
+    +	prodctiv	:	Work conditions allow productivity
+    +	wksmooth	:	Workplace runs in smooth manner
+    +	trdunion	:	Workers need strong unions
+    +	partteam	:	R work as part of a team
+    +	wkdecide	:	How often r take part in decisions
+    +	setthngs	:	How often r set way things done
+    +	toofewwk	:	How often not enough staff
+    +	promteok	:	Rs chances for promotion good
+    +	opdevel	  :	Opportunity to develop my abilities
+    +	hlpequip	:	Enough help and equip to ge the job done
+    +	haveinfo	:	Enough info to get the job done
+    +	wkfreedm	:	A lot of freedom to decide how to do job
+    +	fringeok	:	Fringe benefits are good
+    +	supcares	:	Supervisor concerned about welfare
+    +	condemnd	:	R free from conflicting demands
+    +	promtefr	:	Promotions are handled fairly
+    +	cowrkint	:	Coworkers take a personal interest in r
+    +	jobsecok	:	The job security is good
+    +	suphelp	  :	Supervisor helpful to r in getting job done
+    +	wrktime	  :	R has enough time to get the job done
+    +	cowrkhlp	:	Coworkers can be relied on when r needs help
+    +	trainops	:	R have the training opportunities
+    +	manvsemp	:	Relations bw management and employees
+    +	hvylift	  :	R do repeated lifting
+    +	handmove	:	R perform forceful hand movements
+    +	wkpraise	:	R is likely to be praised by supervisor
+    +	wkbonus	  :	R is likely to get a bonus or pay increase
+    +	fairearn	:	How fair is what r earn on the job
+    +	rincblls	:	Income alone is enough
+    +	laidoff	  :	R was laid off main job last year
+    +	jobfind1	:	How easy for r to find a same job
+    +	trynewjb	:	How likely r make effort for new job next year
+    +	wkageism	:	R feels discriminated because of age
+    +	wkracism	:	R feels discriminated because of race
+    +	wksexism	:	R feels discriminated because of gender
+    +	wkharsex	:	R sexually harassed on the job last 12 months
+    +	wkharoth	:	R threatened on the job last 12 months
+    +	health1	  :	Rs health in general
+    +	physhlth	:	Days of poor physical health past 30 days
+    +	mntlhlth	:	Days of poor mental health past 30 days
+    +	hlthdays	:	Days of activity limitation past 30 days
+    +	usedup	  :	How often during past month r felt used up
+    +	backpain	:	R had back pain in the past 12 months
+    +	painarms	:	R had pain in the arms in the past 12 months
+    +	hurtatwk	:	Number of injuries on the job past 12 months
+    +	spvtrfair	:	Supervisor is fair
+    +	strredpg	:	Access to stress management
+    +	phyeffrt	:	Rate physical effort
+    +	slpprblm	:	Trouble sleeping last 12 months
+    +	satjob1	  :	Job satisfaction in general
+    +	knowschd	:	How far in advance know work schedule
+    +	usetech	  :	Percentage of time use tech
+    +	stress12	:	Stress management program last 12 months
+    +	hyperten	:	Told have hypertension or high blood pressure
+    +	arthrtis	:	Told have arthritis or rheumatism
+    +	diabetes	:	Told have diabetes
+    +	depress	  :	Told have depression
+    +	weight	  :	R weighs how much
+    +	height	  :	R is how tall
+    +	ntwkhard	:	Past week not work hard enough
+    +	misswork	:	Miss work for health past 30 days
     
 
 ```r
@@ -6685,16 +6745,6 @@ dat %>%
 </tbody>
 </table></div>
 
-
-## Imputation convergence plots
-
-
-```r
-plot(imp_merged, y=c('class', 'educ', 'marital_tri', 'income', 'age', "srh_bin", "mntlhlth", "learnnew_bin", "wkdecide_bin", "manvsemp_bin", "safehlth_bin", "workdiff_bin", "wkfreedm_bin", "trustman_bin", "safetywk_bin",  "workfast_bin", "respect_bin", "condemnd_bin", "disc_haras"), main='Convergence plots')
-```
-
-![](analysis_1_15_21_MICE_files/figure-html/unnamed-chunk-23-1.png)<!-- -->![](analysis_1_15_21_MICE_files/figure-html/unnamed-chunk-23-2.png)<!-- -->![](analysis_1_15_21_MICE_files/figure-html/unnamed-chunk-23-3.png)<!-- -->![](analysis_1_15_21_MICE_files/figure-html/unnamed-chunk-23-4.png)<!-- -->![](analysis_1_15_21_MICE_files/figure-html/unnamed-chunk-23-5.png)<!-- -->![](analysis_1_15_21_MICE_files/figure-html/unnamed-chunk-23-6.png)<!-- -->![](analysis_1_15_21_MICE_files/figure-html/unnamed-chunk-23-7.png)<!-- -->
-
 ## How do more-adjusted regressions compare to less-adjusted regressions?
 
 Adjusted for age, year, gender, race, education, region, and marital status.
@@ -6739,7 +6789,7 @@ binded <- formatted(c("Managers", "Petite bourgeoisie", "Capitalists"), 12,
   plot_layout(heights=c(1,0.1))
 ```
 
-![](analysis_1_15_21_MICE_files/figure-html/unnamed-chunk-25-1.png)<!-- -->
+![](analysis_1_15_21_MICE_files/figure-html/unnamed-chunk-24-1.png)<!-- -->
 
 ```r
 #table of estimates
@@ -7091,7 +7141,7 @@ binded <- formatted(c("Male managers", "Male petite bourgeoisie", "Male capitali
   plot_layout(heights=c(1,0.15))
 ```
 
-![](analysis_1_15_21_MICE_files/figure-html/unnamed-chunk-27-1.png)<!-- -->
+![](analysis_1_15_21_MICE_files/figure-html/unnamed-chunk-26-1.png)<!-- -->
 
 ```r
 #table of estimates
@@ -7829,7 +7879,7 @@ binded <- formatted(c("White managers", "White petite bourgeoisie", "White capit
   plot_layout(heights=c(1,0.15))
 ```
 
-![](analysis_1_15_21_MICE_files/figure-html/unnamed-chunk-29-1.png)<!-- -->
+![](analysis_1_15_21_MICE_files/figure-html/unnamed-chunk-28-1.png)<!-- -->
 
 ```r
 #table of estimates
@@ -8570,7 +8620,7 @@ binded <- formatted(c("Female"), 12,
   plot_layout(heights=c(1,0.1))
 ```
 
-![](analysis_1_15_21_MICE_files/figure-html/unnamed-chunk-31-1.png)<!-- -->
+![](analysis_1_15_21_MICE_files/figure-html/unnamed-chunk-30-1.png)<!-- -->
 
 ```r
 #table of estimates
@@ -8728,7 +8778,7 @@ binded <- formatted(c("Black", "Other"), 12,
   plot_layout(heights=c(1,0.1))
 ```
 
-![](analysis_1_15_21_MICE_files/figure-html/unnamed-chunk-33-1.png)<!-- -->
+![](analysis_1_15_21_MICE_files/figure-html/unnamed-chunk-32-1.png)<!-- -->
 
 ```r
 #table of estimates
@@ -8982,7 +9032,7 @@ binded <- formatted(c("White female", "Black male", "Black female", "Other male"
   plot_layout(heights=c(1,0.15))
 ```
 
-![](analysis_1_15_21_MICE_files/figure-html/unnamed-chunk-35-1.png)<!-- -->
+![](analysis_1_15_21_MICE_files/figure-html/unnamed-chunk-34-1.png)<!-- -->
 
 ```r
 #table of estimates
@@ -9485,3 +9535,11 @@ tabled(1:60, "Ref: white male")
 </tbody>
 </table></div>
 
+## Imputation convergence plots
+
+
+```r
+plot(imp_merged, y=c('class', 'educ', 'marital_tri', 'income', 'age', "srh_bin", "mntlhlth", "learnnew_bin", "wkdecide_bin", "manvsemp_bin", "safehlth_bin", "workdiff_bin", "wkfreedm_bin", "trustman_bin", "safetywk_bin",  "workfast_bin", "respect_bin", "condemnd_bin", "disc_haras"), main='Convergence plots')
+```
+
+![](analysis_1_15_21_MICE_files/figure-html/unnamed-chunk-35-1.png)<!-- -->![](analysis_1_15_21_MICE_files/figure-html/unnamed-chunk-35-2.png)<!-- -->![](analysis_1_15_21_MICE_files/figure-html/unnamed-chunk-35-3.png)<!-- -->![](analysis_1_15_21_MICE_files/figure-html/unnamed-chunk-35-4.png)<!-- -->![](analysis_1_15_21_MICE_files/figure-html/unnamed-chunk-35-5.png)<!-- -->![](analysis_1_15_21_MICE_files/figure-html/unnamed-chunk-35-6.png)<!-- -->![](analysis_1_15_21_MICE_files/figure-html/unnamed-chunk-35-7.png)<!-- -->
