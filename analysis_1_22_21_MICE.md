@@ -13,9 +13,11 @@ always_allow_html: true
 
 
 
-**To-do/questions**
+**To-do**
 
 * Make functions more efficient
+
+**Questions**
 
 * Need to figure out what to do with "NH other" category, which has small counts. Should we exclude them in interaction analyses, given small cell sizes (n=283 in unimputed data) and rarity of outcomes? Would make plots simpler too.
 
@@ -945,8 +947,6 @@ aggr(dat[,c("class", "prestg10", 'sex', 'race_h', 'educ', 'marital_tri', 'region
 ![](analysis_1_22_21_MICE_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
 
 ## Multiple imputation
-
-Remember to update number of imputations and cores for final analyses and to not use imputed values of dependent variables in outcome regressions.
 
 
 ```r
@@ -2099,7 +2099,10 @@ binded <- formatted(c("Female"), 20,
   plotted(rows=c(13:16,33:36), xaxis=Class, limitsvec=c(0.62,1.57), breaksvec=c(0.75, 1, 1.3333333, 1.333333^2), 
           cols=c(brewer.pal(8, "Blues")[c(6)], brewer.pal(8, "Greens")[c(6)]), shapes=c(15, 0)) + 
    theme(axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank()) + 
-  plot_layout(ncol=4)) /
+  plotted(rows=c(17:20,37:40), xaxis=Class, limitsvec=c(0.62,1.57), breaksvec=c(0.75, 1, 1.3333333, 1.333333^2), 
+          cols=c(brewer.pal(8, "Blues")[c(6)], brewer.pal(8, "Greens")[c(6)]), shapes=c(15, 0)) + 
+   theme(axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank()) +    
+  plot_layout(ncol=5)) /
   legends(rows=c(1,21), xaxis=Class, cols=c(brewer.pal(8, "Blues")[c(6)], brewer.pal(8, "Greens")[c(6)]), shapes=c(15, 0), nrow=1) +
   plot_layout(heights=c(1,0.1))
 ```
@@ -2311,18 +2314,18 @@ binded <- formatted(c("NH Black", "NH other", "Hispanic"), 20,
 
 ```r
 #plot of estimates
-(plotted(rows=c(1:12,61:64), xaxis=Class, limitsvec=c(0.30, 2.78), breaksvec=c(0.6, 1, 1.666667, 1.666667^2), 
+(plotted(rows=c(1:12,61:64), xaxis=Class, limitsvec=c(0.30, 2.80), breaksvec=c(0.6, 1, 1.666667, 1.666667^2), 
         cols=c(brewer.pal(8, "Blues")[c(6)], brewer.pal(8, "Greens")[c(6)], brewer.pal(8, "Purples")[c(6)], brewer.pal(8, "Greys")[c(6)]), shapes=c(15, 0, 12, 4))  + 
-  plotted(rows=c(13:24,65:68), xaxis=Class, limitsvec=c(0.30, 2.78), breaksvec=c(0.6, 1, 1.666667, 1.666667^2), 
+  plotted(rows=c(13:24,65:68), xaxis=Class, limitsvec=c(0.30, 2.80), breaksvec=c(0.6, 1, 1.666667, 1.666667^2), 
           cols=c(brewer.pal(8, "Blues")[c(6)], brewer.pal(8, "Greens")[c(6)], brewer.pal(8, "Purples")[c(6)], brewer.pal(8, "Greys")[c(6)]), shapes=c(15, 0, 12, 4))  + 
     theme(axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank()) + 
-  plotted(rows=c(25:36,69:72), xaxis=Class, limitsvec=c(0.30, 2.78), breaksvec=c(0.6, 1, 1.666667, 1.666667^2), 
+  plotted(rows=c(25:36,69:72), xaxis=Class, limitsvec=c(0.30, 2.80), breaksvec=c(0.6, 1, 1.666667, 1.666667^2), 
           cols=c(brewer.pal(8, "Blues")[c(6)], brewer.pal(8, "Greens")[c(6)], brewer.pal(8, "Purples")[c(6)], brewer.pal(8, "Greys")[c(6)]), shapes=c(15, 0, 12, 4))  + 
     theme(axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank()) + 
-  plotted(rows=c(37:48,73:76), xaxis=Class, limitsvec=c(0.30, 2.78), breaksvec=c(0.6, 1, 1.666667, 1.666667^2), 
+  plotted(rows=c(37:48,73:76), xaxis=Class, limitsvec=c(0.30, 2.80), breaksvec=c(0.6, 1, 1.666667, 1.666667^2), 
           cols=c(brewer.pal(8, "Blues")[c(6)], brewer.pal(8, "Greens")[c(6)], brewer.pal(8, "Purples")[c(6)], brewer.pal(8, "Greys")[c(6)]), shapes=c(15, 0, 12, 4))  + 
     theme(axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank()) + 
-  plotted(rows=c(49:60,77:80), xaxis=Class, limitsvec=c(0.30, 2.78), breaksvec=c(0.6, 1, 1.666667, 1.666667^2), 
+  plotted(rows=c(49:60,77:80), xaxis=Class, limitsvec=c(0.30, 2.80), breaksvec=c(0.6, 1, 1.666667, 1.666667^2), 
           cols=c(brewer.pal(8, "Blues")[c(6)], brewer.pal(8, "Greens")[c(6)], brewer.pal(8, "Purples")[c(6)], brewer.pal(8, "Greys")[c(6)]), shapes=c(15, 0, 12, 4))  + 
     theme(axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank()) +    
   plot_layout(ncol=5)) /
@@ -2858,24 +2861,24 @@ binded <- formatted(c("NH white women", "NH Black men", "NH Black women", "NH ot
 
 ```r
 #plot estimates
-(plotted(rows=c(1:28,141:144), xaxis=Class, limitsvec=c(0.06, 4.3), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
+(plotted(rows=c(1:28,141:144), xaxis=Class, limitsvec=c(0.06, 4.35), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
         cols=c(brewer.pal(8, "Blues")[c(6,8)], brewer.pal(8, "Greens")[c(6,8)], brewer.pal(8, "Purples")[c(6,8)], brewer.pal(8, "Greys")[c(6,8)]), shapes=c(15, 16, 0, 1, 12, 10, 4, 8))  + 
-  plotted(rows=c(29:56,145:148), xaxis=Class, limitsvec=c(0.06, 4.3), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
+  plotted(rows=c(29:56,145:148), xaxis=Class, limitsvec=c(0.06, 4.35), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
         cols=c(brewer.pal(8, "Blues")[c(6,8)], brewer.pal(8, "Greens")[c(6,8)], brewer.pal(8, "Purples")[c(6,8)], brewer.pal(8, "Greys")[c(6,8)]), shapes=c(15, 16, 0, 1, 12, 10, 4, 8))  +  
     theme(axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank()) + 
-  plotted(rows=c(57:84,149:152), xaxis=Class, limitsvec=c(0.06, 4.3), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
+  plotted(rows=c(57:84,149:152), xaxis=Class, limitsvec=c(0.06, 4.35), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
         cols=c(brewer.pal(8, "Blues")[c(6,8)], brewer.pal(8, "Greens")[c(6,8)], brewer.pal(8, "Purples")[c(6,8)], brewer.pal(8, "Greys")[c(6,8)]), shapes=c(15, 16, 0, 1, 12, 10, 4, 8))  + 
     theme(axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank()) + 
-  plotted(rows=c(85:112,153:156), xaxis=Class, limitsvec=c(0.06, 4.3), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
+  plotted(rows=c(85:112,153:156), xaxis=Class, limitsvec=c(0.06, 4.35), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
         cols=c(brewer.pal(8, "Blues")[c(6,8)], brewer.pal(8, "Greens")[c(6,8)], brewer.pal(8, "Purples")[c(6,8)], brewer.pal(8, "Greys")[c(6,8)]), shapes=c(15, 16, 0, 1, 12, 10, 4, 8))  + 
     theme(axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank()) + 
-  plotted(rows=c(113:140,157:160), xaxis=Class, limitsvec=c(0.06, 4.3), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
+  plotted(rows=c(113:140,157:160), xaxis=Class, limitsvec=c(0.06, 4.35), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
         cols=c(brewer.pal(8, "Blues")[c(6,8)], brewer.pal(8, "Greens")[c(6,8)], brewer.pal(8, "Purples")[c(6,8)], brewer.pal(8, "Greys")[c(6,8)]), shapes=c(15, 16, 0, 1, 12, 10, 4, 8))  + 
     theme(axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank()) + 
   plot_layout(ncol=5)) /
   legends(rows=c(1:7,141), xaxis=Class, cols=c(brewer.pal(8, "Blues")[c(6,8)], brewer.pal(8, "Greens")[c(6,8)], brewer.pal(8, "Purples")[c(6,8)], brewer.pal(8, "Greys")[c(6,8)]),
           shapes=c(15, 16, 0, 1, 12, 10, 4, 8), nrow=2) +
-  plot_layout(heights=c(1,0.1))
+  plot_layout(heights=c(1,0.15))
 ```
 
 ![](analysis_1_22_21_MICE_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
