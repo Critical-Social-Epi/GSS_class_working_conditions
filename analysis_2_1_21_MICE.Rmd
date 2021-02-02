@@ -1,7 +1,7 @@
 ---
 title: "Class and QWL analysis"
 author: "Jerzy Eisenberg-Guyot"
-date: "1/22/2021"
+date: "February, 2021"
 output: 
   html_document:
     code_folding: hide
@@ -23,7 +23,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 * Need to figure out what to do with "NH other" category, which has small counts. Should we exclude them in interaction analyses, given small cell sizes (n=283 in unimputed data) and rarity of outcomes? Would make plots simpler too.
 
-* Does the organization of variables make sense? Need to decide how we want to label them.
+* Does the grouping and labelling of variables make sense?  
 
 * For the analyses within the working class, which interactions should we present?
 
@@ -204,8 +204,8 @@ dat %>%
                          ifelse(race=="black" | race=="other", "poc", NA))),
          race=factor(race, levels=c("white", "black", "other")),
          sex=as.factor(sex),
-         disc_haras=ifelse(wkageism=="yes" | wkracism=="yes" | wksexism=="yes" | wkharsex=="yes" | wkharoth=="yes", 1, 0),
-         disc_haras_unimp=disc_haras, #make duplicated version of each variable for which we wont impute data for so that we can use it in outcome regression
+         disc_haras_bin=ifelse(wkageism=="yes" | wkracism=="yes" | wksexism=="yes" | wkharsex=="yes" | wkharoth=="yes", 1, 0),
+         disc_haras_bin_unimp=disc_haras_bin, #make duplicated version of each variable for which we wont impute data for so that we can use it in outcome regression
          respect_bin=ifelse(respect=="disagree" | respect=="strongly disagree", 1, 0),
          respect_bin_unimp=respect_bin,
          trustman_bin=ifelse(trustman=="disagree" | trustman=="strongly disagree", 1, 0),
@@ -301,14 +301,14 @@ kable(table(dat$race_h_gender, dat$race_h, dat$sex), caption="Race-gender by rac
 ## Missingness patterns
 
 ```{r warning=FALSE, message=FALSE, fig.height=6, fig.width=10}
-aggr(dat[,c("class", "prestg10", 'sex', 'race_h', 'educ', 'marital_tri', 'region', 'income', 'age', "srh_bin", "mntlhlth", "satjob1_bin", "rincblls_bin", "fringeok_bin", "respect_bin", "learnnew_bin", "workdiff_bin",  "workfast_bin", "hlpequip_bin", "wkdecide_bin", "wkfreedm_bin", "mustwork_bin", "manvsemp_bin", "trustman_bin", "condemnd_bin", "cowrkhlp_bin",  "safehlth_bin",  "safetywk_bin", "safefrst_bin", "disc_haras")], cex.axis = 0.6, numbers=FALSE, prop=TRUE)
+aggr(dat[,c("class", "prestg10", 'sex', 'race_h', 'educ', 'marital_tri', 'region', 'income', 'age', "srh_bin", "mntlhlth", "satjob1_bin", "rincblls_bin", "safehlth_bin", "safetywk_bin", "workdiff_bin", "learnnew_bin", "condemnd_bin", "workfast_bin", "wkdecide_bin", "wkfreedm_bin", "mustwork_bin", "chngtme_bin", "manvsemp_bin", "trustman_bin", "respect_bin", "disc_haras_bin")], cex.axis = 0.6, numbers=FALSE, prop=TRUE)
 ```
 
 ## Multiple imputation
 
 ```{r  warning=FALSE, message=FALSE, results='hide'}
 #make imputation dataset. note that we're not using chngtme_bin as an imputation variable since it wasn't asked at all in 2018; correlation with other variables should mitigate bias towards null
-dat_mice <- dat[,c('vpsu', 'vstrat', 'wtssall', 'year', 'age', 'sex', 'race_h', 'educ', 'region', 'marital_tri', 'income', "prestg10", "class", "race_h_gender", "srh_bin", "mntlhlth", "satjob1_bin", "rincblls_bin", "fringeok_bin", "respect_bin", "learnnew_bin", "workdiff_bin",  "workfast_bin", "hlpequip_bin", "wkdecide_bin", "wkfreedm_bin", "mustwork_bin", "manvsemp_bin", "trustman_bin", "condemnd_bin", "cowrkhlp_bin",  "safehlth_bin",  "safetywk_bin", "safefrst_bin", "disc_haras", "satjob1_bin_unimp", "rincblls_bin_unimp", "fringeok_bin_unimp", "respect_bin_unimp", "learnnew_bin_unimp", "workdiff_bin_unimp",  "workfast_bin_unimp", "hlpequip_bin_unimp", "wkdecide_bin_unimp", "wkfreedm_bin_unimp", "mustwork_bin_unimp", "chngtme_bin_unimp", "manvsemp_bin_unimp", "trustman_bin_unimp", "condemnd_bin_unimp", "cowrkhlp_bin_unimp",  "safehlth_bin_unimp",  "safetywk_bin_unimp", "safefrst_bin_unimp", "disc_haras_unimp")]
+dat_mice <- dat[,c('vpsu', 'vstrat', 'wtssall', 'year', 'age', 'sex', 'race_h', 'educ', 'region', 'marital_tri', 'income', "prestg10", "class", "race_h_gender", "srh_bin", "mntlhlth", "satjob1_bin", "rincblls_bin", "safehlth_bin", "safetywk_bin", "workdiff_bin", "learnnew_bin", "condemnd_bin", "workfast_bin", "wkdecide_bin", "wkfreedm_bin", "mustwork_bin", "chngtme_bin", "manvsemp_bin", "trustman_bin", "respect_bin", "disc_haras_bin", "satjob1_bin_unimp", "rincblls_bin_unimp", "safehlth_bin_unimp", "safetywk_bin_unimp", "workdiff_bin_unimp", "learnnew_bin_unimp", "condemnd_bin_unimp", "workfast_bin_unimp", "wkdecide_bin_unimp", "wkfreedm_bin_unimp", "mustwork_bin_unimp", "chngtme_bin_unimp", "manvsemp_bin_unimp", "trustman_bin_unimp", "respect_bin_unimp", "disc_haras_bin_unimp")]
 
 #this creates an empty imputation object that you can manipulate and set options
 initialize <- mice(dat_mice, max=0, print=FALSE)
@@ -316,11 +316,11 @@ initialize <- mice(dat_mice, max=0, print=FALSE)
 #this creates an object that will contain the imputation method for each variable. let mice choose defaults based on variable class
 method <- initialize$method 
 
-#this code tells mice not to impute these variables: not imputing variables with complete data or the unimputed versions of the outcome variables
-method[c("vpsu", 'vstrat', 'wtssall', "year", "sex", "region", "satjob1_bin_unimp", "rincblls_bin_unimp", "fringeok_bin_unimp", "learnnew_bin_unimp", "workdiff_bin_unimp",  "workfast_bin_unimp", "hlpequip_bin_unimp", "wkdecide_bin_unimp", "wkfreedm_bin_unimp", "mustwork_bin_unimp", "chngtme_bin_unimp",  "condemnd_bin_unimp", "respect_bin_unimp", "manvsemp_bin_unimp", "trustman_bin_unimp", "cowrkhlp_bin_unimp",  "safehlth_bin_unimp",  "safetywk_bin_unimp", "safefrst_bin_unimp", "disc_haras_unimp")] <- "" 
+#this code tells mice not to impute these variables: not imputing variables with complete data or the unimputed versions of the outcome variables; don't impute chngtme_bin either, since it wasn't asked in 2018
+method[c("vpsu", 'vstrat', 'wtssall', "year", "sex", "region", "satjob1_bin_unimp", "rincblls_bin_unimp", "safehlth_bin_unimp", "safetywk_bin_unimp", "workdiff_bin_unimp", "learnnew_bin_unimp", "condemnd_bin_unimp", "workfast_bin_unimp", "wkdecide_bin_unimp", "wkfreedm_bin_unimp", "mustwork_bin_unimp", "chngtme_bin", "chngtme_bin_unimp", "manvsemp_bin_unimp", "trustman_bin_unimp", "respect_bin_unimp", "disc_haras_bin_unimp")] <- "" 
 
 #use logistic models for imputed versions of outcome variables: default otherwise is pmm since I didn't code them as factor variables above
-method[c("satjob1_bin", "rincblls_bin", "fringeok_bin", "respect_bin", "learnnew_bin", "workdiff_bin",  "workfast_bin", "hlpequip_bin", "wkdecide_bin", "wkfreedm_bin", "mustwork_bin", "manvsemp_bin", "trustman_bin", "condemnd_bin", "cowrkhlp_bin",  "safehlth_bin",  "safetywk_bin", "safefrst_bin", "disc_haras")] <- "logreg" 
+method[c("satjob1_bin", "rincblls_bin", "safehlth_bin", "safetywk_bin", "workdiff_bin", "learnnew_bin", "condemnd_bin", "workfast_bin", "wkdecide_bin", "wkfreedm_bin", "mustwork_bin", "manvsemp_bin", "trustman_bin", "respect_bin", "disc_haras_bin")] <- "logreg" 
 
 #passive imputation of variables that are perfect combos of other variables
 method['race_h_gender'] <- "~ifelse(race_h=='NH white' & sex=='male', 'NH white men',
@@ -335,8 +335,8 @@ method['race_h_gender'] <- "~ifelse(race_h=='NH white' & sex=='male', 'NH white 
 #this creates an object that will indicate which variables we actually want to include in predicting missing variables. 
 prediction <- initialize$predictorMatrix  
 
-#don't use interacted race-gender variable as predictor since it's collinear with uninteracted versions of those variables; also don't use vstrat, since it has so many levels that models dont fit; don't use duplicated versions of dependent variables
-prediction[,c("race_h_gender", 'vstrat', "satjob1_bin_unimp", "rincblls_bin_unimp", "fringeok_bin_unimp", "learnnew_bin_unimp", "workdiff_bin_unimp",  "workfast_bin_unimp", "hlpequip_bin_unimp", "wkdecide_bin_unimp", "wkfreedm_bin_unimp", "mustwork_bin_unimp", "chngtme_bin_unimp",  "condemnd_bin_unimp", "respect_bin_unimp", "manvsemp_bin_unimp", "trustman_bin_unimp", "cowrkhlp_bin_unimp",  "safehlth_bin_unimp",  "safetywk_bin_unimp", "safefrst_bin_unimp", "disc_haras_unimp")] <- 0  
+#don't use interacted race-gender variable as predictor since it's collinear with uninteracted versions of those variables; also don't use vstrat, since it has so many levels that models dont fit; don't use duplicated versions of dependent variables; don't use chngtme_bin, since it wasn't asked in 2018
+prediction[,c("race_h_gender", 'vstrat', "satjob1_bin_unimp", "rincblls_bin_unimp", "safehlth_bin_unimp", "safetywk_bin_unimp", "workdiff_bin_unimp", "learnnew_bin_unimp", "condemnd_bin_unimp", "workfast_bin_unimp", "wkdecide_bin_unimp", "wkfreedm_bin_unimp", "mustwork_bin_unimp", "chngtme_bin", "chngtme_bin_unimp", "manvsemp_bin_unimp", "trustman_bin_unimp", "respect_bin_unimp", "disc_haras_bin_unimp")] <- 0  
 
 #run MICE in parallel (4 cores * 5 imputations per core = 20 imputed datasets)
 imp_merged <- parlmice(dat_mice, n.core=4, n.imp.core=5, meth=method, pred=prediction, maxit = 25, cluster.seed=9956) 
@@ -388,7 +388,7 @@ Unadjusted prevalence of bad category of each binary QWL variable among each cla
 
 ```{r warning=FALSE, message=FALSE}
 #vars of interest
-qwl_vars <- c("satjob1_bin", "rincblls_bin", "fringeok_bin", "respect_bin", "learnnew_bin", "workdiff_bin",  "workfast_bin", "hlpequip_bin", "wkdecide_bin", "wkfreedm_bin", "mustwork_bin", "chngtme_bin", "manvsemp_bin", "trustman_bin", "condemnd_bin", "cowrkhlp_bin",  "safehlth_bin",  "safetywk_bin", "safefrst_bin", "disc_haras")
+qwl_vars <- c("satjob1_bin", "rincblls_bin", "safehlth_bin", "safetywk_bin", "workdiff_bin", "learnnew_bin", "condemnd_bin", "workfast_bin", "wkdecide_bin", "wkfreedm_bin", "mustwork_bin", "chngtme_bin", "manvsemp_bin", "trustman_bin", "respect_bin", "disc_haras_bin")
 
 x <- svyCreateTableOne(data = svy_dat, vars = qwl_vars, factorVars=qwl_vars, strata='class')
 x <- print(x, printToggle=FALSE, noSpaces=TRUE)
@@ -430,11 +430,10 @@ formatted <- function(classvec, rows, qwlvec, dummy, facvec){
                          Class=rep(dummy, rows), PR=rep(1, rows), Lower=rep(NA, rows), Upper=rep(NA, rows))) %>% #worker dummy row
     mutate(Class=factor(Class, levels=facvec),
            Var=factor(Var, levels=qwlvec),
-           Cat=ifelse(Var=="satjob1_bin_unimp" | Var=="rincblls_bin_unimp" | Var=="fringeok_bin_unimp" | Var=="respect_bin_unimp", "General",
-                      ifelse(Var=="learnnew_bin_unimp" | Var=="workdiff_bin_unimp" | Var == "workfast_bin_unimp" | Var=="hlpequip_bin_unimp", "Labor process",
+           Cat=ifelse(Var=="satjob1_bin_unimp" | Var=="rincblls_bin_unimp" | Var=="safehlth_bin_unimp" | Var=="safetywk_bin_unimp", "Rewards/hazards",
+                      ifelse(Var=="learnnew_bin_unimp" | Var=="workdiff_bin_unimp" | Var == "workfast_bin_unimp" | Var=="condemnd_bin_unimp", "Labor process",
                              ifelse(Var=="wkdecide_bin_unimp" | Var=="wkfreedm_bin_unimp" | Var == "mustwork_bin_unimp" | Var=="chngtme_bin_unimp", "Autonomy",
-                                    ifelse(Var=="manvsemp_bin_unimp" | Var=="trustman_bin_unimp" | Var == "condemnd_bin_unimp" | Var=="cowrkhlp_bin_unimp", "Conflict",
-                                           ifelse(Var=="safehlth_bin_unimp" | Var=="safetywk_bin_unimp" | Var=="safefrst_bin_unimp" | Var == "disc_haras_unimp", "Hazards", NA)))))) -> binded
+                                    ifelse(Var=="manvsemp_bin_unimp" | Var=="trustman_bin_unimp" | Var == "respect_bin_unimp" | Var=="disc_haras_bin_unimp", "Conflict", NA))))) -> binded
   return(binded)
 }
 
@@ -442,23 +441,19 @@ formatted <- function(classvec, rows, qwlvec, dummy, facvec){
 facet_names <- list(
   "satjob1_bin_unimp"="Dissatisfied with job",
   "rincblls_bin_unimp"="Income doesn't pay bills",
-  "fringeok_bin_unimp"="Benefits not good",
-  "respect_bin_unimp"="Not treated with respect",
-  "learnnew_bin_unimp"="Don't learn new things",
+  "safehlth_bin_unimp"="Poor safety conditions",
+  "safetywk_bin_unimp"="Safety not a priority",
   "workdiff_bin_unimp"="Repetitive tasks",
+  "learnnew_bin_unimp"="Don't learn new things",
+  "condemnd_bin_unimp"="Face conflicting demands",
   "workfast_bin_unimp"="Need to work fast", 
-  "hlpequip_bin_unimp"="Not enough help/equip.",
   "wkdecide_bin_unimp"="Don't make decisions", 
   "wkfreedm_bin_unimp"="No freedom on job", 
   "mustwork_bin_unimp"="Mandatory extra hours",
   "chngtme_bin_unimp"="Can't change schedule",
   "manvsemp_bin_unimp"="Worker-manager conflict", 
   "trustman_bin_unimp"="Don't trust management",
-  "condemnd_bin_unimp"="Face conflicting demands", 
-  "cowrkhlp_bin_unimp"="Can't rely on coworkers",
-  "safehlth_bin_unimp"="Poor safety conditions",
-  "safetywk_bin_unimp"="Safety not a priority",
-  "safefrst_bin_unimp"="Safety shortcuts taken",
+  "respect_bin_unimp"="Not treated with respect",
   "disc_haras_unimp"="Face discrim. & harass."
 )
 
@@ -517,44 +512,40 @@ Prevalence of bad category of each binary QWL variable among each class relative
 
 ```{r warning=FALSE, message=FALSE, results='hide'}
 #run regression
-less_adj <- mysvy(svy_dat_mi, c(36:55), "~class + rcs(age, 3) + rcs(year, 3)")
+less_adj <- mysvy(svy_dat_mi, c(33:48), "~class + rcs(age, 3) + rcs(year, 3)")
 
 #pull into matrix
-regs_less <- matrix_func(20, 4, c(36:55))
+regs_less <- matrix_func(16, 4, c(33:48))
 
 #format matrix
-binded <- formatted(c("Managers", "Petite bourgeoisie", "Capitalists"), 20,
-                    c("satjob1_bin_unimp", "rincblls_bin_unimp", "fringeok_bin_unimp", "respect_bin_unimp",  
-                      "learnnew_bin_unimp", "workdiff_bin_unimp", "workfast_bin_unimp", "hlpequip_bin_unimp", 
-                      "wkdecide_bin_unimp", "wkfreedm_bin_unimp", "mustwork_bin_unimp", "chngtme_bin_unimp",  
-                      "manvsemp_bin_unimp", "trustman_bin_unimp", "condemnd_bin_unimp", "cowrkhlp_bin_unimp", 
-                      "safehlth_bin_unimp", "safetywk_bin_unimp", "safefrst_bin_unimp", "disc_haras_unimp"),
+binded <- formatted(c("Managers", "Petite bourgeoisie", "Capitalists"), 16,
+                    c("satjob1_bin_unimp", "rincblls_bin_unimp", "safehlth_bin_unimp", "safetywk_bin_unimp",
+                      "workdiff_bin_unimp", "learnnew_bin_unimp", "condemnd_bin_unimp", "workfast_bin_unimp",
+                      "wkdecide_bin_unimp", "wkfreedm_bin_unimp", "mustwork_bin_unimp", "chngtme_bin_unimp",
+                      "manvsemp_bin_unimp", "trustman_bin_unimp", "respect_bin_unimp", "disc_haras_bin_unimp"),
                     "Workers",
                     c("Workers", "Managers", "Petite bourgeoisie", "Capitalists"))
 ```
 
-```{r warning=FALSE, message=FALSE, fig.height=6, fig.width=9.1}
+```{r warning=FALSE, message=FALSE, fig.height=6, fig.width=8}
 #plot of estimates
-(plotted(rows=c(1:12,61:64), xaxis=Class, limitsvec=c(0.049, 1.73), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
+(plotted(rows=c(1:12,49:52), xaxis=Class, limitsvec=c(0.049, 1.73), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
         cols=brewer.pal(8, "Blues")[c(5,6,7,8)], shapes=c(15,16,17,18))  + 
-  plotted(rows=c(13:24,65:68), xaxis=Class, limitsvec=c(0.049, 1.73), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
+  plotted(rows=c(13:24,53:56), xaxis=Class, limitsvec=c(0.049, 1.73), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
           cols=brewer.pal(8, "Blues")[c(5,6,7,8)], shapes=c(15,16,17,18)) + 
    theme(axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank()) + 
-  plotted(rows=c(25:36,69:72), xaxis=Class, limitsvec=c(0.049, 1.73), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
+  plotted(rows=c(25:36,57:60), xaxis=Class, limitsvec=c(0.049, 1.73), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
           cols=brewer.pal(8, "Blues")[c(5,6,7,8)], shapes=c(15,16,17,18)) + 
    theme(axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank()) + 
-  plotted(rows=c(37:48, 73:76), xaxis=Class, limitsvec=c(0.049, 1.73), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
+  plotted(rows=c(37:48, 61:64), xaxis=Class, limitsvec=c(0.049, 1.73), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
           cols=brewer.pal(8, "Blues")[c(5,6,7,8)], shapes=c(15,16,17,18)) + 
    theme(axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank()) + 
-  plotted(rows=c(49:60, 77:80), xaxis=Class, limitsvec=c(0.049, 1.73), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
-          cols=brewer.pal(8, "Blues")[c(5,6,7,8)], shapes=c(15,16,17,18)) + 
-   theme(axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank()) +   
-  plot_layout(ncol=5)) /
-  legends(rows=c(1:3,61), xaxis=Class, cols=brewer.pal(8, "Blues")[c(5,6,7,8)], shapes=c(15,16,17,18), nrow=1) +
+  plot_layout(ncol=4)) /
+  legends(rows=c(1:3,49), xaxis=Class, cols=brewer.pal(8, "Blues")[c(5,6,7,8)], shapes=c(15,16,17,18), nrow=1) +
   plot_layout(heights=c(1,0.1))
 
 #table of estimates
-tabled(1:60, "Ref: workers")
+tabled(1:48, "Ref: workers")
 ```
 
 ## Gender, race, and select QWL variables among workers
@@ -565,138 +556,126 @@ Prevalence of bad category of each binary QWL variable among each minoritized ge
 
 ```{r warning=FALSE, message=FALSE, results='hide'}
 #run regression
-less_adj <- mysvy(subset(svy_dat_mi, class=="Workers"), c(36:55), "~relevel(as.factor(sex), ref='male') + rcs(age, 3) + rcs(year, 3)")
+less_adj <- mysvy(subset(svy_dat_mi, class=="Workers"), c(33:48), "~relevel(as.factor(sex), ref='male') + rcs(age, 3) + rcs(year, 3)")
 
 #pull into matrix
-regs_less <- matrix_func(20, 3, c(36:55))
+regs_less <- matrix_func(16, 3, c(33:48))
 
 #for some reason function doesn't work properly when only extract one coefficient so we need to delete every other row from regs_less to get df formatted correctly
 nth.delete <- function(dataframe, n)dataframe[-(seq(n,to=nrow(dataframe),by=n)),]
 regs_less <- nth.delete(regs_less, 2)
   
 #format matrix
-binded <- formatted(c("Female"), 20, 
-                    c("satjob1_bin_unimp", "rincblls_bin_unimp", "fringeok_bin_unimp", "respect_bin_unimp",  
-                      "learnnew_bin_unimp", "workdiff_bin_unimp", "workfast_bin_unimp", "hlpequip_bin_unimp", 
-                      "wkdecide_bin_unimp", "wkfreedm_bin_unimp", "mustwork_bin_unimp", "chngtme_bin_unimp",  
-                      "manvsemp_bin_unimp", "trustman_bin_unimp", "condemnd_bin_unimp", "cowrkhlp_bin_unimp", 
-                      "safehlth_bin_unimp", "safetywk_bin_unimp", "safefrst_bin_unimp", "disc_haras_unimp"),
+binded <- formatted(c("Female"), 16, 
+                    c("satjob1_bin_unimp", "rincblls_bin_unimp", "safehlth_bin_unimp", "safetywk_bin_unimp",
+                      "workdiff_bin_unimp", "learnnew_bin_unimp", "condemnd_bin_unimp", "workfast_bin_unimp",
+                      "wkdecide_bin_unimp", "wkfreedm_bin_unimp", "mustwork_bin_unimp", "chngtme_bin_unimp",
+                      "manvsemp_bin_unimp", "trustman_bin_unimp", "respect_bin_unimp", "disc_haras_bin_unimp"),
                     "Male",
                     c("Male", "Female"))
 ```
 
-```{r warning=FALSE, message=FALSE, fig.height=6, fig.width=9.1}
+```{r warning=FALSE, message=FALSE, fig.height=6, fig.width=8}
 #plot of estimates
-(plotted(rows=c(1:4,21:24), xaxis=Class, limitsvec=c(0.62,1.57), breaksvec=c(0.75, 1, 1.3333333, 1.333333^2), 
+(plotted(rows=c(1:4,17:20), xaxis=Class, limitsvec=c(0.62,1.57), breaksvec=c(0.75, 1, 1.3333333, 1.333333^2), 
         cols=c(brewer.pal(8, "Blues")[c(6)], brewer.pal(8, "Greens")[c(6)]), shapes=c(15, 0))  + 
-  plotted(rows=c(5:8,25:28), xaxis=Class, limitsvec=c(0.62,1.57), breaksvec=c(0.75, 1, 1.3333333, 1.333333^2), 
+  plotted(rows=c(5:8,21:24), xaxis=Class, limitsvec=c(0.62,1.57), breaksvec=c(0.75, 1, 1.3333333, 1.333333^2), 
           cols=c(brewer.pal(8, "Blues")[c(6)], brewer.pal(8, "Greens")[c(6)]), shapes=c(15, 0)) + 
    theme(axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank()) + 
-  plotted(rows=c(9:12,29:32), xaxis=Class, limitsvec=c(0.62,1.57), breaksvec=c(0.75, 1, 1.3333333, 1.333333^2), 
+  plotted(rows=c(9:12,25:28), xaxis=Class, limitsvec=c(0.62,1.57), breaksvec=c(0.75, 1, 1.3333333, 1.333333^2), 
           cols=c(brewer.pal(8, "Blues")[c(6)], brewer.pal(8, "Greens")[c(6)]), shapes=c(15, 0)) + 
    theme(axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank()) + 
-  plotted(rows=c(13:16,33:36), xaxis=Class, limitsvec=c(0.62,1.57), breaksvec=c(0.75, 1, 1.3333333, 1.333333^2), 
+  plotted(rows=c(13:16,29:32), xaxis=Class, limitsvec=c(0.62,1.57), breaksvec=c(0.75, 1, 1.3333333, 1.333333^2), 
           cols=c(brewer.pal(8, "Blues")[c(6)], brewer.pal(8, "Greens")[c(6)]), shapes=c(15, 0)) + 
    theme(axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank()) + 
-  plotted(rows=c(17:20,37:40), xaxis=Class, limitsvec=c(0.62,1.57), breaksvec=c(0.75, 1, 1.3333333, 1.333333^2), 
-          cols=c(brewer.pal(8, "Blues")[c(6)], brewer.pal(8, "Greens")[c(6)]), shapes=c(15, 0)) + 
-   theme(axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank()) +    
-  plot_layout(ncol=5)) /
-  legends(rows=c(1,21), xaxis=Class, cols=c(brewer.pal(8, "Blues")[c(6)], brewer.pal(8, "Greens")[c(6)]), shapes=c(15, 0), nrow=1) +
+  plot_layout(ncol=4)) /
+  legends(rows=c(1,17), xaxis=Class, cols=c(brewer.pal(8, "Blues")[c(6)], brewer.pal(8, "Greens")[c(6)]), shapes=c(15, 0), nrow=1) +
   plot_layout(heights=c(1,0.1))
 
 #table of estimates
-tabled(1:20, "Ref: male")
+tabled(1:16, "Ref: male")
 ```
 
 ### Race
 
 ```{r warning=FALSE, message=FALSE, results='hide'}
 #run regression
-less_adj <- mysvy(subset(svy_dat_mi, class=="Workers"), c(36:55), "~race_h + rcs(age, 3) + rcs(year, 3)")
+less_adj <- mysvy(subset(svy_dat_mi, class=="Workers"), c(33:48), "~race_h + rcs(age, 3) + rcs(year, 3)")
 
 #pull into matrix
-regs_less <- matrix_func(20, 4, 36:55)
+regs_less <- matrix_func(16, 4, 33:48)
   
 #format matrix
-binded <- formatted(c("NH Black", "NH other", "Hispanic"), 20, 
-                    c("satjob1_bin_unimp", "rincblls_bin_unimp", "fringeok_bin_unimp", "respect_bin_unimp",  
-                      "learnnew_bin_unimp", "workdiff_bin_unimp", "workfast_bin_unimp", "hlpequip_bin_unimp", 
-                      "wkdecide_bin_unimp", "wkfreedm_bin_unimp", "mustwork_bin_unimp", "chngtme_bin_unimp",  
-                      "manvsemp_bin_unimp", "trustman_bin_unimp", "condemnd_bin_unimp", "cowrkhlp_bin_unimp", 
-                      "safehlth_bin_unimp", "safetywk_bin_unimp", "safefrst_bin_unimp", "disc_haras_unimp"),
+binded <- formatted(c("NH Black", "NH other", "Hispanic"), 16, 
+                    c("satjob1_bin_unimp", "rincblls_bin_unimp", "safehlth_bin_unimp", "safetywk_bin_unimp",
+                      "workdiff_bin_unimp", "learnnew_bin_unimp", "condemnd_bin_unimp", "workfast_bin_unimp",
+                      "wkdecide_bin_unimp", "wkfreedm_bin_unimp", "mustwork_bin_unimp", "chngtme_bin_unimp",
+                      "manvsemp_bin_unimp", "trustman_bin_unimp", "respect_bin_unimp", "disc_haras_bin_unimp"),
                     "NH white",
                     c("NH white", "NH Black", "NH other", "Hispanic"))
 ```
 
-```{r warning=FALSE, message=FALSE, fig.height=6, fig.width=9.1}
+```{r warning=FALSE, message=FALSE, fig.height=6, fig.width=8}
 #plot of estimates
-(plotted(rows=c(1:12,61:64), xaxis=Class, limitsvec=c(0.30, 2.80), breaksvec=c(0.6, 1, 1.666667, 1.666667^2), 
+(plotted(rows=c(1:12,49:52), xaxis=Class, limitsvec=c(0.30, 2.80), breaksvec=c(0.6, 1, 1.666667, 1.666667^2), 
         cols=c(brewer.pal(8, "Blues")[c(6)], brewer.pal(8, "Greens")[c(6)], brewer.pal(8, "Purples")[c(6)], brewer.pal(8, "Greys")[c(6)]), shapes=c(15, 0, 12, 4))  + 
-  plotted(rows=c(13:24,65:68), xaxis=Class, limitsvec=c(0.30, 2.80), breaksvec=c(0.6, 1, 1.666667, 1.666667^2), 
+  plotted(rows=c(13:24,53:56), xaxis=Class, limitsvec=c(0.30, 2.80), breaksvec=c(0.6, 1, 1.666667, 1.666667^2), 
           cols=c(brewer.pal(8, "Blues")[c(6)], brewer.pal(8, "Greens")[c(6)], brewer.pal(8, "Purples")[c(6)], brewer.pal(8, "Greys")[c(6)]), shapes=c(15, 0, 12, 4))  + 
     theme(axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank()) + 
-  plotted(rows=c(25:36,69:72), xaxis=Class, limitsvec=c(0.30, 2.80), breaksvec=c(0.6, 1, 1.666667, 1.666667^2), 
+  plotted(rows=c(25:36,57:60), xaxis=Class, limitsvec=c(0.30, 2.80), breaksvec=c(0.6, 1, 1.666667, 1.666667^2), 
           cols=c(brewer.pal(8, "Blues")[c(6)], brewer.pal(8, "Greens")[c(6)], brewer.pal(8, "Purples")[c(6)], brewer.pal(8, "Greys")[c(6)]), shapes=c(15, 0, 12, 4))  + 
     theme(axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank()) + 
-  plotted(rows=c(37:48,73:76), xaxis=Class, limitsvec=c(0.30, 2.80), breaksvec=c(0.6, 1, 1.666667, 1.666667^2), 
+  plotted(rows=c(37:48,61:64), xaxis=Class, limitsvec=c(0.30, 2.80), breaksvec=c(0.6, 1, 1.666667, 1.666667^2), 
           cols=c(brewer.pal(8, "Blues")[c(6)], brewer.pal(8, "Greens")[c(6)], brewer.pal(8, "Purples")[c(6)], brewer.pal(8, "Greys")[c(6)]), shapes=c(15, 0, 12, 4))  + 
     theme(axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank()) + 
-  plotted(rows=c(49:60,77:80), xaxis=Class, limitsvec=c(0.30, 2.80), breaksvec=c(0.6, 1, 1.666667, 1.666667^2), 
-          cols=c(brewer.pal(8, "Blues")[c(6)], brewer.pal(8, "Greens")[c(6)], brewer.pal(8, "Purples")[c(6)], brewer.pal(8, "Greys")[c(6)]), shapes=c(15, 0, 12, 4))  + 
-    theme(axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank()) +    
-  plot_layout(ncol=5)) /
-  legends(rows=c(1:3,61), xaxis=Class, cols=c(brewer.pal(8, "Blues")[c(6)], brewer.pal(8, "Greens")[c(6)], brewer.pal(8, "Purples")[c(6)], brewer.pal(8, "Greys")[c(6)]),
+  plot_layout(ncol=4)) /
+  legends(rows=c(1:3,49), xaxis=Class, cols=c(brewer.pal(8, "Blues")[c(6)], brewer.pal(8, "Greens")[c(6)], brewer.pal(8, "Purples")[c(6)], brewer.pal(8, "Greys")[c(6)]),
           shapes=c(15, 0, 12, 4), nrow=1) +
   plot_layout(heights=c(1,0.1))
 
 #table of estimates
-tabled(1:60, "Ref: white")
+tabled(1:48, "Ref: white")
 ```
 
 ### Gender-race interaction
 
 ```{r warning=FALSE, message=FALSE, results='hide'}
 #run regression
-less_adj <- mysvy(subset(svy_dat_mi, class=="Workers"), 36:55, "~race_h_gender + rcs(age, 3) + rcs(year, 3)")
+less_adj <- mysvy(subset(svy_dat_mi, class=="Workers"), 33:48, "~race_h_gender + rcs(age, 3) + rcs(year, 3)")
 
 #pull into matrix
-regs_less <- matrix_func(20, 8, 36:55)
+regs_less <- matrix_func(16, 8, 33:48)
 
 #format matrix
-binded <- formatted(c("NH white women", "NH Black men", "NH Black women", "NH other men", "NH other women", "Hispanic men", "Hispanic women"), 20, 
-                    c("satjob1_bin_unimp", "rincblls_bin_unimp", "fringeok_bin_unimp", "respect_bin_unimp",  
-                      "learnnew_bin_unimp", "workdiff_bin_unimp", "workfast_bin_unimp", "hlpequip_bin_unimp", 
-                      "wkdecide_bin_unimp", "wkfreedm_bin_unimp", "mustwork_bin_unimp", "chngtme_bin_unimp",  
-                      "manvsemp_bin_unimp", "trustman_bin_unimp", "condemnd_bin_unimp", "cowrkhlp_bin_unimp", 
-                      "safehlth_bin_unimp", "safetywk_bin_unimp", "safefrst_bin_unimp", "disc_haras_unimp"),
+binded <- formatted(c("NH white women", "NH Black men", "NH Black women", "NH other men", "NH other women", "Hispanic men", "Hispanic women"), 16, 
+                    c("satjob1_bin_unimp", "rincblls_bin_unimp", "safehlth_bin_unimp", "safetywk_bin_unimp",
+                      "workdiff_bin_unimp", "learnnew_bin_unimp", "condemnd_bin_unimp", "workfast_bin_unimp",
+                      "wkdecide_bin_unimp", "wkfreedm_bin_unimp", "mustwork_bin_unimp", "chngtme_bin_unimp",
+                      "manvsemp_bin_unimp", "trustman_bin_unimp", "respect_bin_unimp", "disc_haras_bin_unimp"),
                     "NH white men",
                     c("NH white men" , "NH white women", "NH Black men", "NH Black women", "NH other men", "NH other women", "Hispanic men", "Hispanic women"))
 ```
 
-```{r warning=FALSE, message=FALSE, fig.height=6.5, fig.width=10}
+```{r warning=FALSE, message=FALSE, fig.height=6.5, fig.width=8.5}
 #plot estimates
-(plotted(rows=c(1:28,141:144), xaxis=Class, limitsvec=c(0.06, 4.35), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
+(plotted(rows=c(1:28,113:116), xaxis=Class, limitsvec=c(0.06, 4.35), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
         cols=c(brewer.pal(8, "Blues")[c(6,8)], brewer.pal(8, "Greens")[c(6,8)], brewer.pal(8, "Purples")[c(6,8)], brewer.pal(8, "Greys")[c(6,8)]), shapes=c(15, 16, 0, 1, 12, 10, 4, 8))  + 
-  plotted(rows=c(29:56,145:148), xaxis=Class, limitsvec=c(0.06, 4.35), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
+  plotted(rows=c(29:56,117:120), xaxis=Class, limitsvec=c(0.06, 4.35), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
         cols=c(brewer.pal(8, "Blues")[c(6,8)], brewer.pal(8, "Greens")[c(6,8)], brewer.pal(8, "Purples")[c(6,8)], brewer.pal(8, "Greys")[c(6,8)]), shapes=c(15, 16, 0, 1, 12, 10, 4, 8))  +  
     theme(axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank()) + 
-  plotted(rows=c(57:84,149:152), xaxis=Class, limitsvec=c(0.06, 4.35), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
+  plotted(rows=c(57:84,121:124), xaxis=Class, limitsvec=c(0.06, 4.35), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
         cols=c(brewer.pal(8, "Blues")[c(6,8)], brewer.pal(8, "Greens")[c(6,8)], brewer.pal(8, "Purples")[c(6,8)], brewer.pal(8, "Greys")[c(6,8)]), shapes=c(15, 16, 0, 1, 12, 10, 4, 8))  + 
     theme(axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank()) + 
-  plotted(rows=c(85:112,153:156), xaxis=Class, limitsvec=c(0.06, 4.35), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
+  plotted(rows=c(85:112,125:128), xaxis=Class, limitsvec=c(0.06, 4.35), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
         cols=c(brewer.pal(8, "Blues")[c(6,8)], brewer.pal(8, "Greens")[c(6,8)], brewer.pal(8, "Purples")[c(6,8)], brewer.pal(8, "Greys")[c(6,8)]), shapes=c(15, 16, 0, 1, 12, 10, 4, 8))  + 
     theme(axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank()) + 
-  plotted(rows=c(113:140,157:160), xaxis=Class, limitsvec=c(0.06, 4.35), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
-        cols=c(brewer.pal(8, "Blues")[c(6,8)], brewer.pal(8, "Greens")[c(6,8)], brewer.pal(8, "Purples")[c(6,8)], brewer.pal(8, "Greys")[c(6,8)]), shapes=c(15, 16, 0, 1, 12, 10, 4, 8))  + 
-    theme(axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank()) + 
-  plot_layout(ncol=5)) /
-  legends(rows=c(1:7,141), xaxis=Class, cols=c(brewer.pal(8, "Blues")[c(6,8)], brewer.pal(8, "Greens")[c(6,8)], brewer.pal(8, "Purples")[c(6,8)], brewer.pal(8, "Greys")[c(6,8)]),
+  plot_layout(ncol=4)) /
+  legends(rows=c(1:7,113), xaxis=Class, cols=c(brewer.pal(8, "Blues")[c(6,8)], brewer.pal(8, "Greens")[c(6,8)], brewer.pal(8, "Purples")[c(6,8)], brewer.pal(8, "Greys")[c(6,8)]),
           shapes=c(15, 16, 0, 1, 12, 10, 4, 8), nrow=2) +
   plot_layout(heights=c(1,0.15))
 
 #table of estimates
-tabled(1:140, "Ref: white male")
+tabled(1:128, "Ref: white male")
 ```
 
 # Appendix
@@ -722,6 +701,6 @@ dat %>%
 
 ## Imputation convergence plots
 
-```{r, warning=FALSE, message=FALSE}
-plot(imp_merged, y=c('class', 'race_h', 'educ', 'marital_tri', "prestg10", 'income', 'age', "srh_bin", "mntlhlth", "learnnew_bin", "wkdecide_bin", "manvsemp_bin", "safehlth_bin", "workdiff_bin", "wkfreedm_bin", "trustman_bin", "safetywk_bin",  "workfast_bin", "respect_bin", "condemnd_bin", "disc_haras"), main='Convergence plots')
+```{r, warning=FALSE, message=FALSE} 
+plot(imp_merged, y=c('class', 'race_h', 'educ', 'marital_tri', "prestg10", 'income', 'age', "srh_bin", "mntlhlth", "satjob1_bin", "rincblls_bin", "safehlth_bin", "safetywk_bin", "workdiff_bin", "learnnew_bin", "condemnd_bin", "workfast_bin", "wkdecide_bin", "wkfreedm_bin", "mustwork_bin", "manvsemp_bin", "trustman_bin", "respect_bin", "disc_haras_bin"), main='Convergence plots')
 ```

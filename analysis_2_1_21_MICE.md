@@ -1,7 +1,7 @@
 ---
 title: "Class and QWL analysis"
 author: "Jerzy Eisenberg-Guyot"
-date: "1/22/2021"
+date: "February, 2021"
 output: 
   html_document:
     code_folding: hide
@@ -21,7 +21,7 @@ always_allow_html: true
 
 * Need to figure out what to do with "NH other" category, which has small counts. Should we exclude them in interaction analyses, given small cell sizes (n=283 in unimputed data) and rarity of outcomes? Would make plots simpler too.
 
-* Does the organization of variables make sense? Need to decide how we want to label them.
+* Does the grouping and labelling of variables make sense?  
 
 * For the analyses within the working class, which interactions should we present?
 
@@ -169,7 +169,7 @@ read.csv('GSS_02_06_10_14_18.csv') %>%
   filter(ballot != "ballot d") %>%
   filter(wrkstat=="working fulltime" | wrkstat=="working parttime" | wrkstat=="temp not working") %>%
   filter(!(year==2002 & ballot=="ballot b")) %>%
-  mutate_all(funs(ifelse(.=="DK" | .=="NO ANSWER" | .=="DONT KNOW" | .=="Not asked" | .=="IAP,DK,NA,uncodeable", NA, .))) %>%
+  mutate_all(funs(ifelse(.=="DK" | .=="NO ANSWER" | .=="DONT KNOW" | .=="Not asked" | .=="IAP,DK,NA,uncodeable" | .==".a", NA, .))) %>%
   filter(is.na(respect) | respect!="IAP") -> dat #removing those with IAP for respect is sufficient since IAPs are the same across other QWL variables
 
 #########code new variables and make sure other variables coded correctly and will be treated appropriately by MICE (e.g., no character vars)
@@ -203,8 +203,8 @@ dat %>%
                          ifelse(race=="black" | race=="other", "poc", NA))),
          race=factor(race, levels=c("white", "black", "other")),
          sex=as.factor(sex),
-         disc_haras=ifelse(wkageism=="yes" | wkracism=="yes" | wksexism=="yes" | wkharsex=="yes" | wkharoth=="yes", 1, 0),
-         disc_haras_unimp=disc_haras, #make duplicated version of each variable for which we wont impute data for so that we can use it in outcome regression
+         disc_haras_bin=ifelse(wkageism=="yes" | wkracism=="yes" | wksexism=="yes" | wkharsex=="yes" | wkharoth=="yes", 1, 0),
+         disc_haras_bin_unimp=disc_haras_bin, #make duplicated version of each variable for which we wont impute data for so that we can use it in outcome regression
          respect_bin=ifelse(respect=="disagree" | respect=="strongly disagree", 1, 0),
          respect_bin_unimp=respect_bin,
          trustman_bin=ifelse(trustman=="disagree" | trustman=="strongly disagree", 1, 0),
@@ -941,17 +941,17 @@ kable(table(dat$race_h_gender, dat$race_h, dat$sex), caption="Race-gender by rac
 
 
 ```r
-aggr(dat[,c("class", "prestg10", 'sex', 'race_h', 'educ', 'marital_tri', 'region', 'income', 'age', "srh_bin", "mntlhlth", "satjob1_bin", "rincblls_bin", "fringeok_bin", "respect_bin", "learnnew_bin", "workdiff_bin",  "workfast_bin", "hlpequip_bin", "wkdecide_bin", "wkfreedm_bin", "mustwork_bin", "manvsemp_bin", "trustman_bin", "condemnd_bin", "cowrkhlp_bin",  "safehlth_bin",  "safetywk_bin", "safefrst_bin", "disc_haras")], cex.axis = 0.6, numbers=FALSE, prop=TRUE)
+aggr(dat[,c("class", "prestg10", 'sex', 'race_h', 'educ', 'marital_tri', 'region', 'income', 'age', "srh_bin", "mntlhlth", "satjob1_bin", "rincblls_bin", "safehlth_bin", "safetywk_bin", "workdiff_bin", "learnnew_bin", "condemnd_bin", "workfast_bin", "wkdecide_bin", "wkfreedm_bin", "mustwork_bin", "chngtme_bin", "manvsemp_bin", "trustman_bin", "respect_bin", "disc_haras_bin")], cex.axis = 0.6, numbers=FALSE, prop=TRUE)
 ```
 
-![](analysis_1_22_21_MICE_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
+![](analysis_2_1_21_MICE_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
 
 ## Multiple imputation
 
 
 ```r
 #make imputation dataset. note that we're not using chngtme_bin as an imputation variable since it wasn't asked at all in 2018; correlation with other variables should mitigate bias towards null
-dat_mice <- dat[,c('vpsu', 'vstrat', 'wtssall', 'year', 'age', 'sex', 'race_h', 'educ', 'region', 'marital_tri', 'income', "prestg10", "class", "race_h_gender", "srh_bin", "mntlhlth", "satjob1_bin", "rincblls_bin", "fringeok_bin", "respect_bin", "learnnew_bin", "workdiff_bin",  "workfast_bin", "hlpequip_bin", "wkdecide_bin", "wkfreedm_bin", "mustwork_bin", "manvsemp_bin", "trustman_bin", "condemnd_bin", "cowrkhlp_bin",  "safehlth_bin",  "safetywk_bin", "safefrst_bin", "disc_haras", "satjob1_bin_unimp", "rincblls_bin_unimp", "fringeok_bin_unimp", "respect_bin_unimp", "learnnew_bin_unimp", "workdiff_bin_unimp",  "workfast_bin_unimp", "hlpequip_bin_unimp", "wkdecide_bin_unimp", "wkfreedm_bin_unimp", "mustwork_bin_unimp", "chngtme_bin_unimp", "manvsemp_bin_unimp", "trustman_bin_unimp", "condemnd_bin_unimp", "cowrkhlp_bin_unimp",  "safehlth_bin_unimp",  "safetywk_bin_unimp", "safefrst_bin_unimp", "disc_haras_unimp")]
+dat_mice <- dat[,c('vpsu', 'vstrat', 'wtssall', 'year', 'age', 'sex', 'race_h', 'educ', 'region', 'marital_tri', 'income', "prestg10", "class", "race_h_gender", "srh_bin", "mntlhlth", "satjob1_bin", "rincblls_bin", "safehlth_bin", "safetywk_bin", "workdiff_bin", "learnnew_bin", "condemnd_bin", "workfast_bin", "wkdecide_bin", "wkfreedm_bin", "mustwork_bin", "chngtme_bin", "manvsemp_bin", "trustman_bin", "respect_bin", "disc_haras_bin", "satjob1_bin_unimp", "rincblls_bin_unimp", "safehlth_bin_unimp", "safetywk_bin_unimp", "workdiff_bin_unimp", "learnnew_bin_unimp", "condemnd_bin_unimp", "workfast_bin_unimp", "wkdecide_bin_unimp", "wkfreedm_bin_unimp", "mustwork_bin_unimp", "chngtme_bin_unimp", "manvsemp_bin_unimp", "trustman_bin_unimp", "respect_bin_unimp", "disc_haras_bin_unimp")]
 
 #this creates an empty imputation object that you can manipulate and set options
 initialize <- mice(dat_mice, max=0, print=FALSE)
@@ -959,11 +959,11 @@ initialize <- mice(dat_mice, max=0, print=FALSE)
 #this creates an object that will contain the imputation method for each variable. let mice choose defaults based on variable class
 method <- initialize$method 
 
-#this code tells mice not to impute these variables: not imputing variables with complete data or the unimputed versions of the outcome variables
-method[c("vpsu", 'vstrat', 'wtssall', "year", "sex", "region", "satjob1_bin_unimp", "rincblls_bin_unimp", "fringeok_bin_unimp", "learnnew_bin_unimp", "workdiff_bin_unimp",  "workfast_bin_unimp", "hlpequip_bin_unimp", "wkdecide_bin_unimp", "wkfreedm_bin_unimp", "mustwork_bin_unimp", "chngtme_bin_unimp",  "condemnd_bin_unimp", "respect_bin_unimp", "manvsemp_bin_unimp", "trustman_bin_unimp", "cowrkhlp_bin_unimp",  "safehlth_bin_unimp",  "safetywk_bin_unimp", "safefrst_bin_unimp", "disc_haras_unimp")] <- "" 
+#this code tells mice not to impute these variables: not imputing variables with complete data or the unimputed versions of the outcome variables; don't impute chngtme_bin either, since it wasn't asked in 2018
+method[c("vpsu", 'vstrat', 'wtssall', "year", "sex", "region", "satjob1_bin_unimp", "rincblls_bin_unimp", "safehlth_bin_unimp", "safetywk_bin_unimp", "workdiff_bin_unimp", "learnnew_bin_unimp", "condemnd_bin_unimp", "workfast_bin_unimp", "wkdecide_bin_unimp", "wkfreedm_bin_unimp", "mustwork_bin_unimp", "chngtme_bin", "chngtme_bin_unimp", "manvsemp_bin_unimp", "trustman_bin_unimp", "respect_bin_unimp", "disc_haras_bin_unimp")] <- "" 
 
 #use logistic models for imputed versions of outcome variables: default otherwise is pmm since I didn't code them as factor variables above
-method[c("satjob1_bin", "rincblls_bin", "fringeok_bin", "respect_bin", "learnnew_bin", "workdiff_bin",  "workfast_bin", "hlpequip_bin", "wkdecide_bin", "wkfreedm_bin", "mustwork_bin", "manvsemp_bin", "trustman_bin", "condemnd_bin", "cowrkhlp_bin",  "safehlth_bin",  "safetywk_bin", "safefrst_bin", "disc_haras")] <- "logreg" 
+method[c("satjob1_bin", "rincblls_bin", "safehlth_bin", "safetywk_bin", "workdiff_bin", "learnnew_bin", "condemnd_bin", "workfast_bin", "wkdecide_bin", "wkfreedm_bin", "mustwork_bin", "manvsemp_bin", "trustman_bin", "respect_bin", "disc_haras_bin")] <- "logreg" 
 
 #passive imputation of variables that are perfect combos of other variables
 method['race_h_gender'] <- "~ifelse(race_h=='NH white' & sex=='male', 'NH white men',
@@ -978,8 +978,8 @@ method['race_h_gender'] <- "~ifelse(race_h=='NH white' & sex=='male', 'NH white 
 #this creates an object that will indicate which variables we actually want to include in predicting missing variables. 
 prediction <- initialize$predictorMatrix  
 
-#don't use interacted race-gender variable as predictor since it's collinear with uninteracted versions of those variables; also don't use vstrat, since it has so many levels that models dont fit; don't use duplicated versions of dependent variables
-prediction[,c("race_h_gender", 'vstrat', "satjob1_bin_unimp", "rincblls_bin_unimp", "fringeok_bin_unimp", "learnnew_bin_unimp", "workdiff_bin_unimp",  "workfast_bin_unimp", "hlpequip_bin_unimp", "wkdecide_bin_unimp", "wkfreedm_bin_unimp", "mustwork_bin_unimp", "chngtme_bin_unimp",  "condemnd_bin_unimp", "respect_bin_unimp", "manvsemp_bin_unimp", "trustman_bin_unimp", "cowrkhlp_bin_unimp",  "safehlth_bin_unimp",  "safetywk_bin_unimp", "safefrst_bin_unimp", "disc_haras_unimp")] <- 0  
+#don't use interacted race-gender variable as predictor since it's collinear with uninteracted versions of those variables; also don't use vstrat, since it has so many levels that models dont fit; don't use duplicated versions of dependent variables; don't use chngtme_bin, since it wasn't asked in 2018
+prediction[,c("race_h_gender", 'vstrat', "satjob1_bin_unimp", "rincblls_bin_unimp", "safehlth_bin_unimp", "safetywk_bin_unimp", "workdiff_bin_unimp", "learnnew_bin_unimp", "condemnd_bin_unimp", "workfast_bin_unimp", "wkdecide_bin_unimp", "wkfreedm_bin_unimp", "mustwork_bin_unimp", "chngtme_bin", "chngtme_bin_unimp", "manvsemp_bin_unimp", "trustman_bin_unimp", "respect_bin_unimp", "disc_haras_bin_unimp")] <- 0  
 
 #run MICE in parallel (4 cores * 5 imputations per core = 20 imputed datasets)
 imp_merged <- parlmice(dat_mice, n.core=4, n.imp.core=5, meth=method, pred=prediction, maxit = 25, cluster.seed=9956) 
@@ -1223,7 +1223,7 @@ Unadjusted prevalence of bad category of each binary QWL variable among each cla
 
 ```r
 #vars of interest
-qwl_vars <- c("satjob1_bin", "rincblls_bin", "fringeok_bin", "respect_bin", "learnnew_bin", "workdiff_bin",  "workfast_bin", "hlpequip_bin", "wkdecide_bin", "wkfreedm_bin", "mustwork_bin", "chngtme_bin", "manvsemp_bin", "trustman_bin", "condemnd_bin", "cowrkhlp_bin",  "safehlth_bin",  "safetywk_bin", "safefrst_bin", "disc_haras")
+qwl_vars <- c("satjob1_bin", "rincblls_bin", "safehlth_bin", "safetywk_bin", "workdiff_bin", "learnnew_bin", "condemnd_bin", "workfast_bin", "wkdecide_bin", "wkfreedm_bin", "mustwork_bin", "chngtme_bin", "manvsemp_bin", "trustman_bin", "respect_bin", "disc_haras_bin")
 
 x <- svyCreateTableOne(data = svy_dat, vars = qwl_vars, factorVars=qwl_vars, strata='class')
 x <- print(x, printToggle=FALSE, noSpaces=TRUE)
@@ -1264,25 +1264,18 @@ kable(x[,1:4]) %>%
    <td style="text-align:left;"> 121.4 (29.5) </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> fringeok_bin = 1 (%) </td>
-   <td style="text-align:left;"> 1088.0 (29.0) </td>
-   <td style="text-align:left;"> 493.3 (23.6) </td>
-   <td style="text-align:left;"> 211.4 (41.4) </td>
-   <td style="text-align:left;"> 96.5 (24.2) </td>
+   <td style="text-align:left;"> safehlth_bin = 1 (%) </td>
+   <td style="text-align:left;"> 258.2 (6.8) </td>
+   <td style="text-align:left;"> 110.3 (5.2) </td>
+   <td style="text-align:left;"> 19.7 (3.8) </td>
+   <td style="text-align:left;"> 17.0 (4.2) </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> respect_bin = 1 (%) </td>
-   <td style="text-align:left;"> 334.9 (8.8) </td>
-   <td style="text-align:left;"> 131.3 (6.2) </td>
-   <td style="text-align:left;"> 22.4 (4.2) </td>
-   <td style="text-align:left;"> 11.6 (2.8) </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> learnnew_bin = 1 (%) </td>
-   <td style="text-align:left;"> 650.0 (17.1) </td>
-   <td style="text-align:left;"> 169.1 (8.0) </td>
-   <td style="text-align:left;"> 68.7 (12.9) </td>
-   <td style="text-align:left;"> 16.5 (4.0) </td>
+   <td style="text-align:left;"> safetywk_bin = 1 (%) </td>
+   <td style="text-align:left;"> 362.6 (9.6) </td>
+   <td style="text-align:left;"> 165.5 (7.9) </td>
+   <td style="text-align:left;"> 17.0 (3.4) </td>
+   <td style="text-align:left;"> 15.1 (3.7) </td>
   </tr>
   <tr>
    <td style="text-align:left;"> workdiff_bin = 1 (%) </td>
@@ -1292,18 +1285,25 @@ kable(x[,1:4]) %>%
    <td style="text-align:left;"> 20.9 (5.0) </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> learnnew_bin = 1 (%) </td>
+   <td style="text-align:left;"> 650.0 (17.1) </td>
+   <td style="text-align:left;"> 169.1 (8.0) </td>
+   <td style="text-align:left;"> 68.7 (12.9) </td>
+   <td style="text-align:left;"> 16.5 (4.0) </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> condemnd_bin = 1 (%) </td>
+   <td style="text-align:left;"> 904.3 (24.4) </td>
+   <td style="text-align:left;"> 639.7 (31.0) </td>
+   <td style="text-align:left;"> 87.4 (17.5) </td>
+   <td style="text-align:left;"> 118.8 (29.4) </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> workfast_bin = 1 (%) </td>
    <td style="text-align:left;"> 2450.7 (64.6) </td>
    <td style="text-align:left;"> 1558.0 (74.1) </td>
    <td style="text-align:left;"> 275.8 (51.8) </td>
    <td style="text-align:left;"> 307.2 (74.1) </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> hlpequip_bin = 1 (%) </td>
-   <td style="text-align:left;"> 526.0 (13.8) </td>
-   <td style="text-align:left;"> 302.6 (14.4) </td>
-   <td style="text-align:left;"> 39.1 (7.6) </td>
-   <td style="text-align:left;"> 32.0 (7.9) </td>
   </tr>
   <tr>
    <td style="text-align:left;"> wkdecide_bin = 1 (%) </td>
@@ -1348,42 +1348,14 @@ kable(x[,1:4]) %>%
    <td style="text-align:left;"> 18.9 (4.7) </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> condemnd_bin = 1 (%) </td>
-   <td style="text-align:left;"> 904.3 (24.4) </td>
-   <td style="text-align:left;"> 639.7 (31.0) </td>
-   <td style="text-align:left;"> 87.4 (17.5) </td>
-   <td style="text-align:left;"> 118.8 (29.4) </td>
+   <td style="text-align:left;"> respect_bin = 1 (%) </td>
+   <td style="text-align:left;"> 334.9 (8.8) </td>
+   <td style="text-align:left;"> 131.3 (6.2) </td>
+   <td style="text-align:left;"> 22.4 (4.2) </td>
+   <td style="text-align:left;"> 11.6 (2.8) </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> cowrkhlp_bin = 1 (%) </td>
-   <td style="text-align:left;"> 362.1 (9.5) </td>
-   <td style="text-align:left;"> 184.5 (8.8) </td>
-   <td style="text-align:left;"> 45.8 (9.7) </td>
-   <td style="text-align:left;"> 23.1 (5.7) </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> safehlth_bin = 1 (%) </td>
-   <td style="text-align:left;"> 258.2 (6.8) </td>
-   <td style="text-align:left;"> 110.3 (5.2) </td>
-   <td style="text-align:left;"> 19.7 (3.8) </td>
-   <td style="text-align:left;"> 17.0 (4.2) </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> safetywk_bin = 1 (%) </td>
-   <td style="text-align:left;"> 362.6 (9.6) </td>
-   <td style="text-align:left;"> 165.5 (7.9) </td>
-   <td style="text-align:left;"> 17.0 (3.4) </td>
-   <td style="text-align:left;"> 15.1 (3.7) </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> safefrst_bin = 1 (%) </td>
-   <td style="text-align:left;"> 387.8 (10.3) </td>
-   <td style="text-align:left;"> 188.7 (9.0) </td>
-   <td style="text-align:left;"> 20.4 (4.1) </td>
-   <td style="text-align:left;"> 27.0 (6.7) </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> disc_haras = 1 (%) </td>
+   <td style="text-align:left;"> disc_haras_bin = 1 (%) </td>
    <td style="text-align:left;"> 789.4 (20.8) </td>
    <td style="text-align:left;"> 499.3 (23.8) </td>
    <td style="text-align:left;"> 72.6 (13.8) </td>
@@ -1427,11 +1399,10 @@ formatted <- function(classvec, rows, qwlvec, dummy, facvec){
                          Class=rep(dummy, rows), PR=rep(1, rows), Lower=rep(NA, rows), Upper=rep(NA, rows))) %>% #worker dummy row
     mutate(Class=factor(Class, levels=facvec),
            Var=factor(Var, levels=qwlvec),
-           Cat=ifelse(Var=="satjob1_bin_unimp" | Var=="rincblls_bin_unimp" | Var=="fringeok_bin_unimp" | Var=="respect_bin_unimp", "General",
-                      ifelse(Var=="learnnew_bin_unimp" | Var=="workdiff_bin_unimp" | Var == "workfast_bin_unimp" | Var=="hlpequip_bin_unimp", "Labor process",
+           Cat=ifelse(Var=="satjob1_bin_unimp" | Var=="rincblls_bin_unimp" | Var=="safehlth_bin_unimp" | Var=="safetywk_bin_unimp", "Rewards/hazards",
+                      ifelse(Var=="learnnew_bin_unimp" | Var=="workdiff_bin_unimp" | Var == "workfast_bin_unimp" | Var=="condemnd_bin_unimp", "Labor process",
                              ifelse(Var=="wkdecide_bin_unimp" | Var=="wkfreedm_bin_unimp" | Var == "mustwork_bin_unimp" | Var=="chngtme_bin_unimp", "Autonomy",
-                                    ifelse(Var=="manvsemp_bin_unimp" | Var=="trustman_bin_unimp" | Var == "condemnd_bin_unimp" | Var=="cowrkhlp_bin_unimp", "Conflict",
-                                           ifelse(Var=="safehlth_bin_unimp" | Var=="safetywk_bin_unimp" | Var=="safefrst_bin_unimp" | Var == "disc_haras_unimp", "Hazards", NA)))))) -> binded
+                                    ifelse(Var=="manvsemp_bin_unimp" | Var=="trustman_bin_unimp" | Var == "respect_bin_unimp" | Var=="disc_haras_bin_unimp", "Conflict", NA))))) -> binded
   return(binded)
 }
 
@@ -1439,23 +1410,19 @@ formatted <- function(classvec, rows, qwlvec, dummy, facvec){
 facet_names <- list(
   "satjob1_bin_unimp"="Dissatisfied with job",
   "rincblls_bin_unimp"="Income doesn't pay bills",
-  "fringeok_bin_unimp"="Benefits not good",
-  "respect_bin_unimp"="Not treated with respect",
-  "learnnew_bin_unimp"="Don't learn new things",
+  "safehlth_bin_unimp"="Poor safety conditions",
+  "safetywk_bin_unimp"="Safety not a priority",
   "workdiff_bin_unimp"="Repetitive tasks",
+  "learnnew_bin_unimp"="Don't learn new things",
+  "condemnd_bin_unimp"="Face conflicting demands",
   "workfast_bin_unimp"="Need to work fast", 
-  "hlpequip_bin_unimp"="Not enough help/equip.",
   "wkdecide_bin_unimp"="Don't make decisions", 
   "wkfreedm_bin_unimp"="No freedom on job", 
   "mustwork_bin_unimp"="Mandatory extra hours",
   "chngtme_bin_unimp"="Can't change schedule",
   "manvsemp_bin_unimp"="Worker-manager conflict", 
   "trustman_bin_unimp"="Don't trust management",
-  "condemnd_bin_unimp"="Face conflicting demands", 
-  "cowrkhlp_bin_unimp"="Can't rely on coworkers",
-  "safehlth_bin_unimp"="Poor safety conditions",
-  "safetywk_bin_unimp"="Safety not a priority",
-  "safefrst_bin_unimp"="Safety shortcuts taken",
+  "respect_bin_unimp"="Not treated with respect",
   "disc_haras_unimp"="Face discrim. & harass."
 )
 
@@ -1515,18 +1482,17 @@ Prevalence of bad category of each binary QWL variable among each class relative
 
 ```r
 #run regression
-less_adj <- mysvy(svy_dat_mi, c(36:55), "~class + rcs(age, 3) + rcs(year, 3)")
+less_adj <- mysvy(svy_dat_mi, c(33:48), "~class + rcs(age, 3) + rcs(year, 3)")
 
 #pull into matrix
-regs_less <- matrix_func(20, 4, c(36:55))
+regs_less <- matrix_func(16, 4, c(33:48))
 
 #format matrix
-binded <- formatted(c("Managers", "Petite bourgeoisie", "Capitalists"), 20,
-                    c("satjob1_bin_unimp", "rincblls_bin_unimp", "fringeok_bin_unimp", "respect_bin_unimp",  
-                      "learnnew_bin_unimp", "workdiff_bin_unimp", "workfast_bin_unimp", "hlpequip_bin_unimp", 
-                      "wkdecide_bin_unimp", "wkfreedm_bin_unimp", "mustwork_bin_unimp", "chngtme_bin_unimp",  
-                      "manvsemp_bin_unimp", "trustman_bin_unimp", "condemnd_bin_unimp", "cowrkhlp_bin_unimp", 
-                      "safehlth_bin_unimp", "safetywk_bin_unimp", "safefrst_bin_unimp", "disc_haras_unimp"),
+binded <- formatted(c("Managers", "Petite bourgeoisie", "Capitalists"), 16,
+                    c("satjob1_bin_unimp", "rincblls_bin_unimp", "safehlth_bin_unimp", "safetywk_bin_unimp",
+                      "workdiff_bin_unimp", "learnnew_bin_unimp", "condemnd_bin_unimp", "workfast_bin_unimp",
+                      "wkdecide_bin_unimp", "wkfreedm_bin_unimp", "mustwork_bin_unimp", "chngtme_bin_unimp",
+                      "manvsemp_bin_unimp", "trustman_bin_unimp", "respect_bin_unimp", "disc_haras_bin_unimp"),
                     "Workers",
                     c("Workers", "Managers", "Petite bourgeoisie", "Capitalists"))
 ```
@@ -1534,30 +1500,27 @@ binded <- formatted(c("Managers", "Petite bourgeoisie", "Capitalists"), 20,
 
 ```r
 #plot of estimates
-(plotted(rows=c(1:12,61:64), xaxis=Class, limitsvec=c(0.049, 1.73), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
+(plotted(rows=c(1:12,49:52), xaxis=Class, limitsvec=c(0.049, 1.73), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
         cols=brewer.pal(8, "Blues")[c(5,6,7,8)], shapes=c(15,16,17,18))  + 
-  plotted(rows=c(13:24,65:68), xaxis=Class, limitsvec=c(0.049, 1.73), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
+  plotted(rows=c(13:24,53:56), xaxis=Class, limitsvec=c(0.049, 1.73), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
           cols=brewer.pal(8, "Blues")[c(5,6,7,8)], shapes=c(15,16,17,18)) + 
    theme(axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank()) + 
-  plotted(rows=c(25:36,69:72), xaxis=Class, limitsvec=c(0.049, 1.73), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
+  plotted(rows=c(25:36,57:60), xaxis=Class, limitsvec=c(0.049, 1.73), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
           cols=brewer.pal(8, "Blues")[c(5,6,7,8)], shapes=c(15,16,17,18)) + 
    theme(axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank()) + 
-  plotted(rows=c(37:48, 73:76), xaxis=Class, limitsvec=c(0.049, 1.73), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
+  plotted(rows=c(37:48, 61:64), xaxis=Class, limitsvec=c(0.049, 1.73), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
           cols=brewer.pal(8, "Blues")[c(5,6,7,8)], shapes=c(15,16,17,18)) + 
    theme(axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank()) + 
-  plotted(rows=c(49:60, 77:80), xaxis=Class, limitsvec=c(0.049, 1.73), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
-          cols=brewer.pal(8, "Blues")[c(5,6,7,8)], shapes=c(15,16,17,18)) + 
-   theme(axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank()) +   
-  plot_layout(ncol=5)) /
-  legends(rows=c(1:3,61), xaxis=Class, cols=brewer.pal(8, "Blues")[c(5,6,7,8)], shapes=c(15,16,17,18), nrow=1) +
+  plot_layout(ncol=4)) /
+  legends(rows=c(1:3,49), xaxis=Class, cols=brewer.pal(8, "Blues")[c(5,6,7,8)], shapes=c(15,16,17,18), nrow=1) +
   plot_layout(heights=c(1,0.1))
 ```
 
-![](analysis_1_22_21_MICE_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
+![](analysis_2_1_21_MICE_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
 
 ```r
 #table of estimates
-tabled(1:60, "Ref: workers")
+tabled(1:48, "Ref: workers")
 ```
 
 <div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:250px; overflow-x: scroll; width:100%; "><table class="table table-striped" style="margin-left: auto; margin-right: auto;">
@@ -1575,27 +1538,27 @@ tabled(1:60, "Ref: workers")
 <tbody>
   <tr>
    <td style="text-align:right;"> 0.87 </td>
-   <td style="text-align:right;"> 0.68 </td>
+   <td style="text-align:right;"> 0.69 </td>
    <td style="text-align:right;"> 1.10 </td>
    <td style="text-align:left;"> satjob1_bin_unimp </td>
    <td style="text-align:left;"> Managers </td>
-   <td style="text-align:left;"> General </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 0.52 </td>
+   <td style="text-align:right;"> 0.53 </td>
    <td style="text-align:right;"> 0.33 </td>
-   <td style="text-align:right;"> 0.83 </td>
+   <td style="text-align:right;"> 0.85 </td>
    <td style="text-align:left;"> satjob1_bin_unimp </td>
    <td style="text-align:left;"> Petite bourgeoisie </td>
-   <td style="text-align:left;"> General </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 0.42 </td>
+   <td style="text-align:right;"> 0.41 </td>
    <td style="text-align:right;"> 0.21 </td>
-   <td style="text-align:right;"> 0.81 </td>
+   <td style="text-align:right;"> 0.79 </td>
    <td style="text-align:left;"> satjob1_bin_unimp </td>
    <td style="text-align:left;"> Capitalists </td>
-   <td style="text-align:left;"> General </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 0.79 </td>
@@ -1603,7 +1566,7 @@ tabled(1:60, "Ref: workers")
    <td style="text-align:right;"> 0.84 </td>
    <td style="text-align:left;"> rincblls_bin_unimp </td>
    <td style="text-align:left;"> Managers </td>
-   <td style="text-align:left;"> General </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 0.92 </td>
@@ -1611,7 +1574,7 @@ tabled(1:60, "Ref: workers")
    <td style="text-align:right;"> 1.01 </td>
    <td style="text-align:left;"> rincblls_bin_unimp </td>
    <td style="text-align:left;"> Petite bourgeoisie </td>
-   <td style="text-align:left;"> General </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 0.50 </td>
@@ -1619,79 +1582,55 @@ tabled(1:60, "Ref: workers")
    <td style="text-align:right;"> 0.60 </td>
    <td style="text-align:left;"> rincblls_bin_unimp </td>
    <td style="text-align:left;"> Capitalists </td>
-   <td style="text-align:left;"> General </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 0.83 </td>
    <td style="text-align:right;"> 0.75 </td>
-   <td style="text-align:right;"> 0.92 </td>
-   <td style="text-align:left;"> fringeok_bin_unimp </td>
-   <td style="text-align:left;"> Managers </td>
-   <td style="text-align:left;"> General </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 1.50 </td>
-   <td style="text-align:right;"> 1.31 </td>
-   <td style="text-align:right;"> 1.72 </td>
-   <td style="text-align:left;"> fringeok_bin_unimp </td>
-   <td style="text-align:left;"> Petite bourgeoisie </td>
-   <td style="text-align:left;"> General </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 0.90 </td>
-   <td style="text-align:right;"> 0.74 </td>
-   <td style="text-align:right;"> 1.09 </td>
-   <td style="text-align:left;"> fringeok_bin_unimp </td>
-   <td style="text-align:left;"> Capitalists </td>
-   <td style="text-align:left;"> General </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 0.70 </td>
-   <td style="text-align:right;"> 0.55 </td>
-   <td style="text-align:right;"> 0.89 </td>
-   <td style="text-align:left;"> respect_bin_unimp </td>
-   <td style="text-align:left;"> Managers </td>
-   <td style="text-align:left;"> General </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 0.51 </td>
-   <td style="text-align:right;"> 0.32 </td>
-   <td style="text-align:right;"> 0.82 </td>
-   <td style="text-align:left;"> respect_bin_unimp </td>
-   <td style="text-align:left;"> Petite bourgeoisie </td>
-   <td style="text-align:left;"> General </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 0.34 </td>
-   <td style="text-align:right;"> 0.18 </td>
-   <td style="text-align:right;"> 0.64 </td>
-   <td style="text-align:left;"> respect_bin_unimp </td>
-   <td style="text-align:left;"> Capitalists </td>
-   <td style="text-align:left;"> General </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 0.48 </td>
-   <td style="text-align:right;"> 0.40 </td>
    <td style="text-align:right;"> 0.59 </td>
-   <td style="text-align:left;"> learnnew_bin_unimp </td>
+   <td style="text-align:right;"> 0.96 </td>
+   <td style="text-align:left;"> safehlth_bin_unimp </td>
    <td style="text-align:left;"> Managers </td>
-   <td style="text-align:left;"> Labor process </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 0.73 </td>
-   <td style="text-align:right;"> 0.57 </td>
-   <td style="text-align:right;"> 0.93 </td>
-   <td style="text-align:left;"> learnnew_bin_unimp </td>
+   <td style="text-align:right;"> 0.58 </td>
+   <td style="text-align:right;"> 0.33 </td>
+   <td style="text-align:right;"> 1.01 </td>
+   <td style="text-align:left;"> safehlth_bin_unimp </td>
    <td style="text-align:left;"> Petite bourgeoisie </td>
-   <td style="text-align:left;"> Labor process </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 0.22 </td>
-   <td style="text-align:right;"> 0.13 </td>
-   <td style="text-align:right;"> 0.38 </td>
-   <td style="text-align:left;"> learnnew_bin_unimp </td>
+   <td style="text-align:right;"> 0.62 </td>
+   <td style="text-align:right;"> 0.31 </td>
+   <td style="text-align:right;"> 1.25 </td>
+   <td style="text-align:left;"> safehlth_bin_unimp </td>
    <td style="text-align:left;"> Capitalists </td>
-   <td style="text-align:left;"> Labor process </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 0.82 </td>
+   <td style="text-align:right;"> 0.66 </td>
+   <td style="text-align:right;"> 1.01 </td>
+   <td style="text-align:left;"> safetywk_bin_unimp </td>
+   <td style="text-align:left;"> Managers </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 0.38 </td>
+   <td style="text-align:right;"> 0.23 </td>
+   <td style="text-align:right;"> 0.63 </td>
+   <td style="text-align:left;"> safetywk_bin_unimp </td>
+   <td style="text-align:left;"> Petite bourgeoisie </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 0.42 </td>
+   <td style="text-align:right;"> 0.21 </td>
+   <td style="text-align:right;"> 0.82 </td>
+   <td style="text-align:left;"> safetywk_bin_unimp </td>
+   <td style="text-align:left;"> Capitalists </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 0.39 </td>
@@ -1718,6 +1657,54 @@ tabled(1:60, "Ref: workers")
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
+   <td style="text-align:right;"> 0.48 </td>
+   <td style="text-align:right;"> 0.40 </td>
+   <td style="text-align:right;"> 0.59 </td>
+   <td style="text-align:left;"> learnnew_bin_unimp </td>
+   <td style="text-align:left;"> Managers </td>
+   <td style="text-align:left;"> Labor process </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 0.72 </td>
+   <td style="text-align:right;"> 0.57 </td>
+   <td style="text-align:right;"> 0.93 </td>
+   <td style="text-align:left;"> learnnew_bin_unimp </td>
+   <td style="text-align:left;"> Petite bourgeoisie </td>
+   <td style="text-align:left;"> Labor process </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 0.22 </td>
+   <td style="text-align:right;"> 0.13 </td>
+   <td style="text-align:right;"> 0.38 </td>
+   <td style="text-align:left;"> learnnew_bin_unimp </td>
+   <td style="text-align:left;"> Capitalists </td>
+   <td style="text-align:left;"> Labor process </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 1.23 </td>
+   <td style="text-align:right;"> 1.12 </td>
+   <td style="text-align:right;"> 1.36 </td>
+   <td style="text-align:left;"> condemnd_bin_unimp </td>
+   <td style="text-align:left;"> Managers </td>
+   <td style="text-align:left;"> Labor process </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 0.72 </td>
+   <td style="text-align:right;"> 0.57 </td>
+   <td style="text-align:right;"> 0.91 </td>
+   <td style="text-align:left;"> condemnd_bin_unimp </td>
+   <td style="text-align:left;"> Petite bourgeoisie </td>
+   <td style="text-align:left;"> Labor process </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 1.21 </td>
+   <td style="text-align:right;"> 1.00 </td>
+   <td style="text-align:right;"> 1.46 </td>
+   <td style="text-align:left;"> condemnd_bin_unimp </td>
+   <td style="text-align:left;"> Capitalists </td>
+   <td style="text-align:left;"> Labor process </td>
+  </tr>
+  <tr>
    <td style="text-align:right;"> 1.15 </td>
    <td style="text-align:right;"> 1.11 </td>
    <td style="text-align:right;"> 1.20 </td>
@@ -1736,32 +1723,8 @@ tabled(1:60, "Ref: workers")
   <tr>
    <td style="text-align:right;"> 1.26 </td>
    <td style="text-align:right;"> 1.17 </td>
-   <td style="text-align:right;"> 1.35 </td>
+   <td style="text-align:right;"> 1.34 </td>
    <td style="text-align:left;"> workfast_bin_unimp </td>
-   <td style="text-align:left;"> Capitalists </td>
-   <td style="text-align:left;"> Labor process </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 1.02 </td>
-   <td style="text-align:right;"> 0.88 </td>
-   <td style="text-align:right;"> 1.18 </td>
-   <td style="text-align:left;"> hlpequip_bin_unimp </td>
-   <td style="text-align:left;"> Managers </td>
-   <td style="text-align:left;"> Labor process </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 0.56 </td>
-   <td style="text-align:right;"> 0.39 </td>
-   <td style="text-align:right;"> 0.82 </td>
-   <td style="text-align:left;"> hlpequip_bin_unimp </td>
-   <td style="text-align:left;"> Petite bourgeoisie </td>
-   <td style="text-align:left;"> Labor process </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 0.60 </td>
-   <td style="text-align:right;"> 0.38 </td>
-   <td style="text-align:right;"> 0.94 </td>
-   <td style="text-align:left;"> hlpequip_bin_unimp </td>
    <td style="text-align:left;"> Capitalists </td>
    <td style="text-align:left;"> Labor process </td>
   </tr>
@@ -1814,7 +1777,7 @@ tabled(1:60, "Ref: workers")
    <td style="text-align:left;"> Autonomy </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 1.22 </td>
+   <td style="text-align:right;"> 1.21 </td>
    <td style="text-align:right;"> 1.10 </td>
    <td style="text-align:right;"> 1.34 </td>
    <td style="text-align:left;"> mustwork_bin_unimp </td>
@@ -1832,7 +1795,7 @@ tabled(1:60, "Ref: workers")
   <tr>
    <td style="text-align:right;"> 1.37 </td>
    <td style="text-align:right;"> 1.18 </td>
-   <td style="text-align:right;"> 1.61 </td>
+   <td style="text-align:right;"> 1.60 </td>
    <td style="text-align:left;"> mustwork_bin_unimp </td>
    <td style="text-align:left;"> Capitalists </td>
    <td style="text-align:left;"> Autonomy </td>
@@ -1880,7 +1843,7 @@ tabled(1:60, "Ref: workers")
   <tr>
    <td style="text-align:right;"> 0.23 </td>
    <td style="text-align:right;"> 0.10 </td>
-   <td style="text-align:right;"> 0.51 </td>
+   <td style="text-align:right;"> 0.50 </td>
    <td style="text-align:left;"> manvsemp_bin_unimp </td>
    <td style="text-align:left;"> Capitalists </td>
    <td style="text-align:left;"> Conflict </td>
@@ -1910,148 +1873,52 @@ tabled(1:60, "Ref: workers")
    <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 1.23 </td>
-   <td style="text-align:right;"> 1.12 </td>
-   <td style="text-align:right;"> 1.36 </td>
-   <td style="text-align:left;"> condemnd_bin_unimp </td>
-   <td style="text-align:left;"> Managers </td>
-   <td style="text-align:left;"> Conflict </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 0.72 </td>
-   <td style="text-align:right;"> 0.57 </td>
+   <td style="text-align:right;"> 0.70 </td>
+   <td style="text-align:right;"> 0.55 </td>
    <td style="text-align:right;"> 0.90 </td>
-   <td style="text-align:left;"> condemnd_bin_unimp </td>
-   <td style="text-align:left;"> Petite bourgeoisie </td>
-   <td style="text-align:left;"> Conflict </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 1.21 </td>
-   <td style="text-align:right;"> 1.00 </td>
-   <td style="text-align:right;"> 1.46 </td>
-   <td style="text-align:left;"> condemnd_bin_unimp </td>
-   <td style="text-align:left;"> Capitalists </td>
-   <td style="text-align:left;"> Conflict </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 0.93 </td>
-   <td style="text-align:right;"> 0.77 </td>
-   <td style="text-align:right;"> 1.12 </td>
-   <td style="text-align:left;"> cowrkhlp_bin_unimp </td>
+   <td style="text-align:left;"> respect_bin_unimp </td>
    <td style="text-align:left;"> Managers </td>
    <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 1.05 </td>
-   <td style="text-align:right;"> 0.77 </td>
-   <td style="text-align:right;"> 1.43 </td>
-   <td style="text-align:left;"> cowrkhlp_bin_unimp </td>
-   <td style="text-align:left;"> Petite bourgeoisie </td>
-   <td style="text-align:left;"> Conflict </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 0.62 </td>
-   <td style="text-align:right;"> 0.36 </td>
-   <td style="text-align:right;"> 1.05 </td>
-   <td style="text-align:left;"> cowrkhlp_bin_unimp </td>
-   <td style="text-align:left;"> Capitalists </td>
-   <td style="text-align:left;"> Conflict </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 0.75 </td>
-   <td style="text-align:right;"> 0.59 </td>
-   <td style="text-align:right;"> 0.96 </td>
-   <td style="text-align:left;"> safehlth_bin_unimp </td>
-   <td style="text-align:left;"> Managers </td>
-   <td style="text-align:left;"> Hazards </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 0.58 </td>
-   <td style="text-align:right;"> 0.33 </td>
-   <td style="text-align:right;"> 1.01 </td>
-   <td style="text-align:left;"> safehlth_bin_unimp </td>
-   <td style="text-align:left;"> Petite bourgeoisie </td>
-   <td style="text-align:left;"> Hazards </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 0.63 </td>
-   <td style="text-align:right;"> 0.31 </td>
-   <td style="text-align:right;"> 1.25 </td>
-   <td style="text-align:left;"> safehlth_bin_unimp </td>
-   <td style="text-align:left;"> Capitalists </td>
-   <td style="text-align:left;"> Hazards </td>
-  </tr>
-  <tr>
+   <td style="text-align:right;"> 0.51 </td>
+   <td style="text-align:right;"> 0.32 </td>
    <td style="text-align:right;"> 0.82 </td>
-   <td style="text-align:right;"> 0.66 </td>
-   <td style="text-align:right;"> 1.01 </td>
-   <td style="text-align:left;"> safetywk_bin_unimp </td>
-   <td style="text-align:left;"> Managers </td>
-   <td style="text-align:left;"> Hazards </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 0.38 </td>
-   <td style="text-align:right;"> 0.23 </td>
-   <td style="text-align:right;"> 0.62 </td>
-   <td style="text-align:left;"> safetywk_bin_unimp </td>
+   <td style="text-align:left;"> respect_bin_unimp </td>
    <td style="text-align:left;"> Petite bourgeoisie </td>
-   <td style="text-align:left;"> Hazards </td>
+   <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 0.42 </td>
-   <td style="text-align:right;"> 0.21 </td>
-   <td style="text-align:right;"> 0.83 </td>
-   <td style="text-align:left;"> safetywk_bin_unimp </td>
+   <td style="text-align:right;"> 0.34 </td>
+   <td style="text-align:right;"> 0.18 </td>
+   <td style="text-align:right;"> 0.64 </td>
+   <td style="text-align:left;"> respect_bin_unimp </td>
    <td style="text-align:left;"> Capitalists </td>
-   <td style="text-align:left;"> Hazards </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 0.86 </td>
-   <td style="text-align:right;"> 0.71 </td>
-   <td style="text-align:right;"> 1.05 </td>
-   <td style="text-align:left;"> safefrst_bin_unimp </td>
-   <td style="text-align:left;"> Managers </td>
-   <td style="text-align:left;"> Hazards </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 0.42 </td>
-   <td style="text-align:right;"> 0.25 </td>
-   <td style="text-align:right;"> 0.70 </td>
-   <td style="text-align:left;"> safefrst_bin_unimp </td>
-   <td style="text-align:left;"> Petite bourgeoisie </td>
-   <td style="text-align:left;"> Hazards </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 0.70 </td>
-   <td style="text-align:right;"> 0.42 </td>
-   <td style="text-align:right;"> 1.17 </td>
-   <td style="text-align:left;"> safefrst_bin_unimp </td>
-   <td style="text-align:left;"> Capitalists </td>
-   <td style="text-align:left;"> Hazards </td>
+   <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 1.17 </td>
    <td style="text-align:right;"> 1.04 </td>
    <td style="text-align:right;"> 1.31 </td>
-   <td style="text-align:left;"> disc_haras_unimp </td>
+   <td style="text-align:left;"> disc_haras_bin_unimp </td>
    <td style="text-align:left;"> Managers </td>
-   <td style="text-align:left;"> Hazards </td>
+   <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 0.72 </td>
    <td style="text-align:right;"> 0.56 </td>
    <td style="text-align:right;"> 0.93 </td>
-   <td style="text-align:left;"> disc_haras_unimp </td>
+   <td style="text-align:left;"> disc_haras_bin_unimp </td>
    <td style="text-align:left;"> Petite bourgeoisie </td>
-   <td style="text-align:left;"> Hazards </td>
+   <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 0.89 </td>
    <td style="text-align:right;"> 0.68 </td>
    <td style="text-align:right;"> 1.16 </td>
-   <td style="text-align:left;"> disc_haras_unimp </td>
+   <td style="text-align:left;"> disc_haras_bin_unimp </td>
    <td style="text-align:left;"> Capitalists </td>
-   <td style="text-align:left;"> Hazards </td>
+   <td style="text-align:left;"> Conflict </td>
   </tr>
 </tbody>
 </table></div>
@@ -2065,22 +1932,21 @@ Prevalence of bad category of each binary QWL variable among each minoritized ge
 
 ```r
 #run regression
-less_adj <- mysvy(subset(svy_dat_mi, class=="Workers"), c(36:55), "~relevel(as.factor(sex), ref='male') + rcs(age, 3) + rcs(year, 3)")
+less_adj <- mysvy(subset(svy_dat_mi, class=="Workers"), c(33:48), "~relevel(as.factor(sex), ref='male') + rcs(age, 3) + rcs(year, 3)")
 
 #pull into matrix
-regs_less <- matrix_func(20, 3, c(36:55))
+regs_less <- matrix_func(16, 3, c(33:48))
 
 #for some reason function doesn't work properly when only extract one coefficient so we need to delete every other row from regs_less to get df formatted correctly
 nth.delete <- function(dataframe, n)dataframe[-(seq(n,to=nrow(dataframe),by=n)),]
 regs_less <- nth.delete(regs_less, 2)
   
 #format matrix
-binded <- formatted(c("Female"), 20, 
-                    c("satjob1_bin_unimp", "rincblls_bin_unimp", "fringeok_bin_unimp", "respect_bin_unimp",  
-                      "learnnew_bin_unimp", "workdiff_bin_unimp", "workfast_bin_unimp", "hlpequip_bin_unimp", 
-                      "wkdecide_bin_unimp", "wkfreedm_bin_unimp", "mustwork_bin_unimp", "chngtme_bin_unimp",  
-                      "manvsemp_bin_unimp", "trustman_bin_unimp", "condemnd_bin_unimp", "cowrkhlp_bin_unimp", 
-                      "safehlth_bin_unimp", "safetywk_bin_unimp", "safefrst_bin_unimp", "disc_haras_unimp"),
+binded <- formatted(c("Female"), 16, 
+                    c("satjob1_bin_unimp", "rincblls_bin_unimp", "safehlth_bin_unimp", "safetywk_bin_unimp",
+                      "workdiff_bin_unimp", "learnnew_bin_unimp", "condemnd_bin_unimp", "workfast_bin_unimp",
+                      "wkdecide_bin_unimp", "wkfreedm_bin_unimp", "mustwork_bin_unimp", "chngtme_bin_unimp",
+                      "manvsemp_bin_unimp", "trustman_bin_unimp", "respect_bin_unimp", "disc_haras_bin_unimp"),
                     "Male",
                     c("Male", "Female"))
 ```
@@ -2088,30 +1954,27 @@ binded <- formatted(c("Female"), 20,
 
 ```r
 #plot of estimates
-(plotted(rows=c(1:4,21:24), xaxis=Class, limitsvec=c(0.62,1.57), breaksvec=c(0.75, 1, 1.3333333, 1.333333^2), 
+(plotted(rows=c(1:4,17:20), xaxis=Class, limitsvec=c(0.62,1.57), breaksvec=c(0.75, 1, 1.3333333, 1.333333^2), 
         cols=c(brewer.pal(8, "Blues")[c(6)], brewer.pal(8, "Greens")[c(6)]), shapes=c(15, 0))  + 
-  plotted(rows=c(5:8,25:28), xaxis=Class, limitsvec=c(0.62,1.57), breaksvec=c(0.75, 1, 1.3333333, 1.333333^2), 
+  plotted(rows=c(5:8,21:24), xaxis=Class, limitsvec=c(0.62,1.57), breaksvec=c(0.75, 1, 1.3333333, 1.333333^2), 
           cols=c(brewer.pal(8, "Blues")[c(6)], brewer.pal(8, "Greens")[c(6)]), shapes=c(15, 0)) + 
    theme(axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank()) + 
-  plotted(rows=c(9:12,29:32), xaxis=Class, limitsvec=c(0.62,1.57), breaksvec=c(0.75, 1, 1.3333333, 1.333333^2), 
+  plotted(rows=c(9:12,25:28), xaxis=Class, limitsvec=c(0.62,1.57), breaksvec=c(0.75, 1, 1.3333333, 1.333333^2), 
           cols=c(brewer.pal(8, "Blues")[c(6)], brewer.pal(8, "Greens")[c(6)]), shapes=c(15, 0)) + 
    theme(axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank()) + 
-  plotted(rows=c(13:16,33:36), xaxis=Class, limitsvec=c(0.62,1.57), breaksvec=c(0.75, 1, 1.3333333, 1.333333^2), 
+  plotted(rows=c(13:16,29:32), xaxis=Class, limitsvec=c(0.62,1.57), breaksvec=c(0.75, 1, 1.3333333, 1.333333^2), 
           cols=c(brewer.pal(8, "Blues")[c(6)], brewer.pal(8, "Greens")[c(6)]), shapes=c(15, 0)) + 
    theme(axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank()) + 
-  plotted(rows=c(17:20,37:40), xaxis=Class, limitsvec=c(0.62,1.57), breaksvec=c(0.75, 1, 1.3333333, 1.333333^2), 
-          cols=c(brewer.pal(8, "Blues")[c(6)], brewer.pal(8, "Greens")[c(6)]), shapes=c(15, 0)) + 
-   theme(axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank()) +    
-  plot_layout(ncol=5)) /
-  legends(rows=c(1,21), xaxis=Class, cols=c(brewer.pal(8, "Blues")[c(6)], brewer.pal(8, "Greens")[c(6)]), shapes=c(15, 0), nrow=1) +
+  plot_layout(ncol=4)) /
+  legends(rows=c(1,17), xaxis=Class, cols=c(brewer.pal(8, "Blues")[c(6)], brewer.pal(8, "Greens")[c(6)]), shapes=c(15, 0), nrow=1) +
   plot_layout(heights=c(1,0.1))
 ```
 
-![](analysis_1_22_21_MICE_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
+![](analysis_2_1_21_MICE_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
 
 ```r
 #table of estimates
-tabled(1:20, "Ref: male")
+tabled(1:16, "Ref: male")
 ```
 
 <div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:250px; overflow-x: scroll; width:100%; "><table class="table table-striped" style="margin-left: auto; margin-right: auto;">
@@ -2129,11 +1992,11 @@ tabled(1:20, "Ref: male")
 <tbody>
   <tr>
    <td style="text-align:right;"> 0.80 </td>
-   <td style="text-align:right;"> 0.62 </td>
+   <td style="text-align:right;"> 0.63 </td>
    <td style="text-align:right;"> 1.02 </td>
    <td style="text-align:left;"> satjob1_bin_unimp </td>
    <td style="text-align:left;"> Female </td>
-   <td style="text-align:left;"> General </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 1.40 </td>
@@ -2141,31 +2004,23 @@ tabled(1:20, "Ref: male")
    <td style="text-align:right;"> 1.49 </td>
    <td style="text-align:left;"> rincblls_bin_unimp </td>
    <td style="text-align:left;"> Female </td>
-   <td style="text-align:left;"> General </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 1.07 </td>
-   <td style="text-align:right;"> 0.95 </td>
-   <td style="text-align:right;"> 1.21 </td>
-   <td style="text-align:left;"> fringeok_bin_unimp </td>
+   <td style="text-align:right;"> 1.12 </td>
+   <td style="text-align:right;"> 0.87 </td>
+   <td style="text-align:right;"> 1.44 </td>
+   <td style="text-align:left;"> safehlth_bin_unimp </td>
    <td style="text-align:left;"> Female </td>
-   <td style="text-align:left;"> General </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 1.15 </td>
-   <td style="text-align:right;"> 0.92 </td>
-   <td style="text-align:right;"> 1.43 </td>
-   <td style="text-align:left;"> respect_bin_unimp </td>
+   <td style="text-align:right;"> 1.01 </td>
+   <td style="text-align:right;"> 0.82 </td>
+   <td style="text-align:right;"> 1.26 </td>
+   <td style="text-align:left;"> safetywk_bin_unimp </td>
    <td style="text-align:left;"> Female </td>
-   <td style="text-align:left;"> General </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 0.92 </td>
-   <td style="text-align:right;"> 0.77 </td>
-   <td style="text-align:right;"> 1.09 </td>
-   <td style="text-align:left;"> learnnew_bin_unimp </td>
-   <td style="text-align:left;"> Female </td>
-   <td style="text-align:left;"> Labor process </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 0.85 </td>
@@ -2176,18 +2031,26 @@ tabled(1:20, "Ref: male")
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 1.04 </td>
-   <td style="text-align:right;"> 0.98 </td>
-   <td style="text-align:right;"> 1.10 </td>
-   <td style="text-align:left;"> workfast_bin_unimp </td>
+   <td style="text-align:right;"> 0.92 </td>
+   <td style="text-align:right;"> 0.77 </td>
+   <td style="text-align:right;"> 1.09 </td>
+   <td style="text-align:left;"> learnnew_bin_unimp </td>
    <td style="text-align:left;"> Female </td>
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 0.99 </td>
-   <td style="text-align:right;"> 0.82 </td>
-   <td style="text-align:right;"> 1.19 </td>
-   <td style="text-align:left;"> hlpequip_bin_unimp </td>
+   <td style="text-align:right;"> 1.11 </td>
+   <td style="text-align:right;"> 0.98 </td>
+   <td style="text-align:right;"> 1.26 </td>
+   <td style="text-align:left;"> condemnd_bin_unimp </td>
+   <td style="text-align:left;"> Female </td>
+   <td style="text-align:left;"> Labor process </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 1.04 </td>
+   <td style="text-align:right;"> 0.98 </td>
+   <td style="text-align:right;"> 1.09 </td>
+   <td style="text-align:left;"> workfast_bin_unimp </td>
    <td style="text-align:left;"> Female </td>
    <td style="text-align:left;"> Labor process </td>
   </tr>
@@ -2234,58 +2097,26 @@ tabled(1:20, "Ref: male")
   <tr>
    <td style="text-align:right;"> 0.98 </td>
    <td style="text-align:right;"> 0.86 </td>
-   <td style="text-align:right;"> 1.13 </td>
+   <td style="text-align:right;"> 1.12 </td>
    <td style="text-align:left;"> trustman_bin_unimp </td>
    <td style="text-align:left;"> Female </td>
    <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 1.11 </td>
-   <td style="text-align:right;"> 0.98 </td>
-   <td style="text-align:right;"> 1.26 </td>
-   <td style="text-align:left;"> condemnd_bin_unimp </td>
+   <td style="text-align:right;"> 1.14 </td>
+   <td style="text-align:right;"> 0.92 </td>
+   <td style="text-align:right;"> 1.43 </td>
+   <td style="text-align:left;"> respect_bin_unimp </td>
    <td style="text-align:left;"> Female </td>
    <td style="text-align:left;"> Conflict </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 0.96 </td>
-   <td style="text-align:right;"> 0.77 </td>
-   <td style="text-align:right;"> 1.20 </td>
-   <td style="text-align:left;"> cowrkhlp_bin_unimp </td>
-   <td style="text-align:left;"> Female </td>
-   <td style="text-align:left;"> Conflict </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 1.12 </td>
-   <td style="text-align:right;"> 0.87 </td>
-   <td style="text-align:right;"> 1.44 </td>
-   <td style="text-align:left;"> safehlth_bin_unimp </td>
-   <td style="text-align:left;"> Female </td>
-   <td style="text-align:left;"> Hazards </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 1.01 </td>
-   <td style="text-align:right;"> 0.82 </td>
-   <td style="text-align:right;"> 1.26 </td>
-   <td style="text-align:left;"> safetywk_bin_unimp </td>
-   <td style="text-align:left;"> Female </td>
-   <td style="text-align:left;"> Hazards </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 0.97 </td>
-   <td style="text-align:right;"> 0.80 </td>
-   <td style="text-align:right;"> 1.19 </td>
-   <td style="text-align:left;"> safefrst_bin_unimp </td>
-   <td style="text-align:left;"> Female </td>
-   <td style="text-align:left;"> Hazards </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 1.36 </td>
    <td style="text-align:right;"> 1.18 </td>
-   <td style="text-align:right;"> 1.56 </td>
-   <td style="text-align:left;"> disc_haras_unimp </td>
+   <td style="text-align:right;"> 1.57 </td>
+   <td style="text-align:left;"> disc_haras_bin_unimp </td>
    <td style="text-align:left;"> Female </td>
-   <td style="text-align:left;"> Hazards </td>
+   <td style="text-align:left;"> Conflict </td>
   </tr>
 </tbody>
 </table></div>
@@ -2295,18 +2126,17 @@ tabled(1:20, "Ref: male")
 
 ```r
 #run regression
-less_adj <- mysvy(subset(svy_dat_mi, class=="Workers"), c(36:55), "~race_h + rcs(age, 3) + rcs(year, 3)")
+less_adj <- mysvy(subset(svy_dat_mi, class=="Workers"), c(33:48), "~race_h + rcs(age, 3) + rcs(year, 3)")
 
 #pull into matrix
-regs_less <- matrix_func(20, 4, 36:55)
+regs_less <- matrix_func(16, 4, 33:48)
   
 #format matrix
-binded <- formatted(c("NH Black", "NH other", "Hispanic"), 20, 
-                    c("satjob1_bin_unimp", "rincblls_bin_unimp", "fringeok_bin_unimp", "respect_bin_unimp",  
-                      "learnnew_bin_unimp", "workdiff_bin_unimp", "workfast_bin_unimp", "hlpequip_bin_unimp", 
-                      "wkdecide_bin_unimp", "wkfreedm_bin_unimp", "mustwork_bin_unimp", "chngtme_bin_unimp",  
-                      "manvsemp_bin_unimp", "trustman_bin_unimp", "condemnd_bin_unimp", "cowrkhlp_bin_unimp", 
-                      "safehlth_bin_unimp", "safetywk_bin_unimp", "safefrst_bin_unimp", "disc_haras_unimp"),
+binded <- formatted(c("NH Black", "NH other", "Hispanic"), 16, 
+                    c("satjob1_bin_unimp", "rincblls_bin_unimp", "safehlth_bin_unimp", "safetywk_bin_unimp",
+                      "workdiff_bin_unimp", "learnnew_bin_unimp", "condemnd_bin_unimp", "workfast_bin_unimp",
+                      "wkdecide_bin_unimp", "wkfreedm_bin_unimp", "mustwork_bin_unimp", "chngtme_bin_unimp",
+                      "manvsemp_bin_unimp", "trustman_bin_unimp", "respect_bin_unimp", "disc_haras_bin_unimp"),
                     "NH white",
                     c("NH white", "NH Black", "NH other", "Hispanic"))
 ```
@@ -2314,31 +2144,28 @@ binded <- formatted(c("NH Black", "NH other", "Hispanic"), 20,
 
 ```r
 #plot of estimates
-(plotted(rows=c(1:12,61:64), xaxis=Class, limitsvec=c(0.30, 2.80), breaksvec=c(0.6, 1, 1.666667, 1.666667^2), 
+(plotted(rows=c(1:12,49:52), xaxis=Class, limitsvec=c(0.30, 2.80), breaksvec=c(0.6, 1, 1.666667, 1.666667^2), 
         cols=c(brewer.pal(8, "Blues")[c(6)], brewer.pal(8, "Greens")[c(6)], brewer.pal(8, "Purples")[c(6)], brewer.pal(8, "Greys")[c(6)]), shapes=c(15, 0, 12, 4))  + 
-  plotted(rows=c(13:24,65:68), xaxis=Class, limitsvec=c(0.30, 2.80), breaksvec=c(0.6, 1, 1.666667, 1.666667^2), 
+  plotted(rows=c(13:24,53:56), xaxis=Class, limitsvec=c(0.30, 2.80), breaksvec=c(0.6, 1, 1.666667, 1.666667^2), 
           cols=c(brewer.pal(8, "Blues")[c(6)], brewer.pal(8, "Greens")[c(6)], brewer.pal(8, "Purples")[c(6)], brewer.pal(8, "Greys")[c(6)]), shapes=c(15, 0, 12, 4))  + 
     theme(axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank()) + 
-  plotted(rows=c(25:36,69:72), xaxis=Class, limitsvec=c(0.30, 2.80), breaksvec=c(0.6, 1, 1.666667, 1.666667^2), 
+  plotted(rows=c(25:36,57:60), xaxis=Class, limitsvec=c(0.30, 2.80), breaksvec=c(0.6, 1, 1.666667, 1.666667^2), 
           cols=c(brewer.pal(8, "Blues")[c(6)], brewer.pal(8, "Greens")[c(6)], brewer.pal(8, "Purples")[c(6)], brewer.pal(8, "Greys")[c(6)]), shapes=c(15, 0, 12, 4))  + 
     theme(axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank()) + 
-  plotted(rows=c(37:48,73:76), xaxis=Class, limitsvec=c(0.30, 2.80), breaksvec=c(0.6, 1, 1.666667, 1.666667^2), 
+  plotted(rows=c(37:48,61:64), xaxis=Class, limitsvec=c(0.30, 2.80), breaksvec=c(0.6, 1, 1.666667, 1.666667^2), 
           cols=c(brewer.pal(8, "Blues")[c(6)], brewer.pal(8, "Greens")[c(6)], brewer.pal(8, "Purples")[c(6)], brewer.pal(8, "Greys")[c(6)]), shapes=c(15, 0, 12, 4))  + 
     theme(axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank()) + 
-  plotted(rows=c(49:60,77:80), xaxis=Class, limitsvec=c(0.30, 2.80), breaksvec=c(0.6, 1, 1.666667, 1.666667^2), 
-          cols=c(brewer.pal(8, "Blues")[c(6)], brewer.pal(8, "Greens")[c(6)], brewer.pal(8, "Purples")[c(6)], brewer.pal(8, "Greys")[c(6)]), shapes=c(15, 0, 12, 4))  + 
-    theme(axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank()) +    
-  plot_layout(ncol=5)) /
-  legends(rows=c(1:3,61), xaxis=Class, cols=c(brewer.pal(8, "Blues")[c(6)], brewer.pal(8, "Greens")[c(6)], brewer.pal(8, "Purples")[c(6)], brewer.pal(8, "Greys")[c(6)]),
+  plot_layout(ncol=4)) /
+  legends(rows=c(1:3,49), xaxis=Class, cols=c(brewer.pal(8, "Blues")[c(6)], brewer.pal(8, "Greens")[c(6)], brewer.pal(8, "Purples")[c(6)], brewer.pal(8, "Greys")[c(6)]),
           shapes=c(15, 0, 12, 4), nrow=1) +
   plot_layout(heights=c(1,0.1))
 ```
 
-![](analysis_1_22_21_MICE_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
+![](analysis_2_1_21_MICE_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
 
 ```r
 #table of estimates
-tabled(1:60, "Ref: white")
+tabled(1:48, "Ref: white")
 ```
 
 <div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:250px; overflow-x: scroll; width:100%; "><table class="table table-striped" style="margin-left: auto; margin-right: auto;">
@@ -2355,12 +2182,12 @@ tabled(1:60, "Ref: white")
  </thead>
 <tbody>
   <tr>
-   <td style="text-align:right;"> 1.08 </td>
-   <td style="text-align:right;"> 0.77 </td>
-   <td style="text-align:right;"> 1.51 </td>
+   <td style="text-align:right;"> 1.09 </td>
+   <td style="text-align:right;"> 0.78 </td>
+   <td style="text-align:right;"> 1.52 </td>
    <td style="text-align:left;"> satjob1_bin_unimp </td>
    <td style="text-align:left;"> NH Black </td>
-   <td style="text-align:left;"> General </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 1.31 </td>
@@ -2368,7 +2195,7 @@ tabled(1:60, "Ref: white")
    <td style="text-align:right;"> 2.33 </td>
    <td style="text-align:left;"> satjob1_bin_unimp </td>
    <td style="text-align:left;"> NH other </td>
-   <td style="text-align:left;"> General </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 1.16 </td>
@@ -2376,7 +2203,7 @@ tabled(1:60, "Ref: white")
    <td style="text-align:right;"> 1.73 </td>
    <td style="text-align:left;"> satjob1_bin_unimp </td>
    <td style="text-align:left;"> Hispanic </td>
-   <td style="text-align:left;"> General </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 0.99 </td>
@@ -2384,7 +2211,7 @@ tabled(1:60, "Ref: white")
    <td style="text-align:right;"> 1.09 </td>
    <td style="text-align:left;"> rincblls_bin_unimp </td>
    <td style="text-align:left;"> NH Black </td>
-   <td style="text-align:left;"> General </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 1.00 </td>
@@ -2392,63 +2219,87 @@ tabled(1:60, "Ref: white")
    <td style="text-align:right;"> 1.22 </td>
    <td style="text-align:left;"> rincblls_bin_unimp </td>
    <td style="text-align:left;"> NH other </td>
-   <td style="text-align:left;"> General </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 1.10 </td>
+   <td style="text-align:right;"> 1.09 </td>
    <td style="text-align:right;"> 1.01 </td>
-   <td style="text-align:right;"> 1.19 </td>
+   <td style="text-align:right;"> 1.18 </td>
    <td style="text-align:left;"> rincblls_bin_unimp </td>
    <td style="text-align:left;"> Hispanic </td>
-   <td style="text-align:left;"> General </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 0.93 </td>
-   <td style="text-align:right;"> 0.78 </td>
-   <td style="text-align:right;"> 1.09 </td>
-   <td style="text-align:left;"> fringeok_bin_unimp </td>
+   <td style="text-align:right;"> 1.67 </td>
+   <td style="text-align:right;"> 1.25 </td>
+   <td style="text-align:right;"> 2.25 </td>
+   <td style="text-align:left;"> safehlth_bin_unimp </td>
    <td style="text-align:left;"> NH Black </td>
-   <td style="text-align:left;"> General </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 0.94 </td>
+   <td style="text-align:right;"> 0.42 </td>
+   <td style="text-align:right;"> 2.10 </td>
+   <td style="text-align:left;"> safehlth_bin_unimp </td>
+   <td style="text-align:left;"> NH other </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 1.05 </td>
-   <td style="text-align:right;"> 0.76 </td>
-   <td style="text-align:right;"> 1.43 </td>
-   <td style="text-align:left;"> fringeok_bin_unimp </td>
+   <td style="text-align:right;"> 0.69 </td>
+   <td style="text-align:right;"> 1.61 </td>
+   <td style="text-align:left;"> safehlth_bin_unimp </td>
+   <td style="text-align:left;"> Hispanic </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 1.05 </td>
+   <td style="text-align:right;"> 0.78 </td>
+   <td style="text-align:right;"> 1.40 </td>
+   <td style="text-align:left;"> safetywk_bin_unimp </td>
+   <td style="text-align:left;"> NH Black </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 0.78 </td>
+   <td style="text-align:right;"> 0.38 </td>
+   <td style="text-align:right;"> 1.61 </td>
+   <td style="text-align:left;"> safetywk_bin_unimp </td>
    <td style="text-align:left;"> NH other </td>
-   <td style="text-align:left;"> General </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 1.10 </td>
-   <td style="text-align:right;"> 0.92 </td>
-   <td style="text-align:right;"> 1.32 </td>
-   <td style="text-align:left;"> fringeok_bin_unimp </td>
+   <td style="text-align:right;"> 0.77 </td>
+   <td style="text-align:right;"> 1.56 </td>
+   <td style="text-align:left;"> safetywk_bin_unimp </td>
    <td style="text-align:left;"> Hispanic </td>
-   <td style="text-align:left;"> General </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 1.23 </td>
-   <td style="text-align:right;"> 0.94 </td>
-   <td style="text-align:right;"> 1.62 </td>
-   <td style="text-align:left;"> respect_bin_unimp </td>
+   <td style="text-align:right;"> 1.21 </td>
+   <td style="text-align:right;"> 0.97 </td>
+   <td style="text-align:right;"> 1.52 </td>
+   <td style="text-align:left;"> workdiff_bin_unimp </td>
    <td style="text-align:left;"> NH Black </td>
-   <td style="text-align:left;"> General </td>
+   <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 1.08 </td>
-   <td style="text-align:right;"> 0.56 </td>
-   <td style="text-align:right;"> 2.07 </td>
-   <td style="text-align:left;"> respect_bin_unimp </td>
+   <td style="text-align:right;"> 1.02 </td>
+   <td style="text-align:right;"> 0.62 </td>
+   <td style="text-align:right;"> 1.70 </td>
+   <td style="text-align:left;"> workdiff_bin_unimp </td>
    <td style="text-align:left;"> NH other </td>
-   <td style="text-align:left;"> General </td>
+   <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 0.73 </td>
-   <td style="text-align:right;"> 0.48 </td>
-   <td style="text-align:right;"> 1.11 </td>
-   <td style="text-align:left;"> respect_bin_unimp </td>
+   <td style="text-align:right;"> 1.10 </td>
+   <td style="text-align:right;"> 0.84 </td>
+   <td style="text-align:right;"> 1.43 </td>
+   <td style="text-align:left;"> workdiff_bin_unimp </td>
    <td style="text-align:left;"> Hispanic </td>
-   <td style="text-align:left;"> General </td>
+   <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 1.27 </td>
@@ -2467,34 +2318,34 @@ tabled(1:60, "Ref: white")
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 0.99 </td>
+   <td style="text-align:right;"> 1.00 </td>
    <td style="text-align:right;"> 0.79 </td>
-   <td style="text-align:right;"> 1.25 </td>
+   <td style="text-align:right;"> 1.26 </td>
    <td style="text-align:left;"> learnnew_bin_unimp </td>
    <td style="text-align:left;"> Hispanic </td>
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 1.22 </td>
-   <td style="text-align:right;"> 0.97 </td>
-   <td style="text-align:right;"> 1.52 </td>
-   <td style="text-align:left;"> workdiff_bin_unimp </td>
+   <td style="text-align:right;"> 0.90 </td>
+   <td style="text-align:right;"> 0.76 </td>
+   <td style="text-align:right;"> 1.08 </td>
+   <td style="text-align:left;"> condemnd_bin_unimp </td>
    <td style="text-align:left;"> NH Black </td>
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 1.02 </td>
-   <td style="text-align:right;"> 0.61 </td>
-   <td style="text-align:right;"> 1.69 </td>
-   <td style="text-align:left;"> workdiff_bin_unimp </td>
+   <td style="text-align:right;"> 1.30 </td>
+   <td style="text-align:right;"> 0.97 </td>
+   <td style="text-align:right;"> 1.73 </td>
+   <td style="text-align:left;"> condemnd_bin_unimp </td>
    <td style="text-align:left;"> NH other </td>
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 1.09 </td>
-   <td style="text-align:right;"> 0.84 </td>
-   <td style="text-align:right;"> 1.42 </td>
-   <td style="text-align:left;"> workdiff_bin_unimp </td>
+   <td style="text-align:right;"> 0.93 </td>
+   <td style="text-align:right;"> 0.76 </td>
+   <td style="text-align:right;"> 1.15 </td>
+   <td style="text-align:left;"> condemnd_bin_unimp </td>
    <td style="text-align:left;"> Hispanic </td>
    <td style="text-align:left;"> Labor process </td>
   </tr>
@@ -2516,48 +2367,24 @@ tabled(1:60, "Ref: white")
   </tr>
   <tr>
    <td style="text-align:right;"> 0.91 </td>
-   <td style="text-align:right;"> 0.84 </td>
+   <td style="text-align:right;"> 0.83 </td>
    <td style="text-align:right;"> 0.98 </td>
    <td style="text-align:left;"> workfast_bin_unimp </td>
    <td style="text-align:left;"> Hispanic </td>
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 1.23 </td>
-   <td style="text-align:right;"> 0.97 </td>
-   <td style="text-align:right;"> 1.57 </td>
-   <td style="text-align:left;"> hlpequip_bin_unimp </td>
-   <td style="text-align:left;"> NH Black </td>
-   <td style="text-align:left;"> Labor process </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 1.38 </td>
-   <td style="text-align:right;"> 0.86 </td>
-   <td style="text-align:right;"> 2.22 </td>
-   <td style="text-align:left;"> hlpequip_bin_unimp </td>
-   <td style="text-align:left;"> NH other </td>
-   <td style="text-align:left;"> Labor process </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 1.38 </td>
-   <td style="text-align:right;"> 1.06 </td>
-   <td style="text-align:right;"> 1.80 </td>
-   <td style="text-align:left;"> hlpequip_bin_unimp </td>
-   <td style="text-align:left;"> Hispanic </td>
-   <td style="text-align:left;"> Labor process </td>
-  </tr>
-  <tr>
    <td style="text-align:right;"> 1.35 </td>
    <td style="text-align:right;"> 1.15 </td>
-   <td style="text-align:right;"> 1.58 </td>
+   <td style="text-align:right;"> 1.59 </td>
    <td style="text-align:left;"> wkdecide_bin_unimp </td>
    <td style="text-align:left;"> NH Black </td>
    <td style="text-align:left;"> Autonomy </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 1.36 </td>
-   <td style="text-align:right;"> 0.99 </td>
-   <td style="text-align:right;"> 1.86 </td>
+   <td style="text-align:right;"> 1.00 </td>
+   <td style="text-align:right;"> 1.87 </td>
    <td style="text-align:left;"> wkdecide_bin_unimp </td>
    <td style="text-align:left;"> NH other </td>
    <td style="text-align:left;"> Autonomy </td>
@@ -2581,7 +2408,7 @@ tabled(1:60, "Ref: white")
   <tr>
    <td style="text-align:right;"> 0.87 </td>
    <td style="text-align:right;"> 0.53 </td>
-   <td style="text-align:right;"> 1.41 </td>
+   <td style="text-align:right;"> 1.42 </td>
    <td style="text-align:left;"> wkfreedm_bin_unimp </td>
    <td style="text-align:left;"> NH other </td>
    <td style="text-align:left;"> Autonomy </td>
@@ -2635,7 +2462,7 @@ tabled(1:60, "Ref: white")
    <td style="text-align:left;"> Autonomy </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 1.11 </td>
+   <td style="text-align:right;"> 1.10 </td>
    <td style="text-align:right;"> 0.99 </td>
    <td style="text-align:right;"> 1.24 </td>
    <td style="text-align:left;"> chngtme_bin_unimp </td>
@@ -2644,7 +2471,7 @@ tabled(1:60, "Ref: white")
   </tr>
   <tr>
    <td style="text-align:right;"> 1.28 </td>
-   <td style="text-align:right;"> 0.95 </td>
+   <td style="text-align:right;"> 0.96 </td>
    <td style="text-align:right;"> 1.71 </td>
    <td style="text-align:left;"> manvsemp_bin_unimp </td>
    <td style="text-align:left;"> NH Black </td>
@@ -2661,7 +2488,7 @@ tabled(1:60, "Ref: white")
   <tr>
    <td style="text-align:right;"> 0.76 </td>
    <td style="text-align:right;"> 0.51 </td>
-   <td style="text-align:right;"> 1.14 </td>
+   <td style="text-align:right;"> 1.13 </td>
    <td style="text-align:left;"> manvsemp_bin_unimp </td>
    <td style="text-align:left;"> Hispanic </td>
    <td style="text-align:left;"> Conflict </td>
@@ -2677,7 +2504,7 @@ tabled(1:60, "Ref: white")
   <tr>
    <td style="text-align:right;"> 0.98 </td>
    <td style="text-align:right;"> 0.59 </td>
-   <td style="text-align:right;"> 1.63 </td>
+   <td style="text-align:right;"> 1.64 </td>
    <td style="text-align:left;"> trustman_bin_unimp </td>
    <td style="text-align:left;"> NH other </td>
    <td style="text-align:left;"> Conflict </td>
@@ -2691,148 +2518,52 @@ tabled(1:60, "Ref: white")
    <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 0.90 </td>
-   <td style="text-align:right;"> 0.76 </td>
-   <td style="text-align:right;"> 1.08 </td>
-   <td style="text-align:left;"> condemnd_bin_unimp </td>
+   <td style="text-align:right;"> 1.23 </td>
+   <td style="text-align:right;"> 0.94 </td>
+   <td style="text-align:right;"> 1.62 </td>
+   <td style="text-align:left;"> respect_bin_unimp </td>
    <td style="text-align:left;"> NH Black </td>
    <td style="text-align:left;"> Conflict </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 1.29 </td>
-   <td style="text-align:right;"> 0.97 </td>
-   <td style="text-align:right;"> 1.73 </td>
-   <td style="text-align:left;"> condemnd_bin_unimp </td>
-   <td style="text-align:left;"> NH other </td>
-   <td style="text-align:left;"> Conflict </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 0.93 </td>
-   <td style="text-align:right;"> 0.76 </td>
-   <td style="text-align:right;"> 1.15 </td>
-   <td style="text-align:left;"> condemnd_bin_unimp </td>
-   <td style="text-align:left;"> Hispanic </td>
-   <td style="text-align:left;"> Conflict </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 1.49 </td>
-   <td style="text-align:right;"> 1.14 </td>
-   <td style="text-align:right;"> 1.94 </td>
-   <td style="text-align:left;"> cowrkhlp_bin_unimp </td>
-   <td style="text-align:left;"> NH Black </td>
-   <td style="text-align:left;"> Conflict </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 1.47 </td>
-   <td style="text-align:right;"> 0.77 </td>
-   <td style="text-align:right;"> 2.78 </td>
-   <td style="text-align:left;"> cowrkhlp_bin_unimp </td>
-   <td style="text-align:left;"> NH other </td>
-   <td style="text-align:left;"> Conflict </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 1.07 </td>
-   <td style="text-align:right;"> 0.78 </td>
-   <td style="text-align:right;"> 1.48 </td>
-   <td style="text-align:left;"> cowrkhlp_bin_unimp </td>
-   <td style="text-align:left;"> Hispanic </td>
-   <td style="text-align:left;"> Conflict </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 1.67 </td>
-   <td style="text-align:right;"> 1.24 </td>
-   <td style="text-align:right;"> 2.23 </td>
-   <td style="text-align:left;"> safehlth_bin_unimp </td>
-   <td style="text-align:left;"> NH Black </td>
-   <td style="text-align:left;"> Hazards </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 0.93 </td>
-   <td style="text-align:right;"> 0.41 </td>
-   <td style="text-align:right;"> 2.08 </td>
-   <td style="text-align:left;"> safehlth_bin_unimp </td>
-   <td style="text-align:left;"> NH other </td>
-   <td style="text-align:left;"> Hazards </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 1.05 </td>
-   <td style="text-align:right;"> 0.69 </td>
-   <td style="text-align:right;"> 1.60 </td>
-   <td style="text-align:left;"> safehlth_bin_unimp </td>
-   <td style="text-align:left;"> Hispanic </td>
-   <td style="text-align:left;"> Hazards </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 1.05 </td>
-   <td style="text-align:right;"> 0.78 </td>
-   <td style="text-align:right;"> 1.40 </td>
-   <td style="text-align:left;"> safetywk_bin_unimp </td>
-   <td style="text-align:left;"> NH Black </td>
-   <td style="text-align:left;"> Hazards </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 0.77 </td>
-   <td style="text-align:right;"> 0.37 </td>
-   <td style="text-align:right;"> 1.60 </td>
-   <td style="text-align:left;"> safetywk_bin_unimp </td>
-   <td style="text-align:left;"> NH other </td>
-   <td style="text-align:left;"> Hazards </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 1.09 </td>
-   <td style="text-align:right;"> 0.77 </td>
-   <td style="text-align:right;"> 1.55 </td>
-   <td style="text-align:left;"> safetywk_bin_unimp </td>
-   <td style="text-align:left;"> Hispanic </td>
-   <td style="text-align:left;"> Hazards </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 1.16 </td>
-   <td style="text-align:right;"> 0.89 </td>
-   <td style="text-align:right;"> 1.52 </td>
-   <td style="text-align:left;"> safefrst_bin_unimp </td>
-   <td style="text-align:left;"> NH Black </td>
-   <td style="text-align:left;"> Hazards </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 0.66 </td>
-   <td style="text-align:right;"> 0.31 </td>
-   <td style="text-align:right;"> 1.44 </td>
-   <td style="text-align:left;"> safefrst_bin_unimp </td>
+   <td style="text-align:right;"> 0.57 </td>
+   <td style="text-align:right;"> 2.08 </td>
+   <td style="text-align:left;"> respect_bin_unimp </td>
    <td style="text-align:left;"> NH other </td>
-   <td style="text-align:left;"> Hazards </td>
+   <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 0.87 </td>
-   <td style="text-align:right;"> 0.61 </td>
-   <td style="text-align:right;"> 1.25 </td>
-   <td style="text-align:left;"> safefrst_bin_unimp </td>
+   <td style="text-align:right;"> 0.74 </td>
+   <td style="text-align:right;"> 0.49 </td>
+   <td style="text-align:right;"> 1.11 </td>
+   <td style="text-align:left;"> respect_bin_unimp </td>
    <td style="text-align:left;"> Hispanic </td>
-   <td style="text-align:left;"> Hazards </td>
+   <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 1.31 </td>
    <td style="text-align:right;"> 1.11 </td>
    <td style="text-align:right;"> 1.54 </td>
-   <td style="text-align:left;"> disc_haras_unimp </td>
+   <td style="text-align:left;"> disc_haras_bin_unimp </td>
    <td style="text-align:left;"> NH Black </td>
-   <td style="text-align:left;"> Hazards </td>
+   <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 0.85 </td>
    <td style="text-align:right;"> 0.55 </td>
    <td style="text-align:right;"> 1.32 </td>
-   <td style="text-align:left;"> disc_haras_unimp </td>
+   <td style="text-align:left;"> disc_haras_bin_unimp </td>
    <td style="text-align:left;"> NH other </td>
-   <td style="text-align:left;"> Hazards </td>
+   <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 1.20 </td>
    <td style="text-align:right;"> 0.96 </td>
    <td style="text-align:right;"> 1.49 </td>
-   <td style="text-align:left;"> disc_haras_unimp </td>
+   <td style="text-align:left;"> disc_haras_bin_unimp </td>
    <td style="text-align:left;"> Hispanic </td>
-   <td style="text-align:left;"> Hazards </td>
+   <td style="text-align:left;"> Conflict </td>
   </tr>
 </tbody>
 </table></div>
@@ -2842,18 +2573,17 @@ tabled(1:60, "Ref: white")
 
 ```r
 #run regression
-less_adj <- mysvy(subset(svy_dat_mi, class=="Workers"), 36:55, "~race_h_gender + rcs(age, 3) + rcs(year, 3)")
+less_adj <- mysvy(subset(svy_dat_mi, class=="Workers"), 33:48, "~race_h_gender + rcs(age, 3) + rcs(year, 3)")
 
 #pull into matrix
-regs_less <- matrix_func(20, 8, 36:55)
+regs_less <- matrix_func(16, 8, 33:48)
 
 #format matrix
-binded <- formatted(c("NH white women", "NH Black men", "NH Black women", "NH other men", "NH other women", "Hispanic men", "Hispanic women"), 20, 
-                    c("satjob1_bin_unimp", "rincblls_bin_unimp", "fringeok_bin_unimp", "respect_bin_unimp",  
-                      "learnnew_bin_unimp", "workdiff_bin_unimp", "workfast_bin_unimp", "hlpequip_bin_unimp", 
-                      "wkdecide_bin_unimp", "wkfreedm_bin_unimp", "mustwork_bin_unimp", "chngtme_bin_unimp",  
-                      "manvsemp_bin_unimp", "trustman_bin_unimp", "condemnd_bin_unimp", "cowrkhlp_bin_unimp", 
-                      "safehlth_bin_unimp", "safetywk_bin_unimp", "safefrst_bin_unimp", "disc_haras_unimp"),
+binded <- formatted(c("NH white women", "NH Black men", "NH Black women", "NH other men", "NH other women", "Hispanic men", "Hispanic women"), 16, 
+                    c("satjob1_bin_unimp", "rincblls_bin_unimp", "safehlth_bin_unimp", "safetywk_bin_unimp",
+                      "workdiff_bin_unimp", "learnnew_bin_unimp", "condemnd_bin_unimp", "workfast_bin_unimp",
+                      "wkdecide_bin_unimp", "wkfreedm_bin_unimp", "mustwork_bin_unimp", "chngtme_bin_unimp",
+                      "manvsemp_bin_unimp", "trustman_bin_unimp", "respect_bin_unimp", "disc_haras_bin_unimp"),
                     "NH white men",
                     c("NH white men" , "NH white women", "NH Black men", "NH Black women", "NH other men", "NH other women", "Hispanic men", "Hispanic women"))
 ```
@@ -2861,31 +2591,28 @@ binded <- formatted(c("NH white women", "NH Black men", "NH Black women", "NH ot
 
 ```r
 #plot estimates
-(plotted(rows=c(1:28,141:144), xaxis=Class, limitsvec=c(0.06, 4.35), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
+(plotted(rows=c(1:28,113:116), xaxis=Class, limitsvec=c(0.06, 4.35), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
         cols=c(brewer.pal(8, "Blues")[c(6,8)], brewer.pal(8, "Greens")[c(6,8)], brewer.pal(8, "Purples")[c(6,8)], brewer.pal(8, "Greys")[c(6,8)]), shapes=c(15, 16, 0, 1, 12, 10, 4, 8))  + 
-  plotted(rows=c(29:56,145:148), xaxis=Class, limitsvec=c(0.06, 4.35), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
+  plotted(rows=c(29:56,117:120), xaxis=Class, limitsvec=c(0.06, 4.35), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
         cols=c(brewer.pal(8, "Blues")[c(6,8)], brewer.pal(8, "Greens")[c(6,8)], brewer.pal(8, "Purples")[c(6,8)], brewer.pal(8, "Greys")[c(6,8)]), shapes=c(15, 16, 0, 1, 12, 10, 4, 8))  +  
     theme(axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank()) + 
-  plotted(rows=c(57:84,149:152), xaxis=Class, limitsvec=c(0.06, 4.35), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
+  plotted(rows=c(57:84,121:124), xaxis=Class, limitsvec=c(0.06, 4.35), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
         cols=c(brewer.pal(8, "Blues")[c(6,8)], brewer.pal(8, "Greens")[c(6,8)], brewer.pal(8, "Purples")[c(6,8)], brewer.pal(8, "Greys")[c(6,8)]), shapes=c(15, 16, 0, 1, 12, 10, 4, 8))  + 
     theme(axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank()) + 
-  plotted(rows=c(85:112,153:156), xaxis=Class, limitsvec=c(0.06, 4.35), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
+  plotted(rows=c(85:112,125:128), xaxis=Class, limitsvec=c(0.06, 4.35), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
         cols=c(brewer.pal(8, "Blues")[c(6,8)], brewer.pal(8, "Greens")[c(6,8)], brewer.pal(8, "Purples")[c(6,8)], brewer.pal(8, "Greys")[c(6,8)]), shapes=c(15, 16, 0, 1, 12, 10, 4, 8))  + 
     theme(axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank()) + 
-  plotted(rows=c(113:140,157:160), xaxis=Class, limitsvec=c(0.06, 4.35), breaksvec=c(0.125, 0.25, 0.5, 1, 2), 
-        cols=c(brewer.pal(8, "Blues")[c(6,8)], brewer.pal(8, "Greens")[c(6,8)], brewer.pal(8, "Purples")[c(6,8)], brewer.pal(8, "Greys")[c(6,8)]), shapes=c(15, 16, 0, 1, 12, 10, 4, 8))  + 
-    theme(axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank()) + 
-  plot_layout(ncol=5)) /
-  legends(rows=c(1:7,141), xaxis=Class, cols=c(brewer.pal(8, "Blues")[c(6,8)], brewer.pal(8, "Greens")[c(6,8)], brewer.pal(8, "Purples")[c(6,8)], brewer.pal(8, "Greys")[c(6,8)]),
+  plot_layout(ncol=4)) /
+  legends(rows=c(1:7,113), xaxis=Class, cols=c(brewer.pal(8, "Blues")[c(6,8)], brewer.pal(8, "Greens")[c(6,8)], brewer.pal(8, "Purples")[c(6,8)], brewer.pal(8, "Greys")[c(6,8)]),
           shapes=c(15, 16, 0, 1, 12, 10, 4, 8), nrow=2) +
   plot_layout(heights=c(1,0.15))
 ```
 
-![](analysis_1_22_21_MICE_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
+![](analysis_2_1_21_MICE_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
 
 ```r
 #table of estimates
-tabled(1:140, "Ref: white male")
+tabled(1:128, "Ref: white male")
 ```
 
 <div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:250px; overflow-x: scroll; width:100%; "><table class="table table-striped" style="margin-left: auto; margin-right: auto;">
@@ -2907,7 +2634,7 @@ tabled(1:140, "Ref: white male")
    <td style="text-align:right;"> 1.01 </td>
    <td style="text-align:left;"> satjob1_bin_unimp </td>
    <td style="text-align:left;"> NH white women </td>
-   <td style="text-align:left;"> General </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 0.59 </td>
@@ -2915,15 +2642,15 @@ tabled(1:140, "Ref: white male")
    <td style="text-align:right;"> 1.02 </td>
    <td style="text-align:left;"> satjob1_bin_unimp </td>
    <td style="text-align:left;"> NH Black men </td>
-   <td style="text-align:left;"> General </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 1.17 </td>
-   <td style="text-align:right;"> 0.79 </td>
-   <td style="text-align:right;"> 1.73 </td>
+   <td style="text-align:right;"> 1.18 </td>
+   <td style="text-align:right;"> 0.80 </td>
+   <td style="text-align:right;"> 1.74 </td>
    <td style="text-align:left;"> satjob1_bin_unimp </td>
    <td style="text-align:left;"> NH Black women </td>
-   <td style="text-align:left;"> General </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 1.22 </td>
@@ -2931,7 +2658,7 @@ tabled(1:140, "Ref: white male")
    <td style="text-align:right;"> 2.79 </td>
    <td style="text-align:left;"> satjob1_bin_unimp </td>
    <td style="text-align:left;"> NH other men </td>
-   <td style="text-align:left;"> General </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 1.07 </td>
@@ -2939,15 +2666,15 @@ tabled(1:140, "Ref: white male")
    <td style="text-align:right;"> 2.35 </td>
    <td style="text-align:left;"> satjob1_bin_unimp </td>
    <td style="text-align:left;"> NH other women </td>
-   <td style="text-align:left;"> General </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 1.42 </td>
    <td style="text-align:right;"> 0.88 </td>
-   <td style="text-align:right;"> 2.30 </td>
+   <td style="text-align:right;"> 2.29 </td>
    <td style="text-align:left;"> satjob1_bin_unimp </td>
    <td style="text-align:left;"> Hispanic men </td>
-   <td style="text-align:left;"> General </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 0.58 </td>
@@ -2955,7 +2682,7 @@ tabled(1:140, "Ref: white male")
    <td style="text-align:right;"> 1.08 </td>
    <td style="text-align:left;"> satjob1_bin_unimp </td>
    <td style="text-align:left;"> Hispanic women </td>
-   <td style="text-align:left;"> General </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 1.43 </td>
@@ -2963,7 +2690,7 @@ tabled(1:140, "Ref: white male")
    <td style="text-align:right;"> 1.55 </td>
    <td style="text-align:left;"> rincblls_bin_unimp </td>
    <td style="text-align:left;"> NH white women </td>
-   <td style="text-align:left;"> General </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 0.99 </td>
@@ -2971,7 +2698,7 @@ tabled(1:140, "Ref: white male")
    <td style="text-align:right;"> 1.18 </td>
    <td style="text-align:left;"> rincblls_bin_unimp </td>
    <td style="text-align:left;"> NH Black men </td>
-   <td style="text-align:left;"> General </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 1.38 </td>
@@ -2979,7 +2706,7 @@ tabled(1:140, "Ref: white male")
    <td style="text-align:right;"> 1.55 </td>
    <td style="text-align:left;"> rincblls_bin_unimp </td>
    <td style="text-align:left;"> NH Black women </td>
-   <td style="text-align:left;"> General </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 1.05 </td>
@@ -2987,7 +2714,7 @@ tabled(1:140, "Ref: white male")
    <td style="text-align:right;"> 1.50 </td>
    <td style="text-align:left;"> rincblls_bin_unimp </td>
    <td style="text-align:left;"> NH other men </td>
-   <td style="text-align:left;"> General </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 1.36 </td>
@@ -2995,15 +2722,15 @@ tabled(1:140, "Ref: white male")
    <td style="text-align:right;"> 1.69 </td>
    <td style="text-align:left;"> rincblls_bin_unimp </td>
    <td style="text-align:left;"> NH other women </td>
-   <td style="text-align:left;"> General </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 1.15 </td>
    <td style="text-align:right;"> 0.99 </td>
-   <td style="text-align:right;"> 1.34 </td>
+   <td style="text-align:right;"> 1.33 </td>
    <td style="text-align:left;"> rincblls_bin_unimp </td>
    <td style="text-align:left;"> Hispanic men </td>
-   <td style="text-align:left;"> General </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 1.55 </td>
@@ -3011,119 +2738,175 @@ tabled(1:140, "Ref: white male")
    <td style="text-align:right;"> 1.73 </td>
    <td style="text-align:left;"> rincblls_bin_unimp </td>
    <td style="text-align:left;"> Hispanic women </td>
-   <td style="text-align:left;"> General </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 1.13 </td>
+   <td style="text-align:right;"> 0.81 </td>
+   <td style="text-align:right;"> 1.58 </td>
+   <td style="text-align:left;"> safehlth_bin_unimp </td>
+   <td style="text-align:left;"> NH white women </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 1.59 </td>
+   <td style="text-align:right;"> 0.96 </td>
+   <td style="text-align:right;"> 2.62 </td>
+   <td style="text-align:left;"> safehlth_bin_unimp </td>
+   <td style="text-align:left;"> NH Black men </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 1.93 </td>
+   <td style="text-align:right;"> 1.32 </td>
+   <td style="text-align:right;"> 2.82 </td>
+   <td style="text-align:left;"> safehlth_bin_unimp </td>
+   <td style="text-align:left;"> NH Black women </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 0.90 </td>
+   <td style="text-align:right;"> 0.33 </td>
+   <td style="text-align:right;"> 2.44 </td>
+   <td style="text-align:left;"> safehlth_bin_unimp </td>
+   <td style="text-align:left;"> NH other men </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 1.09 </td>
+   <td style="text-align:right;"> 0.33 </td>
+   <td style="text-align:right;"> 3.61 </td>
+   <td style="text-align:left;"> safehlth_bin_unimp </td>
+   <td style="text-align:left;"> NH other women </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 1.27 </td>
+   <td style="text-align:right;"> 0.71 </td>
+   <td style="text-align:right;"> 2.26 </td>
+   <td style="text-align:left;"> safehlth_bin_unimp </td>
+   <td style="text-align:left;"> Hispanic men </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 0.99 </td>
+   <td style="text-align:right;"> 0.50 </td>
+   <td style="text-align:right;"> 1.96 </td>
+   <td style="text-align:left;"> safehlth_bin_unimp </td>
+   <td style="text-align:left;"> Hispanic women </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 0.90 </td>
+   <td style="text-align:right;"> 0.69 </td>
+   <td style="text-align:right;"> 1.19 </td>
+   <td style="text-align:left;"> safetywk_bin_unimp </td>
+   <td style="text-align:left;"> NH white women </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 0.69 </td>
+   <td style="text-align:right;"> 0.42 </td>
+   <td style="text-align:right;"> 1.12 </td>
+   <td style="text-align:left;"> safetywk_bin_unimp </td>
+   <td style="text-align:left;"> NH Black men </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 1.20 </td>
+   <td style="text-align:right;"> 0.83 </td>
+   <td style="text-align:right;"> 1.73 </td>
+   <td style="text-align:left;"> safetywk_bin_unimp </td>
+   <td style="text-align:left;"> NH Black women </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 0.55 </td>
+   <td style="text-align:right;"> 0.22 </td>
+   <td style="text-align:right;"> 1.41 </td>
+   <td style="text-align:left;"> safetywk_bin_unimp </td>
+   <td style="text-align:left;"> NH other men </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 0.88 </td>
+   <td style="text-align:right;"> 0.33 </td>
+   <td style="text-align:right;"> 2.31 </td>
+   <td style="text-align:left;"> safetywk_bin_unimp </td>
+   <td style="text-align:left;"> NH other women </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 1.08 </td>
+   <td style="text-align:right;"> 0.66 </td>
+   <td style="text-align:right;"> 1.79 </td>
+   <td style="text-align:left;"> safetywk_bin_unimp </td>
+   <td style="text-align:left;"> Hispanic men </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 0.99 </td>
+   <td style="text-align:right;"> 0.63 </td>
+   <td style="text-align:right;"> 1.58 </td>
+   <td style="text-align:left;"> safetywk_bin_unimp </td>
+   <td style="text-align:left;"> Hispanic women </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 0.78 </td>
+   <td style="text-align:right;"> 0.61 </td>
+   <td style="text-align:right;"> 0.99 </td>
+   <td style="text-align:left;"> workdiff_bin_unimp </td>
+   <td style="text-align:left;"> NH white women </td>
+   <td style="text-align:left;"> Labor process </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 1.03 </td>
+   <td style="text-align:right;"> 0.74 </td>
+   <td style="text-align:right;"> 1.43 </td>
+   <td style="text-align:left;"> workdiff_bin_unimp </td>
+   <td style="text-align:left;"> NH Black men </td>
+   <td style="text-align:left;"> Labor process </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 1.09 </td>
+   <td style="text-align:right;"> 0.82 </td>
+   <td style="text-align:right;"> 1.46 </td>
+   <td style="text-align:left;"> workdiff_bin_unimp </td>
+   <td style="text-align:left;"> NH Black women </td>
+   <td style="text-align:left;"> Labor process </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 0.67 </td>
+   <td style="text-align:right;"> 0.29 </td>
+   <td style="text-align:right;"> 1.53 </td>
+   <td style="text-align:left;"> workdiff_bin_unimp </td>
+   <td style="text-align:left;"> NH other men </td>
+   <td style="text-align:left;"> Labor process </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 1.08 </td>
+   <td style="text-align:right;"> 0.58 </td>
+   <td style="text-align:right;"> 2.02 </td>
+   <td style="text-align:left;"> workdiff_bin_unimp </td>
+   <td style="text-align:left;"> NH other women </td>
+   <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 1.07 </td>
-   <td style="text-align:right;"> 0.93 </td>
-   <td style="text-align:right;"> 1.23 </td>
-   <td style="text-align:left;"> fringeok_bin_unimp </td>
-   <td style="text-align:left;"> NH white women </td>
-   <td style="text-align:left;"> General </td>
-  </tr>
-  <tr>
    <td style="text-align:right;"> 0.75 </td>
-   <td style="text-align:right;"> 0.56 </td>
-   <td style="text-align:right;"> 1.00 </td>
-   <td style="text-align:left;"> fringeok_bin_unimp </td>
-   <td style="text-align:left;"> NH Black men </td>
-   <td style="text-align:left;"> General </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 1.11 </td>
-   <td style="text-align:right;"> 0.89 </td>
-   <td style="text-align:right;"> 1.38 </td>
-   <td style="text-align:left;"> fringeok_bin_unimp </td>
-   <td style="text-align:left;"> NH Black women </td>
-   <td style="text-align:left;"> General </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 1.36 </td>
-   <td style="text-align:right;"> 0.85 </td>
-   <td style="text-align:right;"> 2.19 </td>
-   <td style="text-align:left;"> fringeok_bin_unimp </td>
-   <td style="text-align:left;"> NH other men </td>
-   <td style="text-align:left;"> General </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 0.87 </td>
-   <td style="text-align:right;"> 0.54 </td>
-   <td style="text-align:right;"> 1.40 </td>
-   <td style="text-align:left;"> fringeok_bin_unimp </td>
-   <td style="text-align:left;"> NH other women </td>
-   <td style="text-align:left;"> General </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 1.16 </td>
-   <td style="text-align:right;"> 0.90 </td>
-   <td style="text-align:right;"> 1.49 </td>
-   <td style="text-align:left;"> fringeok_bin_unimp </td>
+   <td style="text-align:right;"> 1.53 </td>
+   <td style="text-align:left;"> workdiff_bin_unimp </td>
    <td style="text-align:left;"> Hispanic men </td>
-   <td style="text-align:left;"> General </td>
+   <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 1.12 </td>
-   <td style="text-align:right;"> 0.88 </td>
-   <td style="text-align:right;"> 1.43 </td>
-   <td style="text-align:left;"> fringeok_bin_unimp </td>
+   <td style="text-align:right;"> 0.86 </td>
+   <td style="text-align:right;"> 0.59 </td>
+   <td style="text-align:right;"> 1.27 </td>
+   <td style="text-align:left;"> workdiff_bin_unimp </td>
    <td style="text-align:left;"> Hispanic women </td>
-   <td style="text-align:left;"> General </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 0.93 </td>
-   <td style="text-align:right;"> 0.71 </td>
-   <td style="text-align:right;"> 1.22 </td>
-   <td style="text-align:left;"> respect_bin_unimp </td>
-   <td style="text-align:left;"> NH white women </td>
-   <td style="text-align:left;"> General </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 0.87 </td>
-   <td style="text-align:right;"> 0.55 </td>
-   <td style="text-align:right;"> 1.37 </td>
-   <td style="text-align:left;"> respect_bin_unimp </td>
-   <td style="text-align:left;"> NH Black men </td>
-   <td style="text-align:left;"> General </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 1.40 </td>
-   <td style="text-align:right;"> 0.99 </td>
-   <td style="text-align:right;"> 1.97 </td>
-   <td style="text-align:left;"> respect_bin_unimp </td>
-   <td style="text-align:left;"> NH Black women </td>
-   <td style="text-align:left;"> General </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 0.25 </td>
-   <td style="text-align:right;"> 0.06 </td>
-   <td style="text-align:right;"> 1.06 </td>
-   <td style="text-align:left;"> respect_bin_unimp </td>
-   <td style="text-align:left;"> NH other men </td>
-   <td style="text-align:left;"> General </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 1.66 </td>
-   <td style="text-align:right;"> 0.83 </td>
-   <td style="text-align:right;"> 3.35 </td>
-   <td style="text-align:left;"> respect_bin_unimp </td>
-   <td style="text-align:left;"> NH other women </td>
-   <td style="text-align:left;"> General </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 0.62 </td>
-   <td style="text-align:right;"> 0.34 </td>
-   <td style="text-align:right;"> 1.13 </td>
-   <td style="text-align:left;"> respect_bin_unimp </td>
-   <td style="text-align:left;"> Hispanic men </td>
-   <td style="text-align:left;"> General </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 0.79 </td>
-   <td style="text-align:right;"> 0.46 </td>
-   <td style="text-align:right;"> 1.37 </td>
-   <td style="text-align:left;"> respect_bin_unimp </td>
-   <td style="text-align:left;"> Hispanic women </td>
-   <td style="text-align:left;"> General </td>
+   <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 0.93 </td>
@@ -3158,9 +2941,9 @@ tabled(1:140, "Ref: white male")
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 1.10 </td>
+   <td style="text-align:right;"> 1.11 </td>
    <td style="text-align:right;"> 0.67 </td>
-   <td style="text-align:right;"> 1.80 </td>
+   <td style="text-align:right;"> 1.81 </td>
    <td style="text-align:left;"> learnnew_bin_unimp </td>
    <td style="text-align:left;"> NH other women </td>
    <td style="text-align:left;"> Labor process </td>
@@ -3174,66 +2957,66 @@ tabled(1:140, "Ref: white male")
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 0.94 </td>
+   <td style="text-align:right;"> 0.95 </td>
    <td style="text-align:right;"> 0.68 </td>
-   <td style="text-align:right;"> 1.31 </td>
+   <td style="text-align:right;"> 1.32 </td>
    <td style="text-align:left;"> learnnew_bin_unimp </td>
    <td style="text-align:left;"> Hispanic women </td>
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 0.78 </td>
-   <td style="text-align:right;"> 0.61 </td>
-   <td style="text-align:right;"> 0.99 </td>
-   <td style="text-align:left;"> workdiff_bin_unimp </td>
+   <td style="text-align:right;"> 1.10 </td>
+   <td style="text-align:right;"> 0.94 </td>
+   <td style="text-align:right;"> 1.29 </td>
+   <td style="text-align:left;"> condemnd_bin_unimp </td>
    <td style="text-align:left;"> NH white women </td>
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 1.02 </td>
-   <td style="text-align:right;"> 0.74 </td>
-   <td style="text-align:right;"> 1.43 </td>
-   <td style="text-align:left;"> workdiff_bin_unimp </td>
+   <td style="text-align:right;"> 0.82 </td>
+   <td style="text-align:right;"> 0.60 </td>
+   <td style="text-align:right;"> 1.13 </td>
+   <td style="text-align:left;"> condemnd_bin_unimp </td>
    <td style="text-align:left;"> NH Black men </td>
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 1.10 </td>
-   <td style="text-align:right;"> 0.82 </td>
-   <td style="text-align:right;"> 1.46 </td>
-   <td style="text-align:left;"> workdiff_bin_unimp </td>
+   <td style="text-align:right;"> 1.04 </td>
+   <td style="text-align:right;"> 0.84 </td>
+   <td style="text-align:right;"> 1.29 </td>
+   <td style="text-align:left;"> condemnd_bin_unimp </td>
    <td style="text-align:left;"> NH Black women </td>
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 0.67 </td>
-   <td style="text-align:right;"> 0.29 </td>
-   <td style="text-align:right;"> 1.53 </td>
-   <td style="text-align:left;"> workdiff_bin_unimp </td>
+   <td style="text-align:right;"> 1.18 </td>
+   <td style="text-align:right;"> 0.77 </td>
+   <td style="text-align:right;"> 1.79 </td>
+   <td style="text-align:left;"> condemnd_bin_unimp </td>
    <td style="text-align:left;"> NH other men </td>
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 1.08 </td>
-   <td style="text-align:right;"> 0.57 </td>
-   <td style="text-align:right;"> 2.02 </td>
-   <td style="text-align:left;"> workdiff_bin_unimp </td>
+   <td style="text-align:right;"> 1.51 </td>
+   <td style="text-align:right;"> 1.03 </td>
+   <td style="text-align:right;"> 2.22 </td>
+   <td style="text-align:left;"> condemnd_bin_unimp </td>
    <td style="text-align:left;"> NH other women </td>
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 1.07 </td>
-   <td style="text-align:right;"> 0.75 </td>
-   <td style="text-align:right;"> 1.53 </td>
-   <td style="text-align:left;"> workdiff_bin_unimp </td>
+   <td style="text-align:right;"> 0.99 </td>
+   <td style="text-align:right;"> 0.72 </td>
+   <td style="text-align:right;"> 1.35 </td>
+   <td style="text-align:left;"> condemnd_bin_unimp </td>
    <td style="text-align:left;"> Hispanic men </td>
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 0.86 </td>
-   <td style="text-align:right;"> 0.58 </td>
-   <td style="text-align:right;"> 1.26 </td>
-   <td style="text-align:left;"> workdiff_bin_unimp </td>
+   <td style="text-align:right;"> 0.98 </td>
+   <td style="text-align:right;"> 0.74 </td>
+   <td style="text-align:right;"> 1.31 </td>
+   <td style="text-align:left;"> condemnd_bin_unimp </td>
    <td style="text-align:left;"> Hispanic women </td>
    <td style="text-align:left;"> Labor process </td>
   </tr>
@@ -3254,7 +3037,7 @@ tabled(1:140, "Ref: white male")
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 0.89 </td>
+   <td style="text-align:right;"> 0.88 </td>
    <td style="text-align:right;"> 0.80 </td>
    <td style="text-align:right;"> 0.98 </td>
    <td style="text-align:left;"> workfast_bin_unimp </td>
@@ -3287,65 +3070,9 @@ tabled(1:140, "Ref: white male")
   </tr>
   <tr>
    <td style="text-align:right;"> 0.91 </td>
-   <td style="text-align:right;"> 0.81 </td>
+   <td style="text-align:right;"> 0.80 </td>
    <td style="text-align:right;"> 1.02 </td>
    <td style="text-align:left;"> workfast_bin_unimp </td>
-   <td style="text-align:left;"> Hispanic women </td>
-   <td style="text-align:left;"> Labor process </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 0.98 </td>
-   <td style="text-align:right;"> 0.77 </td>
-   <td style="text-align:right;"> 1.25 </td>
-   <td style="text-align:left;"> hlpequip_bin_unimp </td>
-   <td style="text-align:left;"> NH white women </td>
-   <td style="text-align:left;"> Labor process </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 0.95 </td>
-   <td style="text-align:right;"> 0.64 </td>
-   <td style="text-align:right;"> 1.40 </td>
-   <td style="text-align:left;"> hlpequip_bin_unimp </td>
-   <td style="text-align:left;"> NH Black men </td>
-   <td style="text-align:left;"> Labor process </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 1.40 </td>
-   <td style="text-align:right;"> 1.02 </td>
-   <td style="text-align:right;"> 1.94 </td>
-   <td style="text-align:left;"> hlpequip_bin_unimp </td>
-   <td style="text-align:left;"> NH Black women </td>
-   <td style="text-align:left;"> Labor process </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 1.55 </td>
-   <td style="text-align:right;"> 0.84 </td>
-   <td style="text-align:right;"> 2.84 </td>
-   <td style="text-align:left;"> hlpequip_bin_unimp </td>
-   <td style="text-align:left;"> NH other men </td>
-   <td style="text-align:left;"> Labor process </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 1.22 </td>
-   <td style="text-align:right;"> 0.58 </td>
-   <td style="text-align:right;"> 2.58 </td>
-   <td style="text-align:left;"> hlpequip_bin_unimp </td>
-   <td style="text-align:left;"> NH other women </td>
-   <td style="text-align:left;"> Labor process </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 1.57 </td>
-   <td style="text-align:right;"> 1.09 </td>
-   <td style="text-align:right;"> 2.28 </td>
-   <td style="text-align:left;"> hlpequip_bin_unimp </td>
-   <td style="text-align:left;"> Hispanic men </td>
-   <td style="text-align:left;"> Labor process </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 1.16 </td>
-   <td style="text-align:right;"> 0.79 </td>
-   <td style="text-align:right;"> 1.70 </td>
-   <td style="text-align:left;"> hlpequip_bin_unimp </td>
    <td style="text-align:left;"> Hispanic women </td>
    <td style="text-align:left;"> Labor process </td>
   </tr>
@@ -3359,7 +3086,7 @@ tabled(1:140, "Ref: white male")
   </tr>
   <tr>
    <td style="text-align:right;"> 1.28 </td>
-   <td style="text-align:right;"> 0.98 </td>
+   <td style="text-align:right;"> 0.99 </td>
    <td style="text-align:right;"> 1.66 </td>
    <td style="text-align:left;"> wkdecide_bin_unimp </td>
    <td style="text-align:left;"> NH Black men </td>
@@ -3375,7 +3102,7 @@ tabled(1:140, "Ref: white male")
   </tr>
   <tr>
    <td style="text-align:right;"> 0.65 </td>
-   <td style="text-align:right;"> 0.36 </td>
+   <td style="text-align:right;"> 0.37 </td>
    <td style="text-align:right;"> 1.16 </td>
    <td style="text-align:left;"> wkdecide_bin_unimp </td>
    <td style="text-align:left;"> NH other men </td>
@@ -3383,7 +3110,7 @@ tabled(1:140, "Ref: white male")
   </tr>
   <tr>
    <td style="text-align:right;"> 1.84 </td>
-   <td style="text-align:right;"> 1.29 </td>
+   <td style="text-align:right;"> 1.30 </td>
    <td style="text-align:right;"> 2.61 </td>
    <td style="text-align:left;"> wkdecide_bin_unimp </td>
    <td style="text-align:left;"> NH other women </td>
@@ -3392,7 +3119,7 @@ tabled(1:140, "Ref: white male")
   <tr>
    <td style="text-align:right;"> 1.58 </td>
    <td style="text-align:right;"> 1.26 </td>
-   <td style="text-align:right;"> 1.98 </td>
+   <td style="text-align:right;"> 1.97 </td>
    <td style="text-align:left;"> wkdecide_bin_unimp </td>
    <td style="text-align:left;"> Hispanic men </td>
    <td style="text-align:left;"> Autonomy </td>
@@ -3455,7 +3182,7 @@ tabled(1:140, "Ref: white male")
   </tr>
   <tr>
    <td style="text-align:right;"> 1.07 </td>
-   <td style="text-align:right;"> 0.76 </td>
+   <td style="text-align:right;"> 0.77 </td>
    <td style="text-align:right;"> 1.49 </td>
    <td style="text-align:left;"> wkfreedm_bin_unimp </td>
    <td style="text-align:left;"> Hispanic women </td>
@@ -3463,7 +3190,7 @@ tabled(1:140, "Ref: white male")
   </tr>
   <tr>
    <td style="text-align:right;"> 0.70 </td>
-   <td style="text-align:right;"> 0.59 </td>
+   <td style="text-align:right;"> 0.60 </td>
    <td style="text-align:right;"> 0.83 </td>
    <td style="text-align:left;"> mustwork_bin_unimp </td>
    <td style="text-align:left;"> NH white women </td>
@@ -3486,7 +3213,7 @@ tabled(1:140, "Ref: white male")
    <td style="text-align:left;"> Autonomy </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 0.30 </td>
+   <td style="text-align:right;"> 0.31 </td>
    <td style="text-align:right;"> 0.14 </td>
    <td style="text-align:right;"> 0.65 </td>
    <td style="text-align:left;"> mustwork_bin_unimp </td>
@@ -3534,7 +3261,7 @@ tabled(1:140, "Ref: white male")
    <td style="text-align:left;"> Autonomy </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 1.32 </td>
+   <td style="text-align:right;"> 1.31 </td>
    <td style="text-align:right;"> 1.17 </td>
    <td style="text-align:right;"> 1.48 </td>
    <td style="text-align:left;"> chngtme_bin_unimp </td>
@@ -3560,7 +3287,7 @@ tabled(1:140, "Ref: white male")
   <tr>
    <td style="text-align:right;"> 1.23 </td>
    <td style="text-align:right;"> 1.06 </td>
-   <td style="text-align:right;"> 1.44 </td>
+   <td style="text-align:right;"> 1.43 </td>
    <td style="text-align:left;"> chngtme_bin_unimp </td>
    <td style="text-align:left;"> Hispanic men </td>
    <td style="text-align:left;"> Autonomy </td>
@@ -3583,7 +3310,7 @@ tabled(1:140, "Ref: white male")
   </tr>
   <tr>
    <td style="text-align:right;"> 0.88 </td>
-   <td style="text-align:right;"> 0.54 </td>
+   <td style="text-align:right;"> 0.53 </td>
    <td style="text-align:right;"> 1.46 </td>
    <td style="text-align:left;"> manvsemp_bin_unimp </td>
    <td style="text-align:left;"> NH Black men </td>
@@ -3608,7 +3335,7 @@ tabled(1:140, "Ref: white male")
   <tr>
    <td style="text-align:right;"> 1.25 </td>
    <td style="text-align:right;"> 0.50 </td>
-   <td style="text-align:right;"> 3.11 </td>
+   <td style="text-align:right;"> 3.10 </td>
    <td style="text-align:left;"> manvsemp_bin_unimp </td>
    <td style="text-align:left;"> NH other women </td>
    <td style="text-align:left;"> Conflict </td>
@@ -3686,340 +3413,244 @@ tabled(1:140, "Ref: white male")
    <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 1.10 </td>
-   <td style="text-align:right;"> 0.94 </td>
-   <td style="text-align:right;"> 1.29 </td>
-   <td style="text-align:left;"> condemnd_bin_unimp </td>
-   <td style="text-align:left;"> NH white women </td>
-   <td style="text-align:left;"> Conflict </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 0.82 </td>
-   <td style="text-align:right;"> 0.59 </td>
-   <td style="text-align:right;"> 1.13 </td>
-   <td style="text-align:left;"> condemnd_bin_unimp </td>
-   <td style="text-align:left;"> NH Black men </td>
-   <td style="text-align:left;"> Conflict </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 1.04 </td>
-   <td style="text-align:right;"> 0.84 </td>
-   <td style="text-align:right;"> 1.30 </td>
-   <td style="text-align:left;"> condemnd_bin_unimp </td>
-   <td style="text-align:left;"> NH Black women </td>
-   <td style="text-align:left;"> Conflict </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 1.18 </td>
-   <td style="text-align:right;"> 0.77 </td>
-   <td style="text-align:right;"> 1.80 </td>
-   <td style="text-align:left;"> condemnd_bin_unimp </td>
-   <td style="text-align:left;"> NH other men </td>
-   <td style="text-align:left;"> Conflict </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 1.51 </td>
-   <td style="text-align:right;"> 1.03 </td>
-   <td style="text-align:right;"> 2.22 </td>
-   <td style="text-align:left;"> condemnd_bin_unimp </td>
-   <td style="text-align:left;"> NH other women </td>
-   <td style="text-align:left;"> Conflict </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 0.99 </td>
-   <td style="text-align:right;"> 0.72 </td>
-   <td style="text-align:right;"> 1.36 </td>
-   <td style="text-align:left;"> condemnd_bin_unimp </td>
-   <td style="text-align:left;"> Hispanic men </td>
-   <td style="text-align:left;"> Conflict </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 0.98 </td>
-   <td style="text-align:right;"> 0.73 </td>
-   <td style="text-align:right;"> 1.30 </td>
-   <td style="text-align:left;"> condemnd_bin_unimp </td>
-   <td style="text-align:left;"> Hispanic women </td>
-   <td style="text-align:left;"> Conflict </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 0.91 </td>
-   <td style="text-align:right;"> 0.68 </td>
-   <td style="text-align:right;"> 1.21 </td>
-   <td style="text-align:left;"> cowrkhlp_bin_unimp </td>
-   <td style="text-align:left;"> NH white women </td>
-   <td style="text-align:left;"> Conflict </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 1.38 </td>
-   <td style="text-align:right;"> 0.91 </td>
-   <td style="text-align:right;"> 2.08 </td>
-   <td style="text-align:left;"> cowrkhlp_bin_unimp </td>
-   <td style="text-align:left;"> NH Black men </td>
-   <td style="text-align:left;"> Conflict </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 1.44 </td>
-   <td style="text-align:right;"> 1.00 </td>
-   <td style="text-align:right;"> 2.07 </td>
-   <td style="text-align:left;"> cowrkhlp_bin_unimp </td>
-   <td style="text-align:left;"> NH Black women </td>
-   <td style="text-align:left;"> Conflict </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 1.51 </td>
-   <td style="text-align:right;"> 0.53 </td>
-   <td style="text-align:right;"> 4.30 </td>
-   <td style="text-align:left;"> cowrkhlp_bin_unimp </td>
-   <td style="text-align:left;"> NH other men </td>
-   <td style="text-align:left;"> Conflict </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 1.31 </td>
-   <td style="text-align:right;"> 0.65 </td>
-   <td style="text-align:right;"> 2.65 </td>
-   <td style="text-align:left;"> cowrkhlp_bin_unimp </td>
-   <td style="text-align:left;"> NH other women </td>
-   <td style="text-align:left;"> Conflict </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 1.02 </td>
-   <td style="text-align:right;"> 0.63 </td>
-   <td style="text-align:right;"> 1.64 </td>
-   <td style="text-align:left;"> cowrkhlp_bin_unimp </td>
-   <td style="text-align:left;"> Hispanic men </td>
-   <td style="text-align:left;"> Conflict </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 1.02 </td>
-   <td style="text-align:right;"> 0.64 </td>
-   <td style="text-align:right;"> 1.64 </td>
-   <td style="text-align:left;"> cowrkhlp_bin_unimp </td>
-   <td style="text-align:left;"> Hispanic women </td>
-   <td style="text-align:left;"> Conflict </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 1.14 </td>
-   <td style="text-align:right;"> 0.82 </td>
-   <td style="text-align:right;"> 1.58 </td>
-   <td style="text-align:left;"> safehlth_bin_unimp </td>
-   <td style="text-align:left;"> NH white women </td>
-   <td style="text-align:left;"> Hazards </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 1.59 </td>
-   <td style="text-align:right;"> 0.96 </td>
-   <td style="text-align:right;"> 2.62 </td>
-   <td style="text-align:left;"> safehlth_bin_unimp </td>
-   <td style="text-align:left;"> NH Black men </td>
-   <td style="text-align:left;"> Hazards </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 1.92 </td>
-   <td style="text-align:right;"> 1.32 </td>
-   <td style="text-align:right;"> 2.81 </td>
-   <td style="text-align:left;"> safehlth_bin_unimp </td>
-   <td style="text-align:left;"> NH Black women </td>
-   <td style="text-align:left;"> Hazards </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 0.90 </td>
-   <td style="text-align:right;"> 0.33 </td>
-   <td style="text-align:right;"> 2.44 </td>
-   <td style="text-align:left;"> safehlth_bin_unimp </td>
-   <td style="text-align:left;"> NH other men </td>
-   <td style="text-align:left;"> Hazards </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 1.08 </td>
-   <td style="text-align:right;"> 0.32 </td>
-   <td style="text-align:right;"> 3.58 </td>
-   <td style="text-align:left;"> safehlth_bin_unimp </td>
-   <td style="text-align:left;"> NH other women </td>
-   <td style="text-align:left;"> Hazards </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 1.27 </td>
+   <td style="text-align:right;"> 0.93 </td>
    <td style="text-align:right;"> 0.71 </td>
-   <td style="text-align:right;"> 2.26 </td>
-   <td style="text-align:left;"> safehlth_bin_unimp </td>
-   <td style="text-align:left;"> Hispanic men </td>
-   <td style="text-align:left;"> Hazards </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 0.99 </td>
-   <td style="text-align:right;"> 0.50 </td>
-   <td style="text-align:right;"> 1.95 </td>
-   <td style="text-align:left;"> safehlth_bin_unimp </td>
-   <td style="text-align:left;"> Hispanic women </td>
-   <td style="text-align:left;"> Hazards </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 0.91 </td>
-   <td style="text-align:right;"> 0.69 </td>
-   <td style="text-align:right;"> 1.19 </td>
-   <td style="text-align:left;"> safetywk_bin_unimp </td>
+   <td style="text-align:right;"> 1.21 </td>
+   <td style="text-align:left;"> respect_bin_unimp </td>
    <td style="text-align:left;"> NH white women </td>
-   <td style="text-align:left;"> Hazards </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 0.68 </td>
-   <td style="text-align:right;"> 0.42 </td>
-   <td style="text-align:right;"> 1.12 </td>
-   <td style="text-align:left;"> safetywk_bin_unimp </td>
-   <td style="text-align:left;"> NH Black men </td>
-   <td style="text-align:left;"> Hazards </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 1.20 </td>
-   <td style="text-align:right;"> 0.83 </td>
-   <td style="text-align:right;"> 1.73 </td>
-   <td style="text-align:left;"> safetywk_bin_unimp </td>
-   <td style="text-align:left;"> NH Black women </td>
-   <td style="text-align:left;"> Hazards </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 0.55 </td>
-   <td style="text-align:right;"> 0.22 </td>
-   <td style="text-align:right;"> 1.41 </td>
-   <td style="text-align:left;"> safetywk_bin_unimp </td>
-   <td style="text-align:left;"> NH other men </td>
-   <td style="text-align:left;"> Hazards </td>
+   <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 0.87 </td>
-   <td style="text-align:right;"> 0.33 </td>
-   <td style="text-align:right;"> 2.30 </td>
-   <td style="text-align:left;"> safetywk_bin_unimp </td>
-   <td style="text-align:left;"> NH other women </td>
-   <td style="text-align:left;"> Hazards </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 1.08 </td>
-   <td style="text-align:right;"> 0.66 </td>
-   <td style="text-align:right;"> 1.78 </td>
-   <td style="text-align:left;"> safetywk_bin_unimp </td>
-   <td style="text-align:left;"> Hispanic men </td>
-   <td style="text-align:left;"> Hazards </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 0.99 </td>
-   <td style="text-align:right;"> 0.62 </td>
-   <td style="text-align:right;"> 1.57 </td>
-   <td style="text-align:left;"> safetywk_bin_unimp </td>
-   <td style="text-align:left;"> Hispanic women </td>
-   <td style="text-align:left;"> Hazards </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 0.91 </td>
-   <td style="text-align:right;"> 0.71 </td>
-   <td style="text-align:right;"> 1.17 </td>
-   <td style="text-align:left;"> safefrst_bin_unimp </td>
-   <td style="text-align:left;"> NH white women </td>
-   <td style="text-align:left;"> Hazards </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 0.81 </td>
-   <td style="text-align:right;"> 0.50 </td>
-   <td style="text-align:right;"> 1.30 </td>
-   <td style="text-align:left;"> safefrst_bin_unimp </td>
+   <td style="text-align:right;"> 0.55 </td>
+   <td style="text-align:right;"> 1.37 </td>
+   <td style="text-align:left;"> respect_bin_unimp </td>
    <td style="text-align:left;"> NH Black men </td>
-   <td style="text-align:left;"> Hazards </td>
+   <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 1.31 </td>
-   <td style="text-align:right;"> 0.95 </td>
-   <td style="text-align:right;"> 1.80 </td>
-   <td style="text-align:left;"> safefrst_bin_unimp </td>
+   <td style="text-align:right;"> 1.40 </td>
+   <td style="text-align:right;"> 0.99 </td>
+   <td style="text-align:right;"> 1.97 </td>
+   <td style="text-align:left;"> respect_bin_unimp </td>
    <td style="text-align:left;"> NH Black women </td>
-   <td style="text-align:left;"> Hazards </td>
+   <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 0.77 </td>
-   <td style="text-align:right;"> 0.28 </td>
-   <td style="text-align:right;"> 2.10 </td>
-   <td style="text-align:left;"> safefrst_bin_unimp </td>
+   <td style="text-align:right;"> 0.25 </td>
+   <td style="text-align:right;"> 0.06 </td>
+   <td style="text-align:right;"> 1.06 </td>
+   <td style="text-align:left;"> respect_bin_unimp </td>
    <td style="text-align:left;"> NH other men </td>
-   <td style="text-align:left;"> Hazards </td>
+   <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 0.52 </td>
-   <td style="text-align:right;"> 0.16 </td>
-   <td style="text-align:right;"> 1.73 </td>
-   <td style="text-align:left;"> safefrst_bin_unimp </td>
+   <td style="text-align:right;"> 1.67 </td>
+   <td style="text-align:right;"> 0.83 </td>
+   <td style="text-align:right;"> 3.36 </td>
+   <td style="text-align:left;"> respect_bin_unimp </td>
    <td style="text-align:left;"> NH other women </td>
-   <td style="text-align:left;"> Hazards </td>
+   <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 0.96 </td>
-   <td style="text-align:right;"> 0.59 </td>
-   <td style="text-align:right;"> 1.59 </td>
-   <td style="text-align:left;"> safefrst_bin_unimp </td>
+   <td style="text-align:right;"> 0.62 </td>
+   <td style="text-align:right;"> 0.34 </td>
+   <td style="text-align:right;"> 1.13 </td>
+   <td style="text-align:left;"> respect_bin_unimp </td>
    <td style="text-align:left;"> Hispanic men </td>
-   <td style="text-align:left;"> Hazards </td>
+   <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 0.69 </td>
-   <td style="text-align:right;"> 0.42 </td>
-   <td style="text-align:right;"> 1.11 </td>
-   <td style="text-align:left;"> safefrst_bin_unimp </td>
+   <td style="text-align:right;"> 0.80 </td>
+   <td style="text-align:right;"> 0.46 </td>
+   <td style="text-align:right;"> 1.37 </td>
+   <td style="text-align:left;"> respect_bin_unimp </td>
    <td style="text-align:left;"> Hispanic women </td>
-   <td style="text-align:left;"> Hazards </td>
+   <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 1.64 </td>
+   <td style="text-align:right;"> 1.65 </td>
    <td style="text-align:right;"> 1.38 </td>
    <td style="text-align:right;"> 1.96 </td>
-   <td style="text-align:left;"> disc_haras_unimp </td>
+   <td style="text-align:left;"> disc_haras_bin_unimp </td>
    <td style="text-align:left;"> NH white women </td>
-   <td style="text-align:left;"> Hazards </td>
+   <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 1.58 </td>
-   <td style="text-align:right;"> 1.19 </td>
+   <td style="text-align:right;"> 1.20 </td>
    <td style="text-align:right;"> 2.08 </td>
-   <td style="text-align:left;"> disc_haras_unimp </td>
+   <td style="text-align:left;"> disc_haras_bin_unimp </td>
    <td style="text-align:left;"> NH Black men </td>
-   <td style="text-align:left;"> Hazards </td>
+   <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
-   <td style="text-align:right;"> 1.90 </td>
-   <td style="text-align:right;"> 1.51 </td>
-   <td style="text-align:right;"> 2.40 </td>
-   <td style="text-align:left;"> disc_haras_unimp </td>
+   <td style="text-align:right;"> 1.91 </td>
+   <td style="text-align:right;"> 1.52 </td>
+   <td style="text-align:right;"> 2.41 </td>
+   <td style="text-align:left;"> disc_haras_bin_unimp </td>
    <td style="text-align:left;"> NH Black women </td>
-   <td style="text-align:left;"> Hazards </td>
+   <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 0.99 </td>
    <td style="text-align:right;"> 0.52 </td>
-   <td style="text-align:right;"> 1.89 </td>
-   <td style="text-align:left;"> disc_haras_unimp </td>
+   <td style="text-align:right;"> 1.90 </td>
+   <td style="text-align:left;"> disc_haras_bin_unimp </td>
    <td style="text-align:left;"> NH other men </td>
-   <td style="text-align:left;"> Hazards </td>
+   <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 1.27 </td>
-   <td style="text-align:right;"> 0.71 </td>
+   <td style="text-align:right;"> 0.72 </td>
    <td style="text-align:right;"> 2.26 </td>
-   <td style="text-align:left;"> disc_haras_unimp </td>
+   <td style="text-align:left;"> disc_haras_bin_unimp </td>
    <td style="text-align:left;"> NH other women </td>
-   <td style="text-align:left;"> Hazards </td>
+   <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 1.81 </td>
-   <td style="text-align:right;"> 1.34 </td>
+   <td style="text-align:right;"> 1.33 </td>
    <td style="text-align:right;"> 2.46 </td>
-   <td style="text-align:left;"> disc_haras_unimp </td>
+   <td style="text-align:left;"> disc_haras_bin_unimp </td>
    <td style="text-align:left;"> Hispanic men </td>
-   <td style="text-align:left;"> Hazards </td>
+   <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 1.42 </td>
-   <td style="text-align:right;"> 1.00 </td>
+   <td style="text-align:right;"> 1.01 </td>
    <td style="text-align:right;"> 2.00 </td>
-   <td style="text-align:left;"> disc_haras_unimp </td>
+   <td style="text-align:left;"> disc_haras_bin_unimp </td>
    <td style="text-align:left;"> Hispanic women </td>
-   <td style="text-align:left;"> Hazards </td>
+   <td style="text-align:left;"> Conflict </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 1.00 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:left;"> satjob1_bin_unimp </td>
+   <td style="text-align:left;"> NH white men </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 1.00 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:left;"> rincblls_bin_unimp </td>
+   <td style="text-align:left;"> NH white men </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 1.00 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:left;"> safehlth_bin_unimp </td>
+   <td style="text-align:left;"> NH white men </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 1.00 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:left;"> safetywk_bin_unimp </td>
+   <td style="text-align:left;"> NH white men </td>
+   <td style="text-align:left;"> Rewards/hazards </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 1.00 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:left;"> workdiff_bin_unimp </td>
+   <td style="text-align:left;"> NH white men </td>
+   <td style="text-align:left;"> Labor process </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 1.00 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:left;"> learnnew_bin_unimp </td>
+   <td style="text-align:left;"> NH white men </td>
+   <td style="text-align:left;"> Labor process </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 1.00 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:left;"> condemnd_bin_unimp </td>
+   <td style="text-align:left;"> NH white men </td>
+   <td style="text-align:left;"> Labor process </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 1.00 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:left;"> workfast_bin_unimp </td>
+   <td style="text-align:left;"> NH white men </td>
+   <td style="text-align:left;"> Labor process </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 1.00 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:left;"> wkdecide_bin_unimp </td>
+   <td style="text-align:left;"> NH white men </td>
+   <td style="text-align:left;"> Autonomy </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 1.00 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:left;"> wkfreedm_bin_unimp </td>
+   <td style="text-align:left;"> NH white men </td>
+   <td style="text-align:left;"> Autonomy </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 1.00 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:left;"> mustwork_bin_unimp </td>
+   <td style="text-align:left;"> NH white men </td>
+   <td style="text-align:left;"> Autonomy </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 1.00 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:left;"> chngtme_bin_unimp </td>
+   <td style="text-align:left;"> NH white men </td>
+   <td style="text-align:left;"> Autonomy </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 1.00 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:left;"> manvsemp_bin_unimp </td>
+   <td style="text-align:left;"> NH white men </td>
+   <td style="text-align:left;"> Conflict </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 1.00 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:left;"> trustman_bin_unimp </td>
+   <td style="text-align:left;"> NH white men </td>
+   <td style="text-align:left;"> Conflict </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 1.00 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:left;"> respect_bin_unimp </td>
+   <td style="text-align:left;"> NH white men </td>
+   <td style="text-align:left;"> Conflict </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 1.00 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:left;"> disc_haras_bin_unimp </td>
+   <td style="text-align:left;"> NH white men </td>
+   <td style="text-align:left;"> Conflict </td>
   </tr>
 </tbody>
 </table></div>
@@ -4081,7 +3712,7 @@ dat %>%
 
 
 ```r
-plot(imp_merged, y=c('class', 'race_h', 'educ', 'marital_tri', "prestg10", 'income', 'age', "srh_bin", "mntlhlth", "learnnew_bin", "wkdecide_bin", "manvsemp_bin", "safehlth_bin", "workdiff_bin", "wkfreedm_bin", "trustman_bin", "safetywk_bin",  "workfast_bin", "respect_bin", "condemnd_bin", "disc_haras"), main='Convergence plots')
+plot(imp_merged, y=c('class', 'race_h', 'educ', 'marital_tri', "prestg10", 'income', 'age', "srh_bin", "mntlhlth", "satjob1_bin", "rincblls_bin", "safehlth_bin", "safetywk_bin", "workdiff_bin", "learnnew_bin", "condemnd_bin", "workfast_bin", "wkdecide_bin", "wkfreedm_bin", "mustwork_bin", "manvsemp_bin", "trustman_bin", "respect_bin", "disc_haras_bin"), main='Convergence plots')
 ```
 
-![](analysis_1_22_21_MICE_files/figure-html/unnamed-chunk-18-1.png)<!-- -->![](analysis_1_22_21_MICE_files/figure-html/unnamed-chunk-18-2.png)<!-- -->![](analysis_1_22_21_MICE_files/figure-html/unnamed-chunk-18-3.png)<!-- -->![](analysis_1_22_21_MICE_files/figure-html/unnamed-chunk-18-4.png)<!-- -->![](analysis_1_22_21_MICE_files/figure-html/unnamed-chunk-18-5.png)<!-- -->![](analysis_1_22_21_MICE_files/figure-html/unnamed-chunk-18-6.png)<!-- -->![](analysis_1_22_21_MICE_files/figure-html/unnamed-chunk-18-7.png)<!-- -->
+![](analysis_2_1_21_MICE_files/figure-html/unnamed-chunk-18-1.png)<!-- -->![](analysis_2_1_21_MICE_files/figure-html/unnamed-chunk-18-2.png)<!-- -->![](analysis_2_1_21_MICE_files/figure-html/unnamed-chunk-18-3.png)<!-- -->![](analysis_2_1_21_MICE_files/figure-html/unnamed-chunk-18-4.png)<!-- -->![](analysis_2_1_21_MICE_files/figure-html/unnamed-chunk-18-5.png)<!-- -->![](analysis_2_1_21_MICE_files/figure-html/unnamed-chunk-18-6.png)<!-- -->![](analysis_2_1_21_MICE_files/figure-html/unnamed-chunk-18-7.png)<!-- -->![](analysis_2_1_21_MICE_files/figure-html/unnamed-chunk-18-8.png)<!-- -->
