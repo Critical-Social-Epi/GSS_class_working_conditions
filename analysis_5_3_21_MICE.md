@@ -1,7 +1,7 @@
 ---
 title: "Class and Quality of Working Life (QWL)"
 author: "Jerzy Eisenberg-Guyot"
-date: "March, 2021"
+date: "April, 2021"
 output: 
   html_document:
     code_folding: hide
@@ -69,6 +69,7 @@ library(rms)
 library(patchwork) 
 library(spatstat)
 library(purrr)
+library(ggmosaic)
 
 #########load data, which is a subsetted version of the GSS cumulative file available at the GSS website that I converted from .dta to .csv using Stata 
 #####
@@ -103,16 +104,13 @@ dat %>%
                                   ifelse(race_h=="NH Black" | race_h=="Hispanic" | race_h=="NH other", "POC", NA)), levels=c("NH white", "POC")),
          age=ifelse(age=="89 or older", 89, as.numeric(as.character(age))),
          mntlhlth=as.numeric(as.character(mntlhlth)),
-         physhlth=as.numeric(as.character(physhlth)),
-         hlthdays=as.numeric(as.character(hlthdays)),
-         moredays=as.numeric(as.character(moredays)),
-         region = factor(ifelse(region == "new england" | region == "middle atlantic", "Northeast",
-                                   ifelse(region == "e. sou. central" | region == "south atlantic" | region == "w. sou. central", "South",
-                                          ifelse(region == "e. nor. central" | region == "w. nor. central", "Midwest", "West")))),
-         marital_tri=as.factor(ifelse(marital=="married", "married",
-                            ifelse(marital=="never married", "never married",
-                                   ifelse(marital=="widowed" | marital=="divorced" | marital=="separated", "wid/div/sep", marital)))),
          srh_bin=as.factor(ifelse(health1 == "fair" | health1 == "poor", "poor/fair", "good/vgood/exc")), 
+         region = factor(ifelse(region == "new england" | region == "middle atlantic", "Northeast",
+                                ifelse(region == "e. sou. central" | region == "south atlantic" | region == "w. sou. central", "South",
+                                       ifelse(region == "e. nor. central" | region == "w. nor. central", "Midwest", "West")))),
+         marital_tri=as.factor(ifelse(marital=="married", "married",
+                                      ifelse(marital=="never married", "never married",
+                                            ifelse(marital=="widowed" | marital=="divorced" | marital=="separated", "wid/div/sep", marital)))),
          sex=as.factor(sex),
          disc_haras_bin=ifelse(wkageism=="yes" | wkracism=="yes" | wksexism=="yes" | wkharsex=="yes" | wkharoth=="yes", 1, 0),
          disc_haras_bin_unimp=disc_haras_bin, #make duplicated version of each variable for which we wont impute data for so that we can use it in outcome regression
@@ -155,9 +153,8 @@ dat %>%
          chngtme_bin=ifelse(chngtme=="IAP", NA, #chngtme not asked in 2018
                             ifelse(chngtme=="never" | chngtme=="rarely", 1, 0)),
          chngtme_bin_unimp=chngtme_bin,
-         income=(as.numeric(as.character(coninc)) * 251.1 / 172.2)/10000, #adjust income to 2018 dollars from 2000 dollars (251.1 is CPI in 2018, 172.2 is CPI in 2000), then convert to $10,000s
+         income=(as.numeric(as.character(coninc)) * 251.1 / 172.2)/10000, #adjust income to 2018 dollars from 2000 dollars (251.1 is 2018 CPI, 172.2 is 200 CPI), then convert to $10000s
          prestg10=as.numeric(prestg10),
-         #we could also create the class variable using numemps (number of employees employed by the self-employed), but it's not available in 2002 
          class=factor(ifelse((wksup == "yes" & wrkslf == "self-employed") | (wksup == "yes" & wrkslf == "someone else" & occ10 == "chief executives"), "Capitalists", 
                               ifelse((wksup == "no" & wrkslf == "self-employed") | (wksup == "no" & wrkslf == "someone else" & occ10 == "chief executives"), "Petit bourgeoisie", 
                                                  ifelse(wksup == "yes" & wrkslf == "someone else" & occ10 != "chief executives", "Managers", 
@@ -271,6 +268,9 @@ svy_dat_mi <- svydesign(ids = ~ vpsu,
                  weights = ~ wtssall,
                  nest=TRUE, 
                  data=dat_mi)
+
+#make long imputed dataset
+dat_mi_long <- complete(imp_merged, "long", include=F)
 
 #survey-set unimputed data for descriptives
 svy_dat <- svydesign(ids = ~ vpsu,
@@ -485,6 +485,160 @@ kable(x[,1:4]) %>%
 </tbody>
 </table>
 
+## Distribution of class stratified by race-gender (and vice versa)
+
+### Table
+
+
+```r
+#class by race-gender
+x <- svyCreateTableOne(data = svy_dat, vars = "class", strata='poc_gender')
+x <- print(x, printToggle=FALSE, noSpaces=TRUE)
+kable(x[,1:4]) %>%
+  kable_styling(c("striped", "condensed"))
+```
+
+<table class="table table-striped table-condensed" style="margin-left: auto; margin-right: auto;">
+ <thead>
+  <tr>
+   <th style="text-align:left;">   </th>
+   <th style="text-align:left;"> NH white men </th>
+   <th style="text-align:left;"> NH white women </th>
+   <th style="text-align:left;"> POC men </th>
+   <th style="text-align:left;"> POC women </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> n </td>
+   <td style="text-align:left;"> 2414.8 </td>
+   <td style="text-align:left;"> 2393.3 </td>
+   <td style="text-align:left;"> 1010.3 </td>
+   <td style="text-align:left;"> 1143.6 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> class (%) </td>
+   <td style="text-align:left;">  </td>
+   <td style="text-align:left;">  </td>
+   <td style="text-align:left;">  </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Workers </td>
+   <td style="text-align:left;"> 1120.7 (46.7) </td>
+   <td style="text-align:left;"> 1401.2 (59.1) </td>
+   <td style="text-align:left;"> 579.4 (57.9) </td>
+   <td style="text-align:left;"> 712.8 (62.6) </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Managers </td>
+   <td style="text-align:left;"> 813.3 (33.9) </td>
+   <td style="text-align:left;"> 701.6 (29.6) </td>
+   <td style="text-align:left;"> 282.9 (28.3) </td>
+   <td style="text-align:left;"> 328.5 (28.9) </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
+   <td style="text-align:left;"> 203.6 (8.5) </td>
+   <td style="text-align:left;"> 189.2 (8.0) </td>
+   <td style="text-align:left;"> 73.9 (7.4) </td>
+   <td style="text-align:left;"> 76.6 (6.7) </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Capitalists </td>
+   <td style="text-align:left;"> 260.3 (10.9) </td>
+   <td style="text-align:left;"> 77.3 (3.3) </td>
+   <td style="text-align:left;"> 64.5 (6.5) </td>
+   <td style="text-align:left;"> 20.3 (1.8) </td>
+  </tr>
+</tbody>
+</table>
+
+```r
+#race-gender by class
+x <- svyCreateTableOne(data = svy_dat, vars = "poc_gender", strata='class')
+x <- print(x, printToggle=FALSE, noSpaces=TRUE)
+kable(x[,1:4]) %>%
+  kable_styling(c("striped", "condensed"))
+```
+
+<table class="table table-striped table-condensed" style="margin-left: auto; margin-right: auto;">
+ <thead>
+  <tr>
+   <th style="text-align:left;">   </th>
+   <th style="text-align:left;"> Workers </th>
+   <th style="text-align:left;"> Managers </th>
+   <th style="text-align:left;"> Petit bourgeoisie </th>
+   <th style="text-align:left;"> Capitalists </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> n </td>
+   <td style="text-align:left;"> 3821.8 </td>
+   <td style="text-align:left;"> 2128.6 </td>
+   <td style="text-align:left;"> 544.2 </td>
+   <td style="text-align:left;"> 423.8 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> poc_gender (%) </td>
+   <td style="text-align:left;">  </td>
+   <td style="text-align:left;">  </td>
+   <td style="text-align:left;">  </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> NH white men </td>
+   <td style="text-align:left;"> 1120.7 (29.4) </td>
+   <td style="text-align:left;"> 813.3 (38.3) </td>
+   <td style="text-align:left;"> 203.6 (37.5) </td>
+   <td style="text-align:left;"> 260.3 (61.6) </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> NH white women </td>
+   <td style="text-align:left;"> 1401.2 (36.7) </td>
+   <td style="text-align:left;"> 701.6 (33.0) </td>
+   <td style="text-align:left;"> 189.2 (34.8) </td>
+   <td style="text-align:left;"> 77.3 (18.3) </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> POC men </td>
+   <td style="text-align:left;"> 579.4 (15.2) </td>
+   <td style="text-align:left;"> 282.9 (13.3) </td>
+   <td style="text-align:left;"> 73.9 (13.6) </td>
+   <td style="text-align:left;"> 64.5 (15.3) </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> POC women </td>
+   <td style="text-align:left;"> 712.8 (18.7) </td>
+   <td style="text-align:left;"> 328.5 (15.4) </td>
+   <td style="text-align:left;"> 76.6 (14.1) </td>
+   <td style="text-align:left;"> 20.3 (4.8) </td>
+  </tr>
+</tbody>
+</table>
+
+### Figure
+
+
+```r
+ggplot(data = subset(dat, !is.na(class) & !is.na(poc_gender))) +
+  geom_mosaic(aes(x = product(class, poc_gender), fill=class, weight=wtssall)) +
+  ylab("") +
+  xlab("")  +
+  scale_y_productlist(expand=c(0,0)) +
+  scale_x_productlist(expand=c(0,0)) +
+  scale_fill_manual(values= c("#1F78B4", "#6A3D9A", "#33A02C", "#FF7F00")) +
+  theme_classic() +
+  theme(axis.line=element_blank(), axis.title=element_blank(), legend.position="none") 
+```
+
+![](analysis_5_3_21_MICE_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
+
+```r
+ggsave("mosaic.png", height=4.5, width=6.4, dpi=600)
+```
+
 # Survey-weighted regressions
 
 
@@ -561,7 +715,7 @@ plotted <- function(binded, limitsvec, breaksvec, cols, shapes){
 
 #table function
 tabled <- function(dat, captioned){
-  kable(dat, digits=2, col.names=c("PR", "Lower", "Upper", "QWL variable", "Class"), caption=captioned) %>%
+  kable(dat, digits=2, col.names=c("PR", "Lower", "Upper", "QWL variable", "Class"), caption=captioned, row.names=FALSE) %>%
     kable_styling("striped") %>%
     group_rows("Class", 1, 12) %>%
     group_rows("Class*gender", 13, 40) %>%
@@ -589,10 +743,10 @@ less_adj <- mysvy(svy_dat_mi, outvars, "~class + rcs(age, 3) + rcs(year, 3)")
 regs_less <- matrix_func(4, 4, outvars)
 
 #format matrix
-binded_overall <- formatted(c("Managers", "Petite bourgeoisie", "Capitalists"), 4,
+binded_overall <- formatted(c("Managers", "Petit bourgeoisie", "Capitalists"), 4,
                             outvars,
                             "Workers",
-                            c("Workers", "Managers", "Petite bourgeoisie", "Capitalists"))
+                            c("Workers", "Managers", "Petit bourgeoisie", "Capitalists"))
 
 #######gender interaction
 #run regression
@@ -602,12 +756,12 @@ less_adj <- mysvy(svy_dat_mi, outvars, "~class_gender + rcs(age, 3) + rcs(year, 
 regs_less <- matrix_func(4, 8, outvars)
 
 #format matrix
-binded_gender <- formatted(c("Male managers", "Male petite bourgeoisie", "Male capitalists",
-                             "Female workers", "Female managers", "Female petite bourgeoisie", "Female capitalists"), 4,
+binded_gender <- formatted(c("Male managers", "Male petit bourgeoisie", "Male capitalists",
+                             "Female workers", "Female managers", "Female petit bourgeoisie", "Female capitalists"), 4,
                            outvars,
                            "Male workers",
-                           c("Male workers", "Male managers", "Male petite bourgeoisie", "Male capitalists",
-                             "Female workers", "Female managers", "Female petite bourgeoisie", "Female capitalists"))
+                           c("Male workers", "Male managers", "Male petit bourgeoisie", "Male capitalists",
+                             "Female workers", "Female managers", "Female petit bourgeoisie", "Female capitalists"))
 
 #######race interaction
 #run regression
@@ -617,12 +771,12 @@ less_adj <- mysvy(subset(svy_dat_mi, race_h!="NH other"), outvars, "~class_poc +
 regs_less <- matrix_func(4, 8, outvars)
 
 #format matrix
-binded_race <- formatted(c("NH white managers", "NH white petite bourgeoisie", "NH white capitalists",
-                           "POC workers", "POC managers", "POC petite bourgeoisie", "POC capitalists"), 4,
+binded_race <- formatted(c("NH white managers", "NH white petit bourgeoisie", "NH white capitalists",
+                           "POC workers", "POC managers", "POC petit bourgeoisie", "POC capitalists"), 4,
                           outvars,
                          "NH white workers",
-                         c("NH white workers", "NH white managers", "NH white petite bourgeoisie", "NH white capitalists",
-                           "POC workers", "POC managers", "POC petite bourgeoisie", "POC capitalists"))
+                         c("NH white workers", "NH white managers", "NH white petit bourgeoisie", "NH white capitalists",
+                           "POC workers", "POC managers", "POC petit bourgeoisie", "POC capitalists"))
 ```
 
 
@@ -639,11 +793,13 @@ plotted(binded_overall, limitsvec=c(0.09, 3.73), breaksvec=c(0.125, 0.25, 0.5, 1
   plot_layout(ncol=1, heights=c(1, 2, 2))
 ```
 
-![](analysis_3_9_21_MICE_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
+![](analysis_5_3_21_MICE_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
 
 ```r
+ggsave("comp_safety.png", height=5, width=10.25, dpi=600)
+
 #table 
-tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28,1:5]), "Ref: workers/male workers/white workers") 
+tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28,1:5]), "Ref: workers/male workers/white workers")
 ```
 
 <div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:250px; overflow-x: scroll; width:100%; "><table class="table table-striped" style="margin-left: auto; margin-right: auto;">
@@ -671,7 +827,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.34 </td>
    <td style="text-align:right;"> 0.88 </td>
    <td style="text-align:left;"> satjob1_bin_unimp </td>
-   <td style="text-align:left;"> Petite bourgeoisie </td>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.42 </td>
@@ -692,7 +848,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.84 </td>
    <td style="text-align:right;"> 1.01 </td>
    <td style="text-align:left;"> rincblls_bin_unimp </td>
-   <td style="text-align:left;"> Petite bourgeoisie </td>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.50 </td>
@@ -713,7 +869,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.33 </td>
    <td style="text-align:right;"> 1.01 </td>
    <td style="text-align:left;"> safehlth_bin_unimp </td>
-   <td style="text-align:left;"> Petite bourgeoisie </td>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.62 </td>
@@ -734,7 +890,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.23 </td>
    <td style="text-align:right;"> 0.63 </td>
    <td style="text-align:left;"> safetywk_bin_unimp </td>
-   <td style="text-align:left;"> Petite bourgeoisie </td>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.41 </td>
@@ -756,7 +912,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.40 </td>
    <td style="text-align:right;"> 1.28 </td>
    <td style="text-align:left;"> satjob1_bin_unimp </td>
-   <td style="text-align:left;"> Male petite bourgeoisie </td>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.37 </td>
@@ -784,7 +940,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.11 </td>
    <td style="text-align:right;"> 0.55 </td>
    <td style="text-align:left;"> satjob1_bin_unimp </td>
-   <td style="text-align:left;"> Female petite bourgeoisie </td>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.38 </td>
@@ -805,7 +961,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.67 </td>
    <td style="text-align:right;"> 0.96 </td>
    <td style="text-align:left;"> rincblls_bin_unimp </td>
-   <td style="text-align:left;"> Male petite bourgeoisie </td>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.48 </td>
@@ -833,7 +989,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 1.32 </td>
    <td style="text-align:right;"> 1.63 </td>
    <td style="text-align:left;"> rincblls_bin_unimp </td>
-   <td style="text-align:left;"> Female petite bourgeoisie </td>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.02 </td>
@@ -854,7 +1010,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.43 </td>
    <td style="text-align:right;"> 1.62 </td>
    <td style="text-align:left;"> safehlth_bin_unimp </td>
-   <td style="text-align:left;"> Male petite bourgeoisie </td>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.74 </td>
@@ -882,7 +1038,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.14 </td>
    <td style="text-align:right;"> 1.17 </td>
    <td style="text-align:left;"> safehlth_bin_unimp </td>
-   <td style="text-align:left;"> Female petite bourgeoisie </td>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.46 </td>
@@ -903,7 +1059,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.30 </td>
    <td style="text-align:right;"> 1.02 </td>
    <td style="text-align:left;"> safetywk_bin_unimp </td>
-   <td style="text-align:left;"> Male petite bourgeoisie </td>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.36 </td>
@@ -931,7 +1087,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.09 </td>
    <td style="text-align:right;"> 0.54 </td>
    <td style="text-align:left;"> safetywk_bin_unimp </td>
-   <td style="text-align:left;"> Female petite bourgeoisie </td>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.61 </td>
@@ -953,7 +1109,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.23 </td>
    <td style="text-align:right;"> 0.76 </td>
    <td style="text-align:left;"> satjob1_bin_unimp </td>
-   <td style="text-align:left;"> NH white petite bourgeoisie </td>
+   <td style="text-align:left;"> NH white petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.40 </td>
@@ -981,7 +1137,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.33 </td>
    <td style="text-align:right;"> 2.06 </td>
    <td style="text-align:left;"> satjob1_bin_unimp </td>
-   <td style="text-align:left;"> POC petite bourgeoisie </td>
+   <td style="text-align:left;"> POC petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.00 </td>
@@ -1002,7 +1158,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.79 </td>
    <td style="text-align:right;"> 0.99 </td>
    <td style="text-align:left;"> rincblls_bin_unimp </td>
-   <td style="text-align:left;"> NH white petite bourgeoisie </td>
+   <td style="text-align:left;"> NH white petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.48 </td>
@@ -1030,7 +1186,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.91 </td>
    <td style="text-align:right;"> 1.27 </td>
    <td style="text-align:left;"> rincblls_bin_unimp </td>
-   <td style="text-align:left;"> POC petite bourgeoisie </td>
+   <td style="text-align:left;"> POC petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.67 </td>
@@ -1051,7 +1207,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.17 </td>
    <td style="text-align:right;"> 0.68 </td>
    <td style="text-align:left;"> safehlth_bin_unimp </td>
-   <td style="text-align:left;"> NH white petite bourgeoisie </td>
+   <td style="text-align:left;"> NH white petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.71 </td>
@@ -1079,7 +1235,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.71 </td>
    <td style="text-align:right;"> 3.73 </td>
    <td style="text-align:left;"> safehlth_bin_unimp </td>
-   <td style="text-align:left;"> POC petite bourgeoisie </td>
+   <td style="text-align:left;"> POC petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.55 </td>
@@ -1100,7 +1256,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.19 </td>
    <td style="text-align:right;"> 0.59 </td>
    <td style="text-align:left;"> safetywk_bin_unimp </td>
-   <td style="text-align:left;"> NH white petite bourgeoisie </td>
+   <td style="text-align:left;"> NH white petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.53 </td>
@@ -1128,7 +1284,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.22 </td>
    <td style="text-align:right;"> 1.38 </td>
    <td style="text-align:left;"> safetywk_bin_unimp </td>
-   <td style="text-align:left;"> POC petite bourgeoisie </td>
+   <td style="text-align:left;"> POC petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.00 </td>
@@ -1155,10 +1311,10 @@ less_adj <- mysvy(svy_dat_mi, outvars, "~class + rcs(age, 3) + rcs(year, 3)")
 regs_less <- matrix_func(4, 4, outvars)
 
 #format matrix
-binded_overall <- formatted(c("Managers", "Petite bourgeoisie", "Capitalists"), 4,
+binded_overall <- formatted(c("Managers", "Petit bourgeoisie", "Capitalists"), 4,
                             c("workdiff_bin_unimp", "learnnew_bin_unimp", "condemnd_bin_unimp", "workfast_bin_unimp"),
                             "Workers",
-                            c("Workers", "Managers", "Petite bourgeoisie", "Capitalists"))
+                            c("Workers", "Managers", "Petit bourgeoisie", "Capitalists"))
 
 #######gender interaction
 #run regression
@@ -1168,12 +1324,12 @@ less_adj <- mysvy(svy_dat_mi, outvars, "~class_gender + rcs(age, 3) + rcs(year, 
 regs_less <- matrix_func(4, 8, outvars)
 
 #format matrix
-binded_gender <- formatted(c("Male managers", "Male petite bourgeoisie", "Male capitalists",
-                             "Female workers", "Female managers", "Female petite bourgeoisie", "Female capitalists"), 4,
+binded_gender <- formatted(c("Male managers", "Male petit bourgeoisie", "Male capitalists",
+                             "Female workers", "Female managers", "Female petit bourgeoisie", "Female capitalists"), 4,
                            c("workdiff_bin_unimp", "learnnew_bin_unimp", "condemnd_bin_unimp", "workfast_bin_unimp"),
                            "Male workers",
-                           c("Male workers", "Male managers", "Male petite bourgeoisie", "Male capitalists",
-                             "Female workers", "Female managers", "Female petite bourgeoisie", "Female capitalists"))
+                           c("Male workers", "Male managers", "Male petit bourgeoisie", "Male capitalists",
+                             "Female workers", "Female managers", "Female petit bourgeoisie", "Female capitalists"))
 
 #######race interaction
 #run regression
@@ -1183,12 +1339,12 @@ less_adj <- mysvy(subset(svy_dat_mi, race_h!="NH other"), outvars, "~class_poc +
 regs_less <- matrix_func(4, 8, outvars)
 
 #format matrix
-binded_race <- formatted(c("NH white managers", "NH white petite bourgeoisie", "NH white capitalists",
-                           "POC workers", "POC managers", "POC petite bourgeoisie", "POC capitalists"), 4,
+binded_race <- formatted(c("NH white managers", "NH white petit bourgeoisie", "NH white capitalists",
+                           "POC workers", "POC managers", "POC petit bourgeoisie", "POC capitalists"), 4,
                          outvars,
                          "NH white workers",
-                         c("NH white workers", "NH white managers", "NH white petite bourgeoisie", "NH white capitalists",
-                           "POC workers", "POC managers", "POC petite bourgeoisie", "POC capitalists"))
+                         c("NH white workers", "NH white managers", "NH white petit bourgeoisie", "NH white capitalists",
+                           "POC workers", "POC managers", "POC petit bourgeoisie", "POC capitalists"))
 ```
 
 
@@ -1204,11 +1360,13 @@ plotted(binded_overall, limitsvec=c(0.082, 2.84), breaksvec=c(0.125, 0.25, 0.5, 
   plot_layout(ncol=1, heights=c(1, 2, 2))
 ```
 
-![](analysis_3_9_21_MICE_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
+![](analysis_5_3_21_MICE_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
 
 ```r
+ggsave("labor_process.png", height=5, width=10.25, dpi=600)
+
 #table 
-tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28,1:5]), "Ref: workers/male workers/white workers") 
+tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28,1:5]), "Ref: workers/male workers/white workers")
 ```
 
 <div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:250px; overflow-x: scroll; width:100%; "><table class="table table-striped" style="margin-left: auto; margin-right: auto;">
@@ -1236,7 +1394,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.64 </td>
    <td style="text-align:right;"> 1.11 </td>
    <td style="text-align:left;"> workdiff_bin_unimp </td>
-   <td style="text-align:left;"> Petite bourgeoisie </td>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.36 </td>
@@ -1257,7 +1415,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.57 </td>
    <td style="text-align:right;"> 0.93 </td>
    <td style="text-align:left;"> learnnew_bin_unimp </td>
-   <td style="text-align:left;"> Petite bourgeoisie </td>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.22 </td>
@@ -1278,7 +1436,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.57 </td>
    <td style="text-align:right;"> 0.91 </td>
    <td style="text-align:left;"> condemnd_bin_unimp </td>
-   <td style="text-align:left;"> Petite bourgeoisie </td>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.21 </td>
@@ -1299,7 +1457,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.79 </td>
    <td style="text-align:right;"> 0.95 </td>
    <td style="text-align:left;"> workfast_bin_unimp </td>
-   <td style="text-align:left;"> Petite bourgeoisie </td>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.26 </td>
@@ -1321,7 +1479,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.40 </td>
    <td style="text-align:right;"> 0.99 </td>
    <td style="text-align:left;"> workdiff_bin_unimp </td>
-   <td style="text-align:left;"> Male petite bourgeoisie </td>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.34 </td>
@@ -1349,7 +1507,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.65 </td>
    <td style="text-align:right;"> 1.31 </td>
    <td style="text-align:left;"> workdiff_bin_unimp </td>
-   <td style="text-align:left;"> Female petite bourgeoisie </td>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.30 </td>
@@ -1370,7 +1528,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.31 </td>
    <td style="text-align:right;"> 0.72 </td>
    <td style="text-align:left;"> learnnew_bin_unimp </td>
-   <td style="text-align:left;"> Male petite bourgeoisie </td>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.18 </td>
@@ -1398,7 +1556,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.68 </td>
    <td style="text-align:right;"> 1.28 </td>
    <td style="text-align:left;"> learnnew_bin_unimp </td>
-   <td style="text-align:left;"> Female petite bourgeoisie </td>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.32 </td>
@@ -1419,7 +1577,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.59 </td>
    <td style="text-align:right;"> 1.12 </td>
    <td style="text-align:left;"> condemnd_bin_unimp </td>
-   <td style="text-align:left;"> Male petite bourgeoisie </td>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.37 </td>
@@ -1447,7 +1605,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.53 </td>
    <td style="text-align:right;"> 1.00 </td>
    <td style="text-align:left;"> condemnd_bin_unimp </td>
-   <td style="text-align:left;"> Female petite bourgeoisie </td>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.03 </td>
@@ -1468,7 +1626,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.78 </td>
    <td style="text-align:right;"> 1.03 </td>
    <td style="text-align:left;"> workfast_bin_unimp </td>
-   <td style="text-align:left;"> Male petite bourgeoisie </td>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.27 </td>
@@ -1496,7 +1654,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.76 </td>
    <td style="text-align:right;"> 1.01 </td>
    <td style="text-align:left;"> workfast_bin_unimp </td>
-   <td style="text-align:left;"> Female petite bourgeoisie </td>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.31 </td>
@@ -1518,7 +1676,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.46 </td>
    <td style="text-align:right;"> 0.89 </td>
    <td style="text-align:left;"> workdiff_bin_unimp </td>
-   <td style="text-align:left;"> NH white petite bourgeoisie </td>
+   <td style="text-align:left;"> NH white petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.39 </td>
@@ -1546,7 +1704,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 1.15 </td>
    <td style="text-align:right;"> 2.83 </td>
    <td style="text-align:left;"> workdiff_bin_unimp </td>
-   <td style="text-align:left;"> POC petite bourgeoisie </td>
+   <td style="text-align:left;"> POC petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.38 </td>
@@ -1567,7 +1725,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.49 </td>
    <td style="text-align:right;"> 0.85 </td>
    <td style="text-align:left;"> learnnew_bin_unimp </td>
-   <td style="text-align:left;"> NH white petite bourgeoisie </td>
+   <td style="text-align:left;"> NH white petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.23 </td>
@@ -1595,7 +1753,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.87 </td>
    <td style="text-align:right;"> 2.08 </td>
    <td style="text-align:left;"> learnnew_bin_unimp </td>
-   <td style="text-align:left;"> POC petite bourgeoisie </td>
+   <td style="text-align:left;"> POC petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.27 </td>
@@ -1616,7 +1774,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.60 </td>
    <td style="text-align:right;"> 1.00 </td>
    <td style="text-align:left;"> condemnd_bin_unimp </td>
-   <td style="text-align:left;"> NH white petite bourgeoisie </td>
+   <td style="text-align:left;"> NH white petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.31 </td>
@@ -1644,7 +1802,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.30 </td>
    <td style="text-align:right;"> 0.92 </td>
    <td style="text-align:left;"> condemnd_bin_unimp </td>
-   <td style="text-align:left;"> POC petite bourgeoisie </td>
+   <td style="text-align:left;"> POC petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.61 </td>
@@ -1665,7 +1823,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.76 </td>
    <td style="text-align:right;"> 0.95 </td>
    <td style="text-align:left;"> workfast_bin_unimp </td>
-   <td style="text-align:left;"> NH white petite bourgeoisie </td>
+   <td style="text-align:left;"> NH white petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.24 </td>
@@ -1693,7 +1851,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.55 </td>
    <td style="text-align:right;"> 0.89 </td>
    <td style="text-align:left;"> workfast_bin_unimp </td>
-   <td style="text-align:left;"> POC petite bourgeoisie </td>
+   <td style="text-align:left;"> POC petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.08 </td>
@@ -1720,10 +1878,10 @@ less_adj <- mysvy(svy_dat_mi, outvars, "~class + rcs(age, 3) + rcs(year, 3)")
 regs_less <- matrix_func(4, 4, outvars)
 
 #format matrix
-binded_overall <- formatted(c("Managers", "Petite bourgeoisie", "Capitalists"), 4,
+binded_overall <- formatted(c("Managers", "Petit bourgeoisie", "Capitalists"), 4,
                             c("wkdecide_bin_unimp", "wkfreedm_bin_unimp", "mustwork_bin_unimp", "chngtme_bin_unimp"),
                             "Workers",
-                            c("Workers", "Managers", "Petite bourgeoisie", "Capitalists"))
+                            c("Workers", "Managers", "Petit bourgeoisie", "Capitalists"))
 
 #######gender interaction
 #run regression
@@ -1733,12 +1891,12 @@ less_adj <- mysvy(svy_dat_mi, outvars, "~class_gender + rcs(age, 3) + rcs(year, 
 regs_less <- matrix_func(4, 8, outvars)
 
 #format matrix
-binded_gender <- formatted(c("Male managers", "Male petite bourgeoisie", "Male capitalists",
-                             "Female workers", "Female managers", "Female petite bourgeoisie", "Female capitalists"), 4,
+binded_gender <- formatted(c("Male managers", "Male petit bourgeoisie", "Male capitalists",
+                             "Female workers", "Female managers", "Female petit bourgeoisie", "Female capitalists"), 4,
                            c("wkdecide_bin_unimp", "wkfreedm_bin_unimp", "mustwork_bin_unimp", "chngtme_bin_unimp"),
                            "Male workers",
-                           c("Male workers", "Male managers", "Male petite bourgeoisie", "Male capitalists",
-                             "Female workers", "Female managers", "Female petite bourgeoisie", "Female capitalists"))
+                           c("Male workers", "Male managers", "Male petit bourgeoisie", "Male capitalists",
+                             "Female workers", "Female managers", "Female petit bourgeoisie", "Female capitalists"))
 
 #######race interaction
 #run regression
@@ -1748,12 +1906,12 @@ less_adj <- mysvy(subset(svy_dat_mi, race_h!="NH other"), outvars, "~class_poc +
 regs_less <- matrix_func(4, 8, outvars)
 
 #format matrix
-binded_race <- formatted(c("NH white managers", "NH white petite bourgeoisie", "NH white capitalists",
-                           "POC workers", "POC managers", "POC petite bourgeoisie", "POC capitalists"), 4,
+binded_race <- formatted(c("NH white managers", "NH white petit bourgeoisie", "NH white capitalists",
+                           "POC workers", "POC managers", "POC petit bourgeoisie", "POC capitalists"), 4,
                          outvars,
                          "NH white workers",
-                         c("NH white workers", "NH white managers", "NH white petite bourgeoisie", "NH white capitalists",
-                           "POC workers", "POC managers", "POC petite bourgeoisie", "POC capitalists"))
+                         c("NH white workers", "NH white managers", "NH white petit bourgeoisie", "NH white capitalists",
+                           "POC workers", "POC managers", "POC petit bourgeoisie", "POC capitalists"))
 ```
 
 
@@ -1769,11 +1927,13 @@ plotted(binded_overall, limitsvec=c(0.026, 2.72), breaksvec=c(0.031, 0.0625, 0.1
   plot_layout(ncol=1, heights=c(1, 2, 2))
 ```
 
-![](analysis_3_9_21_MICE_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+![](analysis_5_3_21_MICE_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
 
 ```r
+ggsave("autonomy.png", height=5, width=11.25, dpi=600)
+
 #table 
-tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28,1:5]), "Ref: workers/male workers/white workers") 
+tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28,1:5]), "Ref: workers/male workers/white workers")
 ```
 
 <div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:250px; overflow-x: scroll; width:100%; "><table class="table table-striped" style="margin-left: auto; margin-right: auto;">
@@ -1801,7 +1961,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 1.19 </td>
    <td style="text-align:right;"> 1.59 </td>
    <td style="text-align:left;"> wkdecide_bin_unimp </td>
-   <td style="text-align:left;"> Petite bourgeoisie </td>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.53 </td>
@@ -1822,7 +1982,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.16 </td>
    <td style="text-align:right;"> 0.40 </td>
    <td style="text-align:left;"> wkfreedm_bin_unimp </td>
-   <td style="text-align:left;"> Petite bourgeoisie </td>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.11 </td>
@@ -1843,7 +2003,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.79 </td>
    <td style="text-align:right;"> 1.18 </td>
    <td style="text-align:left;"> mustwork_bin_unimp </td>
-   <td style="text-align:left;"> Petite bourgeoisie </td>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.37 </td>
@@ -1864,7 +2024,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.18 </td>
    <td style="text-align:right;"> 0.31 </td>
    <td style="text-align:left;"> chngtme_bin_unimp </td>
-   <td style="text-align:left;"> Petite bourgeoisie </td>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.28 </td>
@@ -1886,7 +2046,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.92 </td>
    <td style="text-align:right;"> 1.44 </td>
    <td style="text-align:left;"> wkdecide_bin_unimp </td>
-   <td style="text-align:left;"> Male petite bourgeoisie </td>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.57 </td>
@@ -1914,7 +2074,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 1.36 </td>
    <td style="text-align:right;"> 1.95 </td>
    <td style="text-align:left;"> wkdecide_bin_unimp </td>
-   <td style="text-align:left;"> Female petite bourgeoisie </td>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.45 </td>
@@ -1935,7 +2095,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.13 </td>
    <td style="text-align:right;"> 0.43 </td>
    <td style="text-align:left;"> wkfreedm_bin_unimp </td>
-   <td style="text-align:left;"> Male petite bourgeoisie </td>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.11 </td>
@@ -1963,7 +2123,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.14 </td>
    <td style="text-align:right;"> 0.52 </td>
    <td style="text-align:left;"> wkfreedm_bin_unimp </td>
-   <td style="text-align:left;"> Female petite bourgeoisie </td>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.12 </td>
@@ -1984,7 +2144,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.85 </td>
    <td style="text-align:right;"> 1.37 </td>
    <td style="text-align:left;"> mustwork_bin_unimp </td>
-   <td style="text-align:left;"> Male petite bourgeoisie </td>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.29 </td>
@@ -2012,7 +2172,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.41 </td>
    <td style="text-align:right;"> 0.79 </td>
    <td style="text-align:left;"> mustwork_bin_unimp </td>
-   <td style="text-align:left;"> Female petite bourgeoisie </td>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.89 </td>
@@ -2033,7 +2193,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.11 </td>
    <td style="text-align:right;"> 0.28 </td>
    <td style="text-align:left;"> chngtme_bin_unimp </td>
-   <td style="text-align:left;"> Male petite bourgeoisie </td>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.30 </td>
@@ -2061,7 +2221,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.23 </td>
    <td style="text-align:right;"> 0.43 </td>
    <td style="text-align:left;"> chngtme_bin_unimp </td>
-   <td style="text-align:left;"> Female petite bourgeoisie </td>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.26 </td>
@@ -2083,7 +2243,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 1.12 </td>
    <td style="text-align:right;"> 1.61 </td>
    <td style="text-align:left;"> wkdecide_bin_unimp </td>
-   <td style="text-align:left;"> NH white petite bourgeoisie </td>
+   <td style="text-align:left;"> NH white petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.59 </td>
@@ -2111,7 +2271,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 1.75 </td>
    <td style="text-align:right;"> 2.72 </td>
    <td style="text-align:left;"> wkdecide_bin_unimp </td>
-   <td style="text-align:left;"> POC petite bourgeoisie </td>
+   <td style="text-align:left;"> POC petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.81 </td>
@@ -2132,7 +2292,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.15 </td>
    <td style="text-align:right;"> 0.42 </td>
    <td style="text-align:left;"> wkfreedm_bin_unimp </td>
-   <td style="text-align:left;"> NH white petite bourgeoisie </td>
+   <td style="text-align:left;"> NH white petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.11 </td>
@@ -2160,7 +2320,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.12 </td>
    <td style="text-align:right;"> 0.72 </td>
    <td style="text-align:left;"> wkfreedm_bin_unimp </td>
-   <td style="text-align:left;"> POC petite bourgeoisie </td>
+   <td style="text-align:left;"> POC petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.18 </td>
@@ -2181,7 +2341,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.79 </td>
    <td style="text-align:right;"> 1.25 </td>
    <td style="text-align:left;"> mustwork_bin_unimp </td>
-   <td style="text-align:left;"> NH white petite bourgeoisie </td>
+   <td style="text-align:left;"> NH white petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.44 </td>
@@ -2209,7 +2369,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.53 </td>
    <td style="text-align:right;"> 1.46 </td>
    <td style="text-align:left;"> mustwork_bin_unimp </td>
-   <td style="text-align:left;"> POC petite bourgeoisie </td>
+   <td style="text-align:left;"> POC petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.10 </td>
@@ -2230,7 +2390,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.19 </td>
    <td style="text-align:right;"> 0.34 </td>
    <td style="text-align:left;"> chngtme_bin_unimp </td>
-   <td style="text-align:left;"> NH white petite bourgeoisie </td>
+   <td style="text-align:left;"> NH white petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.24 </td>
@@ -2258,7 +2418,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.16 </td>
    <td style="text-align:right;"> 0.52 </td>
    <td style="text-align:left;"> chngtme_bin_unimp </td>
-   <td style="text-align:left;"> POC petite bourgeoisie </td>
+   <td style="text-align:left;"> POC petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.42 </td>
@@ -2285,10 +2445,10 @@ less_adj <- mysvy(svy_dat_mi, outvars, "~class + rcs(age, 3) + rcs(year, 3)")
 regs_less <- matrix_func(4, 4, outvars)
 
 #format matrix
-binded_overall <- formatted(c("Managers", "Petite bourgeoisie", "Capitalists"), 4,
+binded_overall <- formatted(c("Managers", "Petit bourgeoisie", "Capitalists"), 4,
                             c("manvsemp_bin_unimp", "trustman_bin_unimp", "respect_bin_unimp", "disc_haras_bin_unimp"),
                             "Workers",
-                            c("Workers", "Managers", "Petite bourgeoisie", "Capitalists"))
+                            c("Workers", "Managers", "Petit bourgeoisie", "Capitalists"))
 
 #######gender interaction
 #run regression
@@ -2298,12 +2458,12 @@ less_adj <- mysvy(svy_dat_mi, outvars, "~class_gender + rcs(age, 3) + rcs(year, 
 regs_less <- matrix_func(4, 8, outvars)
 
 #format matrix
-binded_gender <- formatted(c("Male managers", "Male petite bourgeoisie", "Male capitalists",
-                             "Female workers", "Female managers", "Female petite bourgeoisie", "Female capitalists"), 4,
+binded_gender <- formatted(c("Male managers", "Male petit bourgeoisie", "Male capitalists",
+                             "Female workers", "Female managers", "Female petit bourgeoisie", "Female capitalists"), 4,
                            c("manvsemp_bin_unimp", "trustman_bin_unimp", "respect_bin_unimp", "disc_haras_bin_unimp"),
                            "Male workers",
-                           c("Male workers", "Male managers", "Male petite bourgeoisie", "Male capitalists",
-                             "Female workers", "Female managers", "Female petite bourgeoisie", "Female capitalists"))
+                           c("Male workers", "Male managers", "Male petit bourgeoisie", "Male capitalists",
+                             "Female workers", "Female managers", "Female petit bourgeoisie", "Female capitalists"))
 
 #######race interaction
 #run regression
@@ -2313,12 +2473,12 @@ less_adj <- mysvy(subset(svy_dat_mi, race_h!="NH other"), outvars, "~class_poc +
 regs_less <- matrix_func(4, 8, outvars)
 
 #format matrix
-binded_race <- formatted(c("NH white managers", "NH white petite bourgeoisie", "NH white capitalists",
-                           "POC workers", "POC managers", "POC petite bourgeoisie", "POC capitalists"), 4,
+binded_race <- formatted(c("NH white managers", "NH white petit bourgeoisie", "NH white capitalists",
+                           "POC workers", "POC managers", "POC petit bourgeoisie", "POC capitalists"), 4,
                          outvars,
                          "NH white workers",
-                         c("NH white workers", "NH white managers", "NH white petite bourgeoisie", "NH white capitalists",
-                           "POC workers", "POC managers", "POC petite bourgeoisie", "POC capitalists"))
+                         c("NH white workers", "NH white managers", "NH white petit bourgeoisie", "NH white capitalists",
+                           "POC workers", "POC managers", "POC petit bourgeoisie", "POC capitalists"))
 ```
 
 
@@ -2335,11 +2495,13 @@ plotted(binded_overall, limitsvec=c(0.017, 2.42), breaksvec=c(0.031, 0.0625, 0.1
   plot_layout(ncol=1, heights=c(1, 2, 2))
 ```
 
-![](analysis_3_9_21_MICE_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
+![](analysis_5_3_21_MICE_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
 
 ```r
+ggsave("conflict.png", height=5, width=11.25, dpi=600)
+
 #table 
-tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28,1:5]), "Ref: workers/male workers/white workers") 
+tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28,1:5]), "Ref: workers/male workers/white workers")
 ```
 
 <div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:250px; overflow-x: scroll; width:100%; "><table class="table table-striped" style="margin-left: auto; margin-right: auto;">
@@ -2367,7 +2529,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.14 </td>
    <td style="text-align:right;"> 0.54 </td>
    <td style="text-align:left;"> manvsemp_bin_unimp </td>
-   <td style="text-align:left;"> Petite bourgeoisie </td>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.23 </td>
@@ -2388,7 +2550,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.16 </td>
    <td style="text-align:right;"> 0.37 </td>
    <td style="text-align:left;"> trustman_bin_unimp </td>
-   <td style="text-align:left;"> Petite bourgeoisie </td>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.23 </td>
@@ -2409,7 +2571,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.32 </td>
    <td style="text-align:right;"> 0.82 </td>
    <td style="text-align:left;"> respect_bin_unimp </td>
-   <td style="text-align:left;"> Petite bourgeoisie </td>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.34 </td>
@@ -2430,7 +2592,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.56 </td>
    <td style="text-align:right;"> 0.94 </td>
    <td style="text-align:left;"> disc_haras_bin_unimp </td>
-   <td style="text-align:left;"> Petite bourgeoisie </td>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.89 </td>
@@ -2452,7 +2614,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.15 </td>
    <td style="text-align:right;"> 0.87 </td>
    <td style="text-align:left;"> manvsemp_bin_unimp </td>
-   <td style="text-align:left;"> Male petite bourgeoisie </td>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.28 </td>
@@ -2480,7 +2642,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.08 </td>
    <td style="text-align:right;"> 0.63 </td>
    <td style="text-align:left;"> manvsemp_bin_unimp </td>
-   <td style="text-align:left;"> Female petite bourgeoisie </td>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.12 </td>
@@ -2501,7 +2663,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.16 </td>
    <td style="text-align:right;"> 0.47 </td>
    <td style="text-align:left;"> trustman_bin_unimp </td>
-   <td style="text-align:left;"> Male petite bourgeoisie </td>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.23 </td>
@@ -2529,7 +2691,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.11 </td>
    <td style="text-align:right;"> 0.42 </td>
    <td style="text-align:left;"> trustman_bin_unimp </td>
-   <td style="text-align:left;"> Female petite bourgeoisie </td>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.20 </td>
@@ -2550,7 +2712,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.30 </td>
    <td style="text-align:right;"> 1.12 </td>
    <td style="text-align:left;"> respect_bin_unimp </td>
-   <td style="text-align:left;"> Male petite bourgeoisie </td>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.38 </td>
@@ -2578,7 +2740,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.27 </td>
    <td style="text-align:right;"> 1.05 </td>
    <td style="text-align:left;"> respect_bin_unimp </td>
-   <td style="text-align:left;"> Female petite bourgeoisie </td>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.36 </td>
@@ -2599,7 +2761,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.72 </td>
    <td style="text-align:right;"> 1.43 </td>
    <td style="text-align:left;"> disc_haras_bin_unimp </td>
-   <td style="text-align:left;"> Male petite bourgeoisie </td>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.04 </td>
@@ -2627,7 +2789,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.50 </td>
    <td style="text-align:right;"> 1.11 </td>
    <td style="text-align:left;"> disc_haras_bin_unimp </td>
-   <td style="text-align:left;"> Female petite bourgeoisie </td>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.18 </td>
@@ -2649,7 +2811,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.14 </td>
    <td style="text-align:right;"> 0.61 </td>
    <td style="text-align:left;"> manvsemp_bin_unimp </td>
-   <td style="text-align:left;"> NH white petite bourgeoisie </td>
+   <td style="text-align:left;"> NH white petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.25 </td>
@@ -2677,7 +2839,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.08 </td>
    <td style="text-align:right;"> 1.46 </td>
    <td style="text-align:left;"> manvsemp_bin_unimp </td>
-   <td style="text-align:left;"> POC petite bourgeoisie </td>
+   <td style="text-align:left;"> POC petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.00 </td>
@@ -2698,7 +2860,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.12 </td>
    <td style="text-align:right;"> 0.32 </td>
    <td style="text-align:left;"> trustman_bin_unimp </td>
-   <td style="text-align:left;"> NH white petite bourgeoisie </td>
+   <td style="text-align:left;"> NH white petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.22 </td>
@@ -2726,7 +2888,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.20 </td>
    <td style="text-align:right;"> 0.91 </td>
    <td style="text-align:left;"> trustman_bin_unimp </td>
-   <td style="text-align:left;"> POC petite bourgeoisie </td>
+   <td style="text-align:left;"> POC petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.25 </td>
@@ -2747,7 +2909,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.28 </td>
    <td style="text-align:right;"> 0.82 </td>
    <td style="text-align:left;"> respect_bin_unimp </td>
-   <td style="text-align:left;"> NH white petite bourgeoisie </td>
+   <td style="text-align:left;"> NH white petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.33 </td>
@@ -2775,7 +2937,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.21 </td>
    <td style="text-align:right;"> 1.35 </td>
    <td style="text-align:left;"> respect_bin_unimp </td>
-   <td style="text-align:left;"> POC petite bourgeoisie </td>
+   <td style="text-align:left;"> POC petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.42 </td>
@@ -2796,7 +2958,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.45 </td>
    <td style="text-align:right;"> 0.88 </td>
    <td style="text-align:left;"> disc_haras_bin_unimp </td>
-   <td style="text-align:left;"> NH white petite bourgeoisie </td>
+   <td style="text-align:left;"> NH white petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.80 </td>
@@ -2824,7 +2986,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.76 </td>
    <td style="text-align:right;"> 1.84 </td>
    <td style="text-align:left;"> disc_haras_bin_unimp </td>
-   <td style="text-align:left;"> POC petite bourgeoisie </td>
+   <td style="text-align:left;"> POC petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.50 </td>
@@ -2888,9 +3050,11 @@ conflict <-  ggplot() + theme_void() + ggtitle("Conflict") + theme(plot.title=el
   plot_layout(heights=c(0.001, 1000))  
 ```
 
-![](analysis_3_9_21_MICE_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
+![](analysis_5_3_21_MICE_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
 
 ```r
+ggsave("gender_race_workers.png", height=6, width=8.75, dpi=600)
+
 #table
 kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
   kable_styling("striped") %>%
@@ -2901,6 +3065,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
 <caption>Ref: NH white men</caption>
  <thead>
   <tr>
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">   </th>
    <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> PR </th>
    <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> Lower </th>
    <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> Upper </th>
@@ -2911,6 +3076,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
  </thead>
 <tbody>
   <tr>
+   <td style="text-align:left;"> poc_genderNH white women </td>
    <td style="text-align:right;"> 0.75 </td>
    <td style="text-align:right;"> 0.56 </td>
    <td style="text-align:right;"> 1.01 </td>
@@ -2919,6 +3085,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC men </td>
    <td style="text-align:right;"> 1.03 </td>
    <td style="text-align:right;"> 0.69 </td>
    <td style="text-align:right;"> 1.54 </td>
@@ -2927,6 +3094,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC women </td>
    <td style="text-align:right;"> 0.91 </td>
    <td style="text-align:right;"> 0.63 </td>
    <td style="text-align:right;"> 1.31 </td>
@@ -2935,6 +3103,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderNH white women1 </td>
    <td style="text-align:right;"> 1.43 </td>
    <td style="text-align:right;"> 1.32 </td>
    <td style="text-align:right;"> 1.56 </td>
@@ -2943,6 +3112,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC men1 </td>
    <td style="text-align:right;"> 1.07 </td>
    <td style="text-align:right;"> 0.95 </td>
    <td style="text-align:right;"> 1.22 </td>
@@ -2951,6 +3121,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC women1 </td>
    <td style="text-align:right;"> 1.46 </td>
    <td style="text-align:right;"> 1.33 </td>
    <td style="text-align:right;"> 1.60 </td>
@@ -2959,6 +3130,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderNH white women2 </td>
    <td style="text-align:right;"> 1.13 </td>
    <td style="text-align:right;"> 0.82 </td>
    <td style="text-align:right;"> 1.58 </td>
@@ -2967,6 +3139,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC men2 </td>
    <td style="text-align:right;"> 1.42 </td>
    <td style="text-align:right;"> 0.93 </td>
    <td style="text-align:right;"> 2.17 </td>
@@ -2975,6 +3148,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC women2 </td>
    <td style="text-align:right;"> 1.53 </td>
    <td style="text-align:right;"> 1.07 </td>
    <td style="text-align:right;"> 2.19 </td>
@@ -2983,6 +3157,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderNH white women3 </td>
    <td style="text-align:right;"> 0.91 </td>
    <td style="text-align:right;"> 0.69 </td>
    <td style="text-align:right;"> 1.20 </td>
@@ -2991,6 +3166,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC men3 </td>
    <td style="text-align:right;"> 0.89 </td>
    <td style="text-align:right;"> 0.60 </td>
    <td style="text-align:right;"> 1.31 </td>
@@ -2999,6 +3175,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC women3 </td>
    <td style="text-align:right;"> 1.11 </td>
    <td style="text-align:right;"> 0.81 </td>
    <td style="text-align:right;"> 1.52 </td>
@@ -3007,6 +3184,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderNH white women4 </td>
    <td style="text-align:right;"> 0.78 </td>
    <td style="text-align:right;"> 0.61 </td>
    <td style="text-align:right;"> 0.99 </td>
@@ -3015,6 +3193,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC men4 </td>
    <td style="text-align:right;"> 1.05 </td>
    <td style="text-align:right;"> 0.81 </td>
    <td style="text-align:right;"> 1.36 </td>
@@ -3023,6 +3202,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC women4 </td>
    <td style="text-align:right;"> 1.00 </td>
    <td style="text-align:right;"> 0.77 </td>
    <td style="text-align:right;"> 1.29 </td>
@@ -3031,6 +3211,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderNH white women5 </td>
    <td style="text-align:right;"> 0.93 </td>
    <td style="text-align:right;"> 0.75 </td>
    <td style="text-align:right;"> 1.14 </td>
@@ -3039,6 +3220,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC men5 </td>
    <td style="text-align:right;"> 1.18 </td>
    <td style="text-align:right;"> 0.92 </td>
    <td style="text-align:right;"> 1.53 </td>
@@ -3047,6 +3229,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC women5 </td>
    <td style="text-align:right;"> 1.03 </td>
    <td style="text-align:right;"> 0.81 </td>
    <td style="text-align:right;"> 1.32 </td>
@@ -3055,6 +3238,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderNH white women6 </td>
    <td style="text-align:right;"> 1.10 </td>
    <td style="text-align:right;"> 0.94 </td>
    <td style="text-align:right;"> 1.29 </td>
@@ -3063,6 +3247,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC men6 </td>
    <td style="text-align:right;"> 0.90 </td>
    <td style="text-align:right;"> 0.70 </td>
    <td style="text-align:right;"> 1.16 </td>
@@ -3071,6 +3256,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC women6 </td>
    <td style="text-align:right;"> 1.01 </td>
    <td style="text-align:right;"> 0.84 </td>
    <td style="text-align:right;"> 1.23 </td>
@@ -3079,6 +3265,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderNH white women7 </td>
    <td style="text-align:right;"> 1.05 </td>
    <td style="text-align:right;"> 0.99 </td>
    <td style="text-align:right;"> 1.12 </td>
@@ -3087,6 +3274,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC men7 </td>
    <td style="text-align:right;"> 0.90 </td>
    <td style="text-align:right;"> 0.81 </td>
    <td style="text-align:right;"> 0.99 </td>
@@ -3095,6 +3283,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC women7 </td>
    <td style="text-align:right;"> 0.89 </td>
    <td style="text-align:right;"> 0.82 </td>
    <td style="text-align:right;"> 0.97 </td>
@@ -3103,6 +3292,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderNH white women8 </td>
    <td style="text-align:right;"> 0.95 </td>
    <td style="text-align:right;"> 0.81 </td>
    <td style="text-align:right;"> 1.11 </td>
@@ -3111,6 +3301,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Autonomy </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC men8 </td>
    <td style="text-align:right;"> 1.43 </td>
    <td style="text-align:right;"> 1.18 </td>
    <td style="text-align:right;"> 1.73 </td>
@@ -3119,6 +3310,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Autonomy </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC women8 </td>
    <td style="text-align:right;"> 1.46 </td>
    <td style="text-align:right;"> 1.23 </td>
    <td style="text-align:right;"> 1.74 </td>
@@ -3127,6 +3319,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Autonomy </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderNH white women9 </td>
    <td style="text-align:right;"> 0.96 </td>
    <td style="text-align:right;"> 0.79 </td>
    <td style="text-align:right;"> 1.16 </td>
@@ -3135,6 +3328,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Autonomy </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC men9 </td>
    <td style="text-align:right;"> 1.11 </td>
    <td style="text-align:right;"> 0.85 </td>
    <td style="text-align:right;"> 1.44 </td>
@@ -3143,6 +3337,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Autonomy </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC women9 </td>
    <td style="text-align:right;"> 1.10 </td>
    <td style="text-align:right;"> 0.87 </td>
    <td style="text-align:right;"> 1.40 </td>
@@ -3151,6 +3346,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Autonomy </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderNH white women10 </td>
    <td style="text-align:right;"> 0.70 </td>
    <td style="text-align:right;"> 0.60 </td>
    <td style="text-align:right;"> 0.83 </td>
@@ -3159,6 +3355,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Autonomy </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC men10 </td>
    <td style="text-align:right;"> 1.05 </td>
    <td style="text-align:right;"> 0.87 </td>
    <td style="text-align:right;"> 1.27 </td>
@@ -3167,6 +3364,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Autonomy </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC women10 </td>
    <td style="text-align:right;"> 0.81 </td>
    <td style="text-align:right;"> 0.67 </td>
    <td style="text-align:right;"> 0.97 </td>
@@ -3175,6 +3373,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Autonomy </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderNH white women11 </td>
    <td style="text-align:right;"> 1.09 </td>
    <td style="text-align:right;"> 0.99 </td>
    <td style="text-align:right;"> 1.20 </td>
@@ -3183,6 +3382,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Autonomy </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC men11 </td>
    <td style="text-align:right;"> 1.25 </td>
    <td style="text-align:right;"> 1.11 </td>
    <td style="text-align:right;"> 1.41 </td>
@@ -3191,6 +3391,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Autonomy </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC women11 </td>
    <td style="text-align:right;"> 1.22 </td>
    <td style="text-align:right;"> 1.10 </td>
    <td style="text-align:right;"> 1.37 </td>
@@ -3199,6 +3400,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Autonomy </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderNH white women12 </td>
    <td style="text-align:right;"> 0.82 </td>
    <td style="text-align:right;"> 0.62 </td>
    <td style="text-align:right;"> 1.10 </td>
@@ -3207,6 +3409,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC men12 </td>
    <td style="text-align:right;"> 0.63 </td>
    <td style="text-align:right;"> 0.40 </td>
    <td style="text-align:right;"> 0.99 </td>
@@ -3215,6 +3418,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC women12 </td>
    <td style="text-align:right;"> 1.17 </td>
    <td style="text-align:right;"> 0.84 </td>
    <td style="text-align:right;"> 1.63 </td>
@@ -3223,6 +3427,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderNH white women13 </td>
    <td style="text-align:right;"> 0.84 </td>
    <td style="text-align:right;"> 0.72 </td>
    <td style="text-align:right;"> 0.99 </td>
@@ -3231,6 +3436,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC men13 </td>
    <td style="text-align:right;"> 0.83 </td>
    <td style="text-align:right;"> 0.65 </td>
    <td style="text-align:right;"> 1.05 </td>
@@ -3239,6 +3445,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC women13 </td>
    <td style="text-align:right;"> 1.15 </td>
    <td style="text-align:right;"> 0.95 </td>
    <td style="text-align:right;"> 1.38 </td>
@@ -3247,6 +3454,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderNH white women14 </td>
    <td style="text-align:right;"> 0.93 </td>
    <td style="text-align:right;"> 0.71 </td>
    <td style="text-align:right;"> 1.22 </td>
@@ -3255,6 +3463,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC men14 </td>
    <td style="text-align:right;"> 0.73 </td>
    <td style="text-align:right;"> 0.50 </td>
    <td style="text-align:right;"> 1.09 </td>
@@ -3263,6 +3472,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC women14 </td>
    <td style="text-align:right;"> 1.14 </td>
    <td style="text-align:right;"> 0.82 </td>
    <td style="text-align:right;"> 1.58 </td>
@@ -3271,6 +3481,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderNH white women15 </td>
    <td style="text-align:right;"> 1.65 </td>
    <td style="text-align:right;"> 1.39 </td>
    <td style="text-align:right;"> 1.97 </td>
@@ -3279,6 +3490,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC men15 </td>
    <td style="text-align:right;"> 1.69 </td>
    <td style="text-align:right;"> 1.34 </td>
    <td style="text-align:right;"> 2.14 </td>
@@ -3287,6 +3499,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC women15 </td>
    <td style="text-align:right;"> 1.70 </td>
    <td style="text-align:right;"> 1.36 </td>
    <td style="text-align:right;"> 2.13 </td>
@@ -3641,146 +3854,6 @@ kable(x[,1:4]) %>%
    <td style="text-align:left;"> 0.24 (0.43) </td>
    <td style="text-align:left;"> 0.24 (0.43) </td>
    <td style="text-align:left;"> 0.24 (0.42) </td>
-  </tr>
-</tbody>
-</table>
-
-### Survey-weighted distributions of class stratified by race-gender 
-
-
-```r
-x <- svyCreateTableOne(data = svy_dat, vars = "class", strata='poc_gender')
-x <- print(x, printToggle=FALSE, noSpaces=TRUE)
-kable(x[,1:4]) %>%
-  kable_styling(c("striped", "condensed"))
-```
-
-<table class="table table-striped table-condensed" style="margin-left: auto; margin-right: auto;">
- <thead>
-  <tr>
-   <th style="text-align:left;">   </th>
-   <th style="text-align:left;"> NH white men </th>
-   <th style="text-align:left;"> NH white women </th>
-   <th style="text-align:left;"> POC men </th>
-   <th style="text-align:left;"> POC women </th>
-  </tr>
- </thead>
-<tbody>
-  <tr>
-   <td style="text-align:left;"> n </td>
-   <td style="text-align:left;"> 2414.8 </td>
-   <td style="text-align:left;"> 2393.3 </td>
-   <td style="text-align:left;"> 1010.3 </td>
-   <td style="text-align:left;"> 1143.6 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> class (%) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Workers </td>
-   <td style="text-align:left;"> 1120.7 (46.7) </td>
-   <td style="text-align:left;"> 1401.2 (59.1) </td>
-   <td style="text-align:left;"> 579.4 (57.9) </td>
-   <td style="text-align:left;"> 712.8 (62.6) </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Managers </td>
-   <td style="text-align:left;"> 813.3 (33.9) </td>
-   <td style="text-align:left;"> 701.6 (29.6) </td>
-   <td style="text-align:left;"> 282.9 (28.3) </td>
-   <td style="text-align:left;"> 328.5 (28.9) </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Petit bourgeoisie </td>
-   <td style="text-align:left;"> 203.6 (8.5) </td>
-   <td style="text-align:left;"> 189.2 (8.0) </td>
-   <td style="text-align:left;"> 73.9 (7.4) </td>
-   <td style="text-align:left;"> 76.6 (6.7) </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Capitalists </td>
-   <td style="text-align:left;"> 260.3 (10.9) </td>
-   <td style="text-align:left;"> 77.3 (3.3) </td>
-   <td style="text-align:left;"> 64.5 (6.5) </td>
-   <td style="text-align:left;"> 20.3 (1.8) </td>
-  </tr>
-</tbody>
-</table>
-
-### Survey-weighted distributions of family income stratified by class-gender-race 
-
-
-```r
-x <- svyCreateTableOne(data = svy_dat, vars = 'income', strata=c("class_gender", "poc"))
-x <- print(x, printToggle=FALSE, noSpaces=TRUE, nonnormal='income')
-kable(x[,1:16]) %>%
-  kable_styling(c("striped", "condensed"))
-```
-
-<table class="table table-striped table-condensed" style="margin-left: auto; margin-right: auto;">
- <thead>
-  <tr>
-   <th style="text-align:left;">   </th>
-   <th style="text-align:left;"> Male workers:NH white </th>
-   <th style="text-align:left;"> Male managers:NH white </th>
-   <th style="text-align:left;"> Male petit bourgeoisie:NH white </th>
-   <th style="text-align:left;"> Male capitalists:NH white </th>
-   <th style="text-align:left;"> Female workers:NH white </th>
-   <th style="text-align:left;"> Female managers:NH white </th>
-   <th style="text-align:left;"> Female petit bourgeoisie:NH white </th>
-   <th style="text-align:left;"> Female capitalists:NH white </th>
-   <th style="text-align:left;"> Male workers:POC </th>
-   <th style="text-align:left;"> Male managers:POC </th>
-   <th style="text-align:left;"> Male petit bourgeoisie:POC </th>
-   <th style="text-align:left;"> Male capitalists:POC </th>
-   <th style="text-align:left;"> Female workers:POC </th>
-   <th style="text-align:left;"> Female managers:POC </th>
-   <th style="text-align:left;"> Female petit bourgeoisie:POC </th>
-   <th style="text-align:left;"> Female capitalists:POC </th>
-  </tr>
- </thead>
-<tbody>
-  <tr>
-   <td style="text-align:left;"> n </td>
-   <td style="text-align:left;"> 1120.68 </td>
-   <td style="text-align:left;"> 813.31 </td>
-   <td style="text-align:left;"> 203.59 </td>
-   <td style="text-align:left;"> 260.32 </td>
-   <td style="text-align:left;"> 1401.22 </td>
-   <td style="text-align:left;"> 701.55 </td>
-   <td style="text-align:left;"> 189.17 </td>
-   <td style="text-align:left;"> 77.31 </td>
-   <td style="text-align:left;"> 579.39 </td>
-   <td style="text-align:left;"> 282.92 </td>
-   <td style="text-align:left;"> 73.86 </td>
-   <td style="text-align:left;"> 64.55 </td>
-   <td style="text-align:left;"> 712.83 </td>
-   <td style="text-align:left;"> 328.51 </td>
-   <td style="text-align:left;"> 76.64 </td>
-   <td style="text-align:left;"> 20.26 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> income (median [IQR]) </td>
-   <td style="text-align:left;"> 7.07 [4.39, 10.78] </td>
-   <td style="text-align:left;"> 9.58 [5.79, 14.19] </td>
-   <td style="text-align:left;"> 8.89 [4.28, 15.09] </td>
-   <td style="text-align:left;"> 12.95 [7.27, 23.36] </td>
-   <td style="text-align:left;"> 7.07 [4.04, 10.61] </td>
-   <td style="text-align:left;"> 8.68 [5.32, 12.86] </td>
-   <td style="text-align:left;"> 6.38 [3.54, 10.61] </td>
-   <td style="text-align:left;"> 11.71 [8.64, 23.07] </td>
-   <td style="text-align:left;"> 4.84 [2.96, 8.65] </td>
-   <td style="text-align:left;"> 7.27 [4.39, 11.70] </td>
-   <td style="text-align:left;"> 3.53 [1.75, 7.42] </td>
-   <td style="text-align:left;"> 9.58 [5.02, 22.30] </td>
-   <td style="text-align:left;"> 4.60 [2.43, 7.27] </td>
-   <td style="text-align:left;"> 5.79 [3.37, 10.22] </td>
-   <td style="text-align:left;"> 4.62 [2.59, 10.51] </td>
-   <td style="text-align:left;"> 10.09 [3.85, 14.71] </td>
   </tr>
 </tbody>
 </table>
@@ -4376,7 +4449,7 @@ kable(table(dat$poc_gender, dat$race_h, dat$sex), caption="Race-gender by race a
 aggr(dat[,c("class", 'sex', 'poc', 'educ', 'marital_tri', 'region', 'income',  "prestg10", 'age', "srh_bin", "mntlhlth", "satjob1_bin", "rincblls_bin", "safehlth_bin", "safetywk_bin", "workdiff_bin", "learnnew_bin", "condemnd_bin", "workfast_bin", "wkdecide_bin", "wkfreedm_bin", "mustwork_bin", "chngtme_bin", "manvsemp_bin", "trustman_bin", "respect_bin", "disc_haras_bin")], cex.axis = 0.6, numbers=FALSE, prop=TRUE)
 ```
 
-![](analysis_3_9_21_MICE_files/figure-html/unnamed-chunk-22-1.png)<!-- -->
+![](analysis_5_3_21_MICE_files/figure-html/unnamed-chunk-22-1.png)<!-- -->
 
 ## Imputation convergence plots
 
@@ -4385,7 +4458,7 @@ aggr(dat[,c("class", 'sex', 'poc', 'educ', 'marital_tri', 'region', 'income',  "
 plot(imp_merged, y=c('class', 'race_h', 'educ', 'marital_tri', "prestg10", 'income', 'age', "srh_bin", "mntlhlth", "satjob1_bin", "rincblls_bin", "safehlth_bin", "safetywk_bin", "workdiff_bin", "learnnew_bin", "condemnd_bin", "workfast_bin", "wkdecide_bin", "wkfreedm_bin", "mustwork_bin", "manvsemp_bin", "trustman_bin", "respect_bin", "disc_haras_bin"), main='Convergence plots')
 ```
 
-![](analysis_3_9_21_MICE_files/figure-html/unnamed-chunk-23-1.png)<!-- -->![](analysis_3_9_21_MICE_files/figure-html/unnamed-chunk-23-2.png)<!-- -->![](analysis_3_9_21_MICE_files/figure-html/unnamed-chunk-23-3.png)<!-- -->![](analysis_3_9_21_MICE_files/figure-html/unnamed-chunk-23-4.png)<!-- -->![](analysis_3_9_21_MICE_files/figure-html/unnamed-chunk-23-5.png)<!-- -->![](analysis_3_9_21_MICE_files/figure-html/unnamed-chunk-23-6.png)<!-- -->![](analysis_3_9_21_MICE_files/figure-html/unnamed-chunk-23-7.png)<!-- -->![](analysis_3_9_21_MICE_files/figure-html/unnamed-chunk-23-8.png)<!-- -->
+![](analysis_5_3_21_MICE_files/figure-html/unnamed-chunk-23-1.png)<!-- -->![](analysis_5_3_21_MICE_files/figure-html/unnamed-chunk-23-2.png)<!-- -->![](analysis_5_3_21_MICE_files/figure-html/unnamed-chunk-23-3.png)<!-- -->![](analysis_5_3_21_MICE_files/figure-html/unnamed-chunk-23-4.png)<!-- -->![](analysis_5_3_21_MICE_files/figure-html/unnamed-chunk-23-5.png)<!-- -->![](analysis_5_3_21_MICE_files/figure-html/unnamed-chunk-23-6.png)<!-- -->![](analysis_5_3_21_MICE_files/figure-html/unnamed-chunk-23-7.png)<!-- -->![](analysis_5_3_21_MICE_files/figure-html/unnamed-chunk-23-8.png)<!-- -->
 
 ## Unimputed analyses
 
@@ -4439,7 +4512,7 @@ less_adj <- mysvy(svy_dat, outvars, "~class + rcs(age, 3) + rcs(year, 3)")
 regs_less <- matrix_func(4, 4, outvars)
 
 #format matrix
-binded_overall <- formatted(c("Managers", "Petite bourgeoisie", "Capitalists"), 4, outvars)
+binded_overall <- formatted(c("Managers", "Petit bourgeoisie", "Capitalists"), 4, outvars)
 
 #######gender interaction
 #run regression
@@ -4449,8 +4522,8 @@ less_adj <- mysvy(svy_dat, outvars, "~class_gender + rcs(age, 3) + rcs(year, 3)"
 regs_less <- matrix_func(4, 8, outvars)
 
 #format matrix
-binded_gender <- formatted(c("Male managers", "Male petite bourgeoisie", "Male capitalists",
-                             "Female workers", "Female managers", "Female petite bourgeoisie", "Female capitalists"), 4, outvars)
+binded_gender <- formatted(c("Male managers", "Male petit bourgeoisie", "Male capitalists",
+                             "Female workers", "Female managers", "Female petit bourgeoisie", "Female capitalists"), 4, outvars)
 
 #######race interaction
 #run regression
@@ -4460,8 +4533,8 @@ less_adj <- mysvy(subset(svy_dat, race_h!="NH other"), outvars, "~class_poc + rc
 regs_less <- matrix_func(4, 8, outvars)
 
 #format matrix
-binded_race <- formatted(c("NH white managers", "NH white petite bourgeoisie", "NH white capitalists",
-                           "POC workers", "POC managers", "POC petite bourgeoisie", "POC capitalists"), 4, outvars)
+binded_race <- formatted(c("NH white managers", "NH white petit bourgeoisie", "NH white capitalists",
+                           "POC workers", "POC managers", "POC petit bourgeoisie", "POC capitalists"), 4, outvars)
 ```
 
 
@@ -4495,7 +4568,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.34 </td>
    <td style="text-align:right;"> 0.83 </td>
    <td style="text-align:left;"> satjob1_bin_unimp </td>
-   <td style="text-align:left;"> Petite bourgeoisie </td>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.37 </td>
@@ -4516,7 +4589,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.83 </td>
    <td style="text-align:right;"> 1.01 </td>
    <td style="text-align:left;"> rincblls_bin_unimp </td>
-   <td style="text-align:left;"> Petite bourgeoisie </td>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.49 </td>
@@ -4537,7 +4610,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.34 </td>
    <td style="text-align:right;"> 1.02 </td>
    <td style="text-align:left;"> safehlth_bin_unimp </td>
-   <td style="text-align:left;"> Petite bourgeoisie </td>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.63 </td>
@@ -4558,7 +4631,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.23 </td>
    <td style="text-align:right;"> 0.62 </td>
    <td style="text-align:left;"> safetywk_bin_unimp </td>
-   <td style="text-align:left;"> Petite bourgeoisie </td>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.42 </td>
@@ -4580,7 +4653,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.40 </td>
    <td style="text-align:right;"> 1.18 </td>
    <td style="text-align:left;"> satjob1_bin_unimp </td>
-   <td style="text-align:left;"> Male petite bourgeoisie </td>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.32 </td>
@@ -4608,7 +4681,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.11 </td>
    <td style="text-align:right;"> 0.55 </td>
    <td style="text-align:left;"> satjob1_bin_unimp </td>
-   <td style="text-align:left;"> Female petite bourgeoisie </td>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.38 </td>
@@ -4629,7 +4702,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.67 </td>
    <td style="text-align:right;"> 0.96 </td>
    <td style="text-align:left;"> rincblls_bin_unimp </td>
-   <td style="text-align:left;"> Male petite bourgeoisie </td>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.47 </td>
@@ -4657,7 +4730,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 1.32 </td>
    <td style="text-align:right;"> 1.63 </td>
    <td style="text-align:left;"> rincblls_bin_unimp </td>
-   <td style="text-align:left;"> Female petite bourgeoisie </td>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.03 </td>
@@ -4678,7 +4751,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.43 </td>
    <td style="text-align:right;"> 1.62 </td>
    <td style="text-align:left;"> safehlth_bin_unimp </td>
-   <td style="text-align:left;"> Male petite bourgeoisie </td>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.74 </td>
@@ -4706,7 +4779,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.14 </td>
    <td style="text-align:right;"> 1.16 </td>
    <td style="text-align:left;"> safehlth_bin_unimp </td>
-   <td style="text-align:left;"> Female petite bourgeoisie </td>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.45 </td>
@@ -4727,7 +4800,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.29 </td>
    <td style="text-align:right;"> 0.99 </td>
    <td style="text-align:left;"> safetywk_bin_unimp </td>
-   <td style="text-align:left;"> Male petite bourgeoisie </td>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.36 </td>
@@ -4755,7 +4828,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.09 </td>
    <td style="text-align:right;"> 0.54 </td>
    <td style="text-align:left;"> safetywk_bin_unimp </td>
-   <td style="text-align:left;"> Female petite bourgeoisie </td>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.61 </td>
@@ -4777,7 +4850,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.20 </td>
    <td style="text-align:right;"> 0.71 </td>
    <td style="text-align:left;"> satjob1_bin_unimp </td>
-   <td style="text-align:left;"> NH white petite bourgeoisie </td>
+   <td style="text-align:left;"> NH white petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.41 </td>
@@ -4805,7 +4878,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.32 </td>
    <td style="text-align:right;"> 1.72 </td>
    <td style="text-align:left;"> satjob1_bin_unimp </td>
-   <td style="text-align:left;"> POC petite bourgeoisie </td>
+   <td style="text-align:left;"> POC petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.00 </td>
@@ -4826,7 +4899,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.79 </td>
    <td style="text-align:right;"> 0.99 </td>
    <td style="text-align:left;"> rincblls_bin_unimp </td>
-   <td style="text-align:left;"> NH white petite bourgeoisie </td>
+   <td style="text-align:left;"> NH white petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.49 </td>
@@ -4854,7 +4927,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.90 </td>
    <td style="text-align:right;"> 1.27 </td>
    <td style="text-align:left;"> rincblls_bin_unimp </td>
-   <td style="text-align:left;"> POC petite bourgeoisie </td>
+   <td style="text-align:left;"> POC petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.65 </td>
@@ -4875,7 +4948,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.15 </td>
    <td style="text-align:right;"> 0.64 </td>
    <td style="text-align:left;"> safehlth_bin_unimp </td>
-   <td style="text-align:left;"> NH white petite bourgeoisie </td>
+   <td style="text-align:left;"> NH white petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.74 </td>
@@ -4903,7 +4976,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.73 </td>
    <td style="text-align:right;"> 3.89 </td>
    <td style="text-align:left;"> safehlth_bin_unimp </td>
-   <td style="text-align:left;"> POC petite bourgeoisie </td>
+   <td style="text-align:left;"> POC petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.58 </td>
@@ -4924,7 +4997,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.17 </td>
    <td style="text-align:right;"> 0.52 </td>
    <td style="text-align:left;"> safetywk_bin_unimp </td>
-   <td style="text-align:left;"> NH white petite bourgeoisie </td>
+   <td style="text-align:left;"> NH white petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.54 </td>
@@ -4952,7 +5025,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.23 </td>
    <td style="text-align:right;"> 1.42 </td>
    <td style="text-align:left;"> safetywk_bin_unimp </td>
-   <td style="text-align:left;"> POC petite bourgeoisie </td>
+   <td style="text-align:left;"> POC petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.00 </td>
@@ -4979,7 +5052,7 @@ less_adj <- mysvy(svy_dat, outvars, "~class + rcs(age, 3) + rcs(year, 3)")
 regs_less <- matrix_func(4, 4, outvars)
 
 #format matrix
-binded_overall <- formatted(c("Managers", "Petite bourgeoisie", "Capitalists"), 4, outvars)
+binded_overall <- formatted(c("Managers", "Petit bourgeoisie", "Capitalists"), 4, outvars)
 
 #######gender interaction
 #run regression
@@ -4989,8 +5062,8 @@ less_adj <- mysvy(svy_dat, outvars, "~class_gender + rcs(age, 3) + rcs(year, 3)"
 regs_less <- matrix_func(4, 8, outvars)
 
 #format matrix
-binded_gender <- formatted(c("Male managers", "Male petite bourgeoisie", "Male capitalists",
-                             "Female workers", "Female managers", "Female petite bourgeoisie", "Female capitalists"), 4, outvars)
+binded_gender <- formatted(c("Male managers", "Male petit bourgeoisie", "Male capitalists",
+                             "Female workers", "Female managers", "Female petit bourgeoisie", "Female capitalists"), 4, outvars)
 
 #######race interaction
 #run regression
@@ -5000,8 +5073,8 @@ less_adj <- mysvy(subset(svy_dat, race_h!="NH other"), outvars, "~class_poc + rc
 regs_less <- matrix_func(4, 8, outvars)
 
 #format matrix
-binded_race <- formatted(c("NH white managers", "NH white petite bourgeoisie", "NH white capitalists",
-                           "POC workers", "POC managers", "POC petite bourgeoisie", "POC capitalists"), 4, outvars)
+binded_race <- formatted(c("NH white managers", "NH white petit bourgeoisie", "NH white capitalists",
+                           "POC workers", "POC managers", "POC petit bourgeoisie", "POC capitalists"), 4, outvars)
 ```
 
 
@@ -5035,7 +5108,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.64 </td>
    <td style="text-align:right;"> 1.12 </td>
    <td style="text-align:left;"> workdiff_bin_unimp </td>
-   <td style="text-align:left;"> Petite bourgeoisie </td>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.37 </td>
@@ -5056,7 +5129,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.57 </td>
    <td style="text-align:right;"> 0.93 </td>
    <td style="text-align:left;"> learnnew_bin_unimp </td>
-   <td style="text-align:left;"> Petite bourgeoisie </td>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.22 </td>
@@ -5077,7 +5150,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.57 </td>
    <td style="text-align:right;"> 0.91 </td>
    <td style="text-align:left;"> condemnd_bin_unimp </td>
-   <td style="text-align:left;"> Petite bourgeoisie </td>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.21 </td>
@@ -5098,7 +5171,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.79 </td>
    <td style="text-align:right;"> 0.96 </td>
    <td style="text-align:left;"> workfast_bin_unimp </td>
-   <td style="text-align:left;"> Petite bourgeoisie </td>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.26 </td>
@@ -5120,7 +5193,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.40 </td>
    <td style="text-align:right;"> 0.99 </td>
    <td style="text-align:left;"> workdiff_bin_unimp </td>
-   <td style="text-align:left;"> Male petite bourgeoisie </td>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.34 </td>
@@ -5148,7 +5221,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.65 </td>
    <td style="text-align:right;"> 1.31 </td>
    <td style="text-align:left;"> workdiff_bin_unimp </td>
-   <td style="text-align:left;"> Female petite bourgeoisie </td>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.31 </td>
@@ -5169,7 +5242,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.31 </td>
    <td style="text-align:right;"> 0.72 </td>
    <td style="text-align:left;"> learnnew_bin_unimp </td>
-   <td style="text-align:left;"> Male petite bourgeoisie </td>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.18 </td>
@@ -5197,7 +5270,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.68 </td>
    <td style="text-align:right;"> 1.29 </td>
    <td style="text-align:left;"> learnnew_bin_unimp </td>
-   <td style="text-align:left;"> Female petite bourgeoisie </td>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.33 </td>
@@ -5218,7 +5291,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.58 </td>
    <td style="text-align:right;"> 1.10 </td>
    <td style="text-align:left;"> condemnd_bin_unimp </td>
-   <td style="text-align:left;"> Male petite bourgeoisie </td>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.36 </td>
@@ -5246,7 +5319,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.53 </td>
    <td style="text-align:right;"> 1.01 </td>
    <td style="text-align:left;"> condemnd_bin_unimp </td>
-   <td style="text-align:left;"> Female petite bourgeoisie </td>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.04 </td>
@@ -5267,7 +5340,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.77 </td>
    <td style="text-align:right;"> 1.02 </td>
    <td style="text-align:left;"> workfast_bin_unimp </td>
-   <td style="text-align:left;"> Male petite bourgeoisie </td>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.27 </td>
@@ -5295,7 +5368,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.76 </td>
    <td style="text-align:right;"> 1.02 </td>
    <td style="text-align:left;"> workfast_bin_unimp </td>
-   <td style="text-align:left;"> Female petite bourgeoisie </td>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.32 </td>
@@ -5317,7 +5390,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.47 </td>
    <td style="text-align:right;"> 0.90 </td>
    <td style="text-align:left;"> workdiff_bin_unimp </td>
-   <td style="text-align:left;"> NH white petite bourgeoisie </td>
+   <td style="text-align:left;"> NH white petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.39 </td>
@@ -5345,7 +5418,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 1.17 </td>
    <td style="text-align:right;"> 2.88 </td>
    <td style="text-align:left;"> workdiff_bin_unimp </td>
-   <td style="text-align:left;"> POC petite bourgeoisie </td>
+   <td style="text-align:left;"> POC petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.40 </td>
@@ -5366,7 +5439,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.49 </td>
    <td style="text-align:right;"> 0.86 </td>
    <td style="text-align:left;"> learnnew_bin_unimp </td>
-   <td style="text-align:left;"> NH white petite bourgeoisie </td>
+   <td style="text-align:left;"> NH white petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.23 </td>
@@ -5394,7 +5467,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.89 </td>
    <td style="text-align:right;"> 2.10 </td>
    <td style="text-align:left;"> learnnew_bin_unimp </td>
-   <td style="text-align:left;"> POC petite bourgeoisie </td>
+   <td style="text-align:left;"> POC petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.28 </td>
@@ -5415,7 +5488,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.60 </td>
    <td style="text-align:right;"> 1.00 </td>
    <td style="text-align:left;"> condemnd_bin_unimp </td>
-   <td style="text-align:left;"> NH white petite bourgeoisie </td>
+   <td style="text-align:left;"> NH white petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.33 </td>
@@ -5443,7 +5516,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.30 </td>
    <td style="text-align:right;"> 0.82 </td>
    <td style="text-align:left;"> condemnd_bin_unimp </td>
-   <td style="text-align:left;"> POC petite bourgeoisie </td>
+   <td style="text-align:left;"> POC petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.52 </td>
@@ -5464,7 +5537,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.76 </td>
    <td style="text-align:right;"> 0.95 </td>
    <td style="text-align:left;"> workfast_bin_unimp </td>
-   <td style="text-align:left;"> NH white petite bourgeoisie </td>
+   <td style="text-align:left;"> NH white petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.24 </td>
@@ -5492,7 +5565,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.54 </td>
    <td style="text-align:right;"> 0.88 </td>
    <td style="text-align:left;"> workfast_bin_unimp </td>
-   <td style="text-align:left;"> POC petite bourgeoisie </td>
+   <td style="text-align:left;"> POC petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.07 </td>
@@ -5519,7 +5592,7 @@ less_adj <- mysvy(svy_dat, outvars, "~class + rcs(age, 3) + rcs(year, 3)")
 regs_less <- matrix_func(4, 4, outvars)
 
 #format matrix
-binded_overall <- formatted(c("Managers", "Petite bourgeoisie", "Capitalists"), 4, outvars)
+binded_overall <- formatted(c("Managers", "Petit bourgeoisie", "Capitalists"), 4, outvars)
 
 #######gender interaction
 #run regression
@@ -5529,8 +5602,8 @@ less_adj <- mysvy(svy_dat, outvars, "~class_gender + rcs(age, 3) + rcs(year, 3)"
 regs_less <- matrix_func(4, 8, outvars)
 
 #format matrix
-binded_gender <- formatted(c("Male managers", "Male petite bourgeoisie", "Male capitalists",
-                             "Female workers", "Female managers", "Female petite bourgeoisie", "Female capitalists"), 4, outvars)
+binded_gender <- formatted(c("Male managers", "Male petit bourgeoisie", "Male capitalists",
+                             "Female workers", "Female managers", "Female petit bourgeoisie", "Female capitalists"), 4, outvars)
 
 #######race interaction
 #run regression
@@ -5540,8 +5613,8 @@ less_adj <- mysvy(subset(svy_dat, race_h!="NH other"), outvars, "~class_poc + rc
 regs_less <- matrix_func(4, 8, outvars)
 
 #format matrix
-binded_race <- formatted(c("NH white managers", "NH white petite bourgeoisie", "NH white capitalists",
-                           "POC workers", "POC managers", "POC petite bourgeoisie", "POC capitalists"), 4, outvars)
+binded_race <- formatted(c("NH white managers", "NH white petit bourgeoisie", "NH white capitalists",
+                           "POC workers", "POC managers", "POC petit bourgeoisie", "POC capitalists"), 4, outvars)
 ```
 
 
@@ -5575,7 +5648,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 1.19 </td>
    <td style="text-align:right;"> 1.59 </td>
    <td style="text-align:left;"> wkdecide_bin_unimp </td>
-   <td style="text-align:left;"> Petite bourgeoisie </td>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.52 </td>
@@ -5596,7 +5669,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.16 </td>
    <td style="text-align:right;"> 0.40 </td>
    <td style="text-align:left;"> wkfreedm_bin_unimp </td>
-   <td style="text-align:left;"> Petite bourgeoisie </td>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.11 </td>
@@ -5617,7 +5690,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.79 </td>
    <td style="text-align:right;"> 1.18 </td>
    <td style="text-align:left;"> mustwork_bin_unimp </td>
-   <td style="text-align:left;"> Petite bourgeoisie </td>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.37 </td>
@@ -5638,7 +5711,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.18 </td>
    <td style="text-align:right;"> 0.30 </td>
    <td style="text-align:left;"> chngtme_bin_unimp </td>
-   <td style="text-align:left;"> Petite bourgeoisie </td>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.28 </td>
@@ -5660,7 +5733,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.91 </td>
    <td style="text-align:right;"> 1.43 </td>
    <td style="text-align:left;"> wkdecide_bin_unimp </td>
-   <td style="text-align:left;"> Male petite bourgeoisie </td>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.55 </td>
@@ -5688,7 +5761,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 1.38 </td>
    <td style="text-align:right;"> 1.98 </td>
    <td style="text-align:left;"> wkdecide_bin_unimp </td>
-   <td style="text-align:left;"> Female petite bourgeoisie </td>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.46 </td>
@@ -5709,7 +5782,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.13 </td>
    <td style="text-align:right;"> 0.43 </td>
    <td style="text-align:left;"> wkfreedm_bin_unimp </td>
-   <td style="text-align:left;"> Male petite bourgeoisie </td>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.11 </td>
@@ -5737,7 +5810,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.14 </td>
    <td style="text-align:right;"> 0.52 </td>
    <td style="text-align:left;"> wkfreedm_bin_unimp </td>
-   <td style="text-align:left;"> Female petite bourgeoisie </td>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.11 </td>
@@ -5758,7 +5831,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.85 </td>
    <td style="text-align:right;"> 1.37 </td>
    <td style="text-align:left;"> mustwork_bin_unimp </td>
-   <td style="text-align:left;"> Male petite bourgeoisie </td>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.27 </td>
@@ -5786,7 +5859,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.42 </td>
    <td style="text-align:right;"> 0.80 </td>
    <td style="text-align:left;"> mustwork_bin_unimp </td>
-   <td style="text-align:left;"> Female petite bourgeoisie </td>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.90 </td>
@@ -5807,7 +5880,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.10 </td>
    <td style="text-align:right;"> 0.26 </td>
    <td style="text-align:left;"> chngtme_bin_unimp </td>
-   <td style="text-align:left;"> Male petite bourgeoisie </td>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.29 </td>
@@ -5835,7 +5908,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.23 </td>
    <td style="text-align:right;"> 0.43 </td>
    <td style="text-align:left;"> chngtme_bin_unimp </td>
-   <td style="text-align:left;"> Female petite bourgeoisie </td>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.27 </td>
@@ -5857,7 +5930,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 1.12 </td>
    <td style="text-align:right;"> 1.62 </td>
    <td style="text-align:left;"> wkdecide_bin_unimp </td>
-   <td style="text-align:left;"> NH white petite bourgeoisie </td>
+   <td style="text-align:left;"> NH white petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.59 </td>
@@ -5885,7 +5958,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 1.75 </td>
    <td style="text-align:right;"> 2.72 </td>
    <td style="text-align:left;"> wkdecide_bin_unimp </td>
-   <td style="text-align:left;"> POC petite bourgeoisie </td>
+   <td style="text-align:left;"> POC petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.73 </td>
@@ -5906,7 +5979,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.14 </td>
    <td style="text-align:right;"> 0.40 </td>
    <td style="text-align:left;"> wkfreedm_bin_unimp </td>
-   <td style="text-align:left;"> NH white petite bourgeoisie </td>
+   <td style="text-align:left;"> NH white petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.11 </td>
@@ -5934,7 +6007,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.12 </td>
    <td style="text-align:right;"> 0.73 </td>
    <td style="text-align:left;"> wkfreedm_bin_unimp </td>
-   <td style="text-align:left;"> POC petite bourgeoisie </td>
+   <td style="text-align:left;"> POC petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.18 </td>
@@ -5955,7 +6028,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.79 </td>
    <td style="text-align:right;"> 1.26 </td>
    <td style="text-align:left;"> mustwork_bin_unimp </td>
-   <td style="text-align:left;"> NH white petite bourgeoisie </td>
+   <td style="text-align:left;"> NH white petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.45 </td>
@@ -5983,7 +6056,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.52 </td>
    <td style="text-align:right;"> 1.41 </td>
    <td style="text-align:left;"> mustwork_bin_unimp </td>
-   <td style="text-align:left;"> POC petite bourgeoisie </td>
+   <td style="text-align:left;"> POC petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.01 </td>
@@ -6004,7 +6077,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.19 </td>
    <td style="text-align:right;"> 0.33 </td>
    <td style="text-align:left;"> chngtme_bin_unimp </td>
-   <td style="text-align:left;"> NH white petite bourgeoisie </td>
+   <td style="text-align:left;"> NH white petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.24 </td>
@@ -6032,7 +6105,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.15 </td>
    <td style="text-align:right;"> 0.46 </td>
    <td style="text-align:left;"> chngtme_bin_unimp </td>
-   <td style="text-align:left;"> POC petite bourgeoisie </td>
+   <td style="text-align:left;"> POC petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.37 </td>
@@ -6059,7 +6132,7 @@ less_adj <- mysvy(svy_dat, outvars, "~class + rcs(age, 3) + rcs(year, 3)")
 regs_less <- matrix_func(4, 4, outvars)
 
 #format matrix
-binded_overall <- formatted(c("Managers", "Petite bourgeoisie", "Capitalists"), 4, outvars)
+binded_overall <- formatted(c("Managers", "Petit bourgeoisie", "Capitalists"), 4, outvars)
 
 #######gender interaction
 #run regression
@@ -6069,8 +6142,8 @@ less_adj <- mysvy(svy_dat, outvars, "~class_gender + rcs(age, 3) + rcs(year, 3)"
 regs_less <- matrix_func(4, 8, outvars)
 
 #format matrix
-binded_gender <- formatted(c("Male managers", "Male petite bourgeoisie", "Male capitalists",
-                             "Female workers", "Female managers", "Female petite bourgeoisie", "Female capitalists"), 4, outvars)
+binded_gender <- formatted(c("Male managers", "Male petit bourgeoisie", "Male capitalists",
+                             "Female workers", "Female managers", "Female petit bourgeoisie", "Female capitalists"), 4, outvars)
 
 #######race interaction
 #run regression
@@ -6080,8 +6153,8 @@ less_adj <- mysvy(subset(svy_dat, race_h!="NH other"), outvars, "~class_poc + rc
 regs_less <- matrix_func(4, 8, outvars)
 
 #format matrix
-binded_race <- formatted(c("NH white managers", "NH white petite bourgeoisie", "NH white capitalists",
-                           "POC workers", "POC managers", "POC petite bourgeoisie", "POC capitalists"), 4, outvars)
+binded_race <- formatted(c("NH white managers", "NH white petit bourgeoisie", "NH white capitalists",
+                           "POC workers", "POC managers", "POC petit bourgeoisie", "POC capitalists"), 4, outvars)
 ```
 
 
@@ -6115,7 +6188,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.15 </td>
    <td style="text-align:right;"> 0.54 </td>
    <td style="text-align:left;"> manvsemp_bin_unimp </td>
-   <td style="text-align:left;"> Petite bourgeoisie </td>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.23 </td>
@@ -6136,7 +6209,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.16 </td>
    <td style="text-align:right;"> 0.37 </td>
    <td style="text-align:left;"> trustman_bin_unimp </td>
-   <td style="text-align:left;"> Petite bourgeoisie </td>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.23 </td>
@@ -6157,7 +6230,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.32 </td>
    <td style="text-align:right;"> 0.83 </td>
    <td style="text-align:left;"> respect_bin_unimp </td>
-   <td style="text-align:left;"> Petite bourgeoisie </td>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.35 </td>
@@ -6178,7 +6251,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.56 </td>
    <td style="text-align:right;"> 0.93 </td>
    <td style="text-align:left;"> disc_haras_bin_unimp </td>
-   <td style="text-align:left;"> Petite bourgeoisie </td>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.88 </td>
@@ -6200,7 +6273,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.15 </td>
    <td style="text-align:right;"> 0.88 </td>
    <td style="text-align:left;"> manvsemp_bin_unimp </td>
-   <td style="text-align:left;"> Male petite bourgeoisie </td>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.28 </td>
@@ -6228,7 +6301,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.08 </td>
    <td style="text-align:right;"> 0.63 </td>
    <td style="text-align:left;"> manvsemp_bin_unimp </td>
-   <td style="text-align:left;"> Female petite bourgeoisie </td>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.12 </td>
@@ -6249,7 +6322,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.16 </td>
    <td style="text-align:right;"> 0.46 </td>
    <td style="text-align:left;"> trustman_bin_unimp </td>
-   <td style="text-align:left;"> Male petite bourgeoisie </td>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.23 </td>
@@ -6277,7 +6350,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.11 </td>
    <td style="text-align:right;"> 0.43 </td>
    <td style="text-align:left;"> trustman_bin_unimp </td>
-   <td style="text-align:left;"> Female petite bourgeoisie </td>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.21 </td>
@@ -6298,7 +6371,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.30 </td>
    <td style="text-align:right;"> 1.13 </td>
    <td style="text-align:left;"> respect_bin_unimp </td>
-   <td style="text-align:left;"> Male petite bourgeoisie </td>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.38 </td>
@@ -6326,7 +6399,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.27 </td>
    <td style="text-align:right;"> 1.04 </td>
    <td style="text-align:left;"> respect_bin_unimp </td>
-   <td style="text-align:left;"> Female petite bourgeoisie </td>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.35 </td>
@@ -6347,7 +6420,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.71 </td>
    <td style="text-align:right;"> 1.40 </td>
    <td style="text-align:left;"> disc_haras_bin_unimp </td>
-   <td style="text-align:left;"> Male petite bourgeoisie </td>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.03 </td>
@@ -6375,7 +6448,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.51 </td>
    <td style="text-align:right;"> 1.13 </td>
    <td style="text-align:left;"> disc_haras_bin_unimp </td>
-   <td style="text-align:left;"> Female petite bourgeoisie </td>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.21 </td>
@@ -6397,7 +6470,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.12 </td>
    <td style="text-align:right;"> 0.57 </td>
    <td style="text-align:left;"> manvsemp_bin_unimp </td>
-   <td style="text-align:left;"> NH white petite bourgeoisie </td>
+   <td style="text-align:left;"> NH white petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.26 </td>
@@ -6425,7 +6498,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.08 </td>
    <td style="text-align:right;"> 1.47 </td>
    <td style="text-align:left;"> manvsemp_bin_unimp </td>
-   <td style="text-align:left;"> POC petite bourgeoisie </td>
+   <td style="text-align:left;"> POC petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.00 </td>
@@ -6446,7 +6519,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.11 </td>
    <td style="text-align:right;"> 0.31 </td>
    <td style="text-align:left;"> trustman_bin_unimp </td>
-   <td style="text-align:left;"> NH white petite bourgeoisie </td>
+   <td style="text-align:left;"> NH white petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.21 </td>
@@ -6474,7 +6547,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.19 </td>
    <td style="text-align:right;"> 0.90 </td>
    <td style="text-align:left;"> trustman_bin_unimp </td>
-   <td style="text-align:left;"> POC petite bourgeoisie </td>
+   <td style="text-align:left;"> POC petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.26 </td>
@@ -6495,7 +6568,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.26 </td>
    <td style="text-align:right;"> 0.80 </td>
    <td style="text-align:left;"> respect_bin_unimp </td>
-   <td style="text-align:left;"> NH white petite bourgeoisie </td>
+   <td style="text-align:left;"> NH white petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.33 </td>
@@ -6523,7 +6596,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.21 </td>
    <td style="text-align:right;"> 1.38 </td>
    <td style="text-align:left;"> respect_bin_unimp </td>
-   <td style="text-align:left;"> POC petite bourgeoisie </td>
+   <td style="text-align:left;"> POC petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.44 </td>
@@ -6544,7 +6617,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.44 </td>
    <td style="text-align:right;"> 0.87 </td>
    <td style="text-align:left;"> disc_haras_bin_unimp </td>
-   <td style="text-align:left;"> NH white petite bourgeoisie </td>
+   <td style="text-align:left;"> NH white petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.81 </td>
@@ -6572,7 +6645,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
    <td style="text-align:right;"> 0.76 </td>
    <td style="text-align:right;"> 1.79 </td>
    <td style="text-align:left;"> disc_haras_bin_unimp </td>
-   <td style="text-align:left;"> POC petite bourgeoisie </td>
+   <td style="text-align:left;"> POC petit bourgeoisie </td>
   </tr>
   <tr>
    <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.42 </td>
@@ -6618,6 +6691,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
 <caption>Ref: NH white men</caption>
  <thead>
   <tr>
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">   </th>
    <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> PR </th>
    <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> Lower </th>
    <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> Upper </th>
@@ -6628,6 +6702,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
  </thead>
 <tbody>
   <tr>
+   <td style="text-align:left;"> poc_genderNH.white.women </td>
    <td style="text-align:right;"> 0.75 </td>
    <td style="text-align:right;"> 0.56 </td>
    <td style="text-align:right;"> 1.02 </td>
@@ -6636,6 +6711,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC.men </td>
    <td style="text-align:right;"> 1.03 </td>
    <td style="text-align:right;"> 0.68 </td>
    <td style="text-align:right;"> 1.54 </td>
@@ -6644,6 +6720,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC.women </td>
    <td style="text-align:right;"> 0.92 </td>
    <td style="text-align:right;"> 0.63 </td>
    <td style="text-align:right;"> 1.33 </td>
@@ -6652,6 +6729,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderNH.white.women.1 </td>
    <td style="text-align:right;"> 1.43 </td>
    <td style="text-align:right;"> 1.31 </td>
    <td style="text-align:right;"> 1.55 </td>
@@ -6660,6 +6738,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC.men.1 </td>
    <td style="text-align:right;"> 1.07 </td>
    <td style="text-align:right;"> 0.94 </td>
    <td style="text-align:right;"> 1.22 </td>
@@ -6668,6 +6747,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC.women.1 </td>
    <td style="text-align:right;"> 1.45 </td>
    <td style="text-align:right;"> 1.32 </td>
    <td style="text-align:right;"> 1.60 </td>
@@ -6676,6 +6756,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderNH.white.women.2 </td>
    <td style="text-align:right;"> 1.06 </td>
    <td style="text-align:right;"> 0.76 </td>
    <td style="text-align:right;"> 1.49 </td>
@@ -6684,6 +6765,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC.men.2 </td>
    <td style="text-align:right;"> 1.43 </td>
    <td style="text-align:right;"> 0.94 </td>
    <td style="text-align:right;"> 2.18 </td>
@@ -6692,6 +6774,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC.women.2 </td>
    <td style="text-align:right;"> 1.51 </td>
    <td style="text-align:right;"> 1.06 </td>
    <td style="text-align:right;"> 2.17 </td>
@@ -6700,6 +6783,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderNH.white.women.3 </td>
    <td style="text-align:right;"> 0.87 </td>
    <td style="text-align:right;"> 0.66 </td>
    <td style="text-align:right;"> 1.15 </td>
@@ -6708,6 +6792,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC.men.3 </td>
    <td style="text-align:right;"> 0.89 </td>
    <td style="text-align:right;"> 0.60 </td>
    <td style="text-align:right;"> 1.32 </td>
@@ -6716,6 +6801,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC.women.3 </td>
    <td style="text-align:right;"> 1.09 </td>
    <td style="text-align:right;"> 0.79 </td>
    <td style="text-align:right;"> 1.50 </td>
@@ -6724,6 +6810,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderNH.white.women.4 </td>
    <td style="text-align:right;"> 0.77 </td>
    <td style="text-align:right;"> 0.61 </td>
    <td style="text-align:right;"> 0.99 </td>
@@ -6732,6 +6819,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC.men.4 </td>
    <td style="text-align:right;"> 1.06 </td>
    <td style="text-align:right;"> 0.82 </td>
    <td style="text-align:right;"> 1.37 </td>
@@ -6740,6 +6828,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC.women.4 </td>
    <td style="text-align:right;"> 0.99 </td>
    <td style="text-align:right;"> 0.76 </td>
    <td style="text-align:right;"> 1.29 </td>
@@ -6748,6 +6837,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderNH.white.women.5 </td>
    <td style="text-align:right;"> 0.92 </td>
    <td style="text-align:right;"> 0.75 </td>
    <td style="text-align:right;"> 1.14 </td>
@@ -6756,6 +6846,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC.men.5 </td>
    <td style="text-align:right;"> 1.18 </td>
    <td style="text-align:right;"> 0.91 </td>
    <td style="text-align:right;"> 1.52 </td>
@@ -6764,6 +6855,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC.women.5 </td>
    <td style="text-align:right;"> 1.03 </td>
    <td style="text-align:right;"> 0.81 </td>
    <td style="text-align:right;"> 1.31 </td>
@@ -6772,6 +6864,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderNH.white.women.6 </td>
    <td style="text-align:right;"> 1.09 </td>
    <td style="text-align:right;"> 0.93 </td>
    <td style="text-align:right;"> 1.28 </td>
@@ -6780,6 +6873,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC.men.6 </td>
    <td style="text-align:right;"> 0.89 </td>
    <td style="text-align:right;"> 0.69 </td>
    <td style="text-align:right;"> 1.14 </td>
@@ -6788,6 +6882,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC.women.6 </td>
    <td style="text-align:right;"> 1.00 </td>
    <td style="text-align:right;"> 0.83 </td>
    <td style="text-align:right;"> 1.21 </td>
@@ -6796,6 +6891,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderNH.white.women.7 </td>
    <td style="text-align:right;"> 1.05 </td>
    <td style="text-align:right;"> 0.99 </td>
    <td style="text-align:right;"> 1.12 </td>
@@ -6804,6 +6900,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC.men.7 </td>
    <td style="text-align:right;"> 0.89 </td>
    <td style="text-align:right;"> 0.81 </td>
    <td style="text-align:right;"> 0.99 </td>
@@ -6812,6 +6909,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC.women.7 </td>
    <td style="text-align:right;"> 0.89 </td>
    <td style="text-align:right;"> 0.82 </td>
    <td style="text-align:right;"> 0.97 </td>
@@ -6820,6 +6918,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderNH.white.women.8 </td>
    <td style="text-align:right;"> 0.94 </td>
    <td style="text-align:right;"> 0.80 </td>
    <td style="text-align:right;"> 1.10 </td>
@@ -6828,6 +6927,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Autonomy </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC.men.8 </td>
    <td style="text-align:right;"> 1.42 </td>
    <td style="text-align:right;"> 1.17 </td>
    <td style="text-align:right;"> 1.72 </td>
@@ -6836,6 +6936,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Autonomy </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC.women.8 </td>
    <td style="text-align:right;"> 1.46 </td>
    <td style="text-align:right;"> 1.23 </td>
    <td style="text-align:right;"> 1.73 </td>
@@ -6844,6 +6945,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Autonomy </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderNH.white.women.9 </td>
    <td style="text-align:right;"> 0.94 </td>
    <td style="text-align:right;"> 0.77 </td>
    <td style="text-align:right;"> 1.14 </td>
@@ -6852,6 +6954,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Autonomy </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC.men.9 </td>
    <td style="text-align:right;"> 1.11 </td>
    <td style="text-align:right;"> 0.85 </td>
    <td style="text-align:right;"> 1.45 </td>
@@ -6860,6 +6963,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Autonomy </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC.women.9 </td>
    <td style="text-align:right;"> 1.09 </td>
    <td style="text-align:right;"> 0.86 </td>
    <td style="text-align:right;"> 1.38 </td>
@@ -6868,6 +6972,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Autonomy </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderNH.white.women.10 </td>
    <td style="text-align:right;"> 0.71 </td>
    <td style="text-align:right;"> 0.60 </td>
    <td style="text-align:right;"> 0.84 </td>
@@ -6876,6 +6981,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Autonomy </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC.men.10 </td>
    <td style="text-align:right;"> 1.05 </td>
    <td style="text-align:right;"> 0.87 </td>
    <td style="text-align:right;"> 1.27 </td>
@@ -6884,6 +6990,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Autonomy </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC.women.10 </td>
    <td style="text-align:right;"> 0.80 </td>
    <td style="text-align:right;"> 0.67 </td>
    <td style="text-align:right;"> 0.97 </td>
@@ -6892,6 +6999,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Autonomy </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderNH.white.women.11 </td>
    <td style="text-align:right;"> 1.08 </td>
    <td style="text-align:right;"> 0.99 </td>
    <td style="text-align:right;"> 1.19 </td>
@@ -6900,6 +7008,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Autonomy </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC.men.11 </td>
    <td style="text-align:right;"> 1.24 </td>
    <td style="text-align:right;"> 1.10 </td>
    <td style="text-align:right;"> 1.40 </td>
@@ -6908,6 +7017,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Autonomy </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC.women.11 </td>
    <td style="text-align:right;"> 1.22 </td>
    <td style="text-align:right;"> 1.09 </td>
    <td style="text-align:right;"> 1.36 </td>
@@ -6916,6 +7026,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Autonomy </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderNH.white.women.12 </td>
    <td style="text-align:right;"> 0.81 </td>
    <td style="text-align:right;"> 0.60 </td>
    <td style="text-align:right;"> 1.08 </td>
@@ -6924,6 +7035,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC.men.12 </td>
    <td style="text-align:right;"> 0.64 </td>
    <td style="text-align:right;"> 0.41 </td>
    <td style="text-align:right;"> 1.00 </td>
@@ -6932,6 +7044,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC.women.12 </td>
    <td style="text-align:right;"> 1.17 </td>
    <td style="text-align:right;"> 0.84 </td>
    <td style="text-align:right;"> 1.63 </td>
@@ -6940,6 +7053,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderNH.white.women.13 </td>
    <td style="text-align:right;"> 0.83 </td>
    <td style="text-align:right;"> 0.71 </td>
    <td style="text-align:right;"> 0.98 </td>
@@ -6948,6 +7062,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC.men.13 </td>
    <td style="text-align:right;"> 0.82 </td>
    <td style="text-align:right;"> 0.65 </td>
    <td style="text-align:right;"> 1.05 </td>
@@ -6956,6 +7071,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC.women.13 </td>
    <td style="text-align:right;"> 1.15 </td>
    <td style="text-align:right;"> 0.96 </td>
    <td style="text-align:right;"> 1.38 </td>
@@ -6964,6 +7080,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderNH.white.women.14 </td>
    <td style="text-align:right;"> 0.89 </td>
    <td style="text-align:right;"> 0.67 </td>
    <td style="text-align:right;"> 1.17 </td>
@@ -6972,6 +7089,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC.men.14 </td>
    <td style="text-align:right;"> 0.72 </td>
    <td style="text-align:right;"> 0.49 </td>
    <td style="text-align:right;"> 1.08 </td>
@@ -6980,6 +7098,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC.women.14 </td>
    <td style="text-align:right;"> 1.12 </td>
    <td style="text-align:right;"> 0.81 </td>
    <td style="text-align:right;"> 1.56 </td>
@@ -6988,6 +7107,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderNH.white.women.15 </td>
    <td style="text-align:right;"> 1.68 </td>
    <td style="text-align:right;"> 1.41 </td>
    <td style="text-align:right;"> 2.01 </td>
@@ -6996,6 +7116,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC.men.15 </td>
    <td style="text-align:right;"> 1.72 </td>
    <td style="text-align:right;"> 1.36 </td>
    <td style="text-align:right;"> 2.19 </td>
@@ -7004,6 +7125,7 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
    <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> poc_genderPOC.women.15 </td>
    <td style="text-align:right;"> 1.72 </td>
    <td style="text-align:right;"> 1.37 </td>
    <td style="text-align:right;"> 2.17 </td>

@@ -1,7 +1,7 @@
 ---
 title: "Class and Quality of Working Life (QWL)"
 author: "Jerzy Eisenberg-Guyot"
-date: "March, 2021"
+date: "May, 2021"
 output: 
   html_document:
     code_folding: hide
@@ -70,6 +70,7 @@ library(rms)
 library(patchwork) 
 library(spatstat)
 library(purrr)
+library(ggmosaic)
 
 #########load data, which is a subsetted version of the GSS cumulative file available at the GSS website that I converted from .dta to .csv using Stata 
 #####
@@ -104,16 +105,13 @@ dat %>%
                                   ifelse(race_h=="NH Black" | race_h=="Hispanic" | race_h=="NH other", "POC", NA)), levels=c("NH white", "POC")),
          age=ifelse(age=="89 or older", 89, as.numeric(as.character(age))),
          mntlhlth=as.numeric(as.character(mntlhlth)),
-         physhlth=as.numeric(as.character(physhlth)),
-         hlthdays=as.numeric(as.character(hlthdays)),
-         moredays=as.numeric(as.character(moredays)),
-         region = factor(ifelse(region == "new england" | region == "middle atlantic", "Northeast",
-                                   ifelse(region == "e. sou. central" | region == "south atlantic" | region == "w. sou. central", "South",
-                                          ifelse(region == "e. nor. central" | region == "w. nor. central", "Midwest", "West")))),
-         marital_tri=as.factor(ifelse(marital=="married", "married",
-                            ifelse(marital=="never married", "never married",
-                                   ifelse(marital=="widowed" | marital=="divorced" | marital=="separated", "wid/div/sep", marital)))),
          srh_bin=as.factor(ifelse(health1 == "fair" | health1 == "poor", "poor/fair", "good/vgood/exc")), 
+         region = factor(ifelse(region == "new england" | region == "middle atlantic", "Northeast",
+                                ifelse(region == "e. sou. central" | region == "south atlantic" | region == "w. sou. central", "South",
+                                       ifelse(region == "e. nor. central" | region == "w. nor. central", "Midwest", "West")))),
+         marital_tri=as.factor(ifelse(marital=="married", "married",
+                                      ifelse(marital=="never married", "never married",
+                                            ifelse(marital=="widowed" | marital=="divorced" | marital=="separated", "wid/div/sep", marital)))),
          sex=as.factor(sex),
          disc_haras_bin=ifelse(wkageism=="yes" | wkracism=="yes" | wksexism=="yes" | wkharsex=="yes" | wkharoth=="yes", 1, 0),
          disc_haras_bin_unimp=disc_haras_bin, #make duplicated version of each variable for which we wont impute data for so that we can use it in outcome regression
@@ -156,9 +154,8 @@ dat %>%
          chngtme_bin=ifelse(chngtme=="IAP", NA, #chngtme not asked in 2018
                             ifelse(chngtme=="never" | chngtme=="rarely", 1, 0)),
          chngtme_bin_unimp=chngtme_bin,
-         income=(as.numeric(as.character(coninc)) * 251.1 / 172.2)/10000, #adjust income to 2018 dollars from 2000 dollars (251.1 is CPI in 2018, 172.2 is CPI in 2000), then convert to $10,000s
+         income=(as.numeric(as.character(coninc)) * 251.1 / 172.2)/10000, #adjust income to 2018 dollars from 2000 dollars (251.1 is 2018 CPI, 172.2 is 200 CPI), then convert to $10000s
          prestg10=as.numeric(prestg10),
-         #we could also create the class variable using numemps (number of employees employed by the self-employed), but it's not available in 2002 
          class=factor(ifelse((wksup == "yes" & wrkslf == "self-employed") | (wksup == "yes" & wrkslf == "someone else" & occ10 == "chief executives"), "Capitalists", 
                               ifelse((wksup == "no" & wrkslf == "self-employed") | (wksup == "no" & wrkslf == "someone else" & occ10 == "chief executives"), "Petit bourgeoisie", 
                                                  ifelse(wksup == "yes" & wrkslf == "someone else" & occ10 != "chief executives", "Managers", 
@@ -271,6 +268,9 @@ svy_dat_mi <- svydesign(ids = ~ vpsu,
                  nest=TRUE, 
                  data=dat_mi)
 
+#make long imputed dataset
+dat_mi_long <- complete(imp_merged, "long", include=F)
+
 #survey-set unimputed data for descriptives
 svy_dat <- svydesign(ids = ~ vpsu,
                      strata = ~ vstrat,
@@ -292,6 +292,40 @@ x <- svyCreateTableOne(data = svy_dat, vars = vars, strata='class')
 x <- print(x, printToggle=FALSE, noSpaces=TRUE, nonnormal=nonorm)
 kable(x[,1:4]) %>%
   kable_styling(c("striped", "condensed"))
+```
+
+## Distribution of class stratified by race-gender (and vice versa)
+
+### Table
+
+```{r warning=FALSE, message=FALSE}
+#class by race-gender
+x <- svyCreateTableOne(data = svy_dat, vars = "class", strata='poc_gender')
+x <- print(x, printToggle=FALSE, noSpaces=TRUE)
+kable(x[,1:4]) %>%
+  kable_styling(c("striped", "condensed"))
+
+#race-gender by class
+x <- svyCreateTableOne(data = svy_dat, vars = "poc_gender", strata='class')
+x <- print(x, printToggle=FALSE, noSpaces=TRUE)
+kable(x[,1:4]) %>%
+  kable_styling(c("striped", "condensed"))
+```
+
+### Figure
+
+```{r warning=FALSE, message=FALSE, fig.height=4.5, fig.width=6.4}
+ggplot(data = subset(dat, !is.na(class) & !is.na(poc_gender))) +
+  geom_mosaic(aes(x = product(class, poc_gender), fill=class, weight=wtssall)) +
+  ylab("") +
+  xlab("")  +
+  scale_y_productlist(expand=c(0,0)) +
+  scale_x_productlist(expand=c(0,0)) +
+  scale_fill_manual(values= c("#1F78B4", "#6A3D9A", "#33A02C", "#FF7F00")) +
+  theme_classic() +
+  theme(axis.line=element_blank(), axis.title=element_blank(), legend.position="none") 
+
+ggsave("mosaic.png", height=4.5, width=6.4, dpi=600)
 ```
 
 # Survey-weighted regressions
@@ -369,7 +403,7 @@ plotted <- function(binded, limitsvec, breaksvec, cols, shapes){
 
 #table function
 tabled <- function(dat, captioned){
-  kable(dat, digits=2, col.names=c("PR", "Lower", "Upper", "QWL variable", "Class"), caption=captioned) %>%
+  kable(dat, digits=2, col.names=c("PR", "Lower", "Upper", "QWL variable", "Class"), caption=captioned, row.names=FALSE) %>%
     kable_styling("striped") %>%
     group_rows("Class", 1, 12) %>%
     group_rows("Class*gender", 13, 40) %>%
@@ -396,10 +430,10 @@ less_adj <- mysvy(svy_dat_mi, outvars, "~class + rcs(age, 3) + rcs(year, 3)")
 regs_less <- matrix_func(4, 4, outvars)
 
 #format matrix
-binded_overall <- formatted(c("Managers", "Petite bourgeoisie", "Capitalists"), 4,
+binded_overall <- formatted(c("Managers", "Petit bourgeoisie", "Capitalists"), 4,
                             outvars,
                             "Workers",
-                            c("Workers", "Managers", "Petite bourgeoisie", "Capitalists"))
+                            c("Workers", "Managers", "Petit bourgeoisie", "Capitalists"))
 
 #######gender interaction
 #run regression
@@ -409,12 +443,12 @@ less_adj <- mysvy(svy_dat_mi, outvars, "~class_gender + rcs(age, 3) + rcs(year, 
 regs_less <- matrix_func(4, 8, outvars)
 
 #format matrix
-binded_gender <- formatted(c("Male managers", "Male petite bourgeoisie", "Male capitalists",
-                             "Female workers", "Female managers", "Female petite bourgeoisie", "Female capitalists"), 4,
+binded_gender <- formatted(c("Male managers", "Male petit bourgeoisie", "Male capitalists",
+                             "Female workers", "Female managers", "Female petit bourgeoisie", "Female capitalists"), 4,
                            outvars,
                            "Male workers",
-                           c("Male workers", "Male managers", "Male petite bourgeoisie", "Male capitalists",
-                             "Female workers", "Female managers", "Female petite bourgeoisie", "Female capitalists"))
+                           c("Male workers", "Male managers", "Male petit bourgeoisie", "Male capitalists",
+                             "Female workers", "Female managers", "Female petit bourgeoisie", "Female capitalists"))
 
 #######race interaction
 #run regression
@@ -424,12 +458,12 @@ less_adj <- mysvy(subset(svy_dat_mi, race_h!="NH other"), outvars, "~class_poc +
 regs_less <- matrix_func(4, 8, outvars)
 
 #format matrix
-binded_race <- formatted(c("NH white managers", "NH white petite bourgeoisie", "NH white capitalists",
-                           "POC workers", "POC managers", "POC petite bourgeoisie", "POC capitalists"), 4,
+binded_race <- formatted(c("NH white managers", "NH white petit bourgeoisie", "NH white capitalists",
+                           "POC workers", "POC managers", "POC petit bourgeoisie", "POC capitalists"), 4,
                           outvars,
                          "NH white workers",
-                         c("NH white workers", "NH white managers", "NH white petite bourgeoisie", "NH white capitalists",
-                           "POC workers", "POC managers", "POC petite bourgeoisie", "POC capitalists"))
+                         c("NH white workers", "NH white managers", "NH white petit bourgeoisie", "NH white capitalists",
+                           "POC workers", "POC managers", "POC petit bourgeoisie", "POC capitalists"))
 ```
 
 ```{r warning=FALSE, message=FALSE, fig.height=5, fig.width=10.25}
@@ -444,8 +478,10 @@ plotted(binded_overall, limitsvec=c(0.09, 3.73), breaksvec=c(0.125, 0.25, 0.5, 1
             geom_text(data=filter(binded_race, row_number()==28), x=-2.3, y=1.13, label="\u2190", color="#4A1486", size=6) +  
   plot_layout(ncol=1, heights=c(1, 2, 2))
 
+ggsave("comp_safety.png", height=5, width=10.25, dpi=600)
+
 #table 
-tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28,1:5]), "Ref: workers/male workers/white workers") 
+tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28,1:5]), "Ref: workers/male workers/white workers")
 ```
 
 ### Labor process
@@ -462,10 +498,10 @@ less_adj <- mysvy(svy_dat_mi, outvars, "~class + rcs(age, 3) + rcs(year, 3)")
 regs_less <- matrix_func(4, 4, outvars)
 
 #format matrix
-binded_overall <- formatted(c("Managers", "Petite bourgeoisie", "Capitalists"), 4,
+binded_overall <- formatted(c("Managers", "Petit bourgeoisie", "Capitalists"), 4,
                             c("workdiff_bin_unimp", "learnnew_bin_unimp", "condemnd_bin_unimp", "workfast_bin_unimp"),
                             "Workers",
-                            c("Workers", "Managers", "Petite bourgeoisie", "Capitalists"))
+                            c("Workers", "Managers", "Petit bourgeoisie", "Capitalists"))
 
 #######gender interaction
 #run regression
@@ -475,12 +511,12 @@ less_adj <- mysvy(svy_dat_mi, outvars, "~class_gender + rcs(age, 3) + rcs(year, 
 regs_less <- matrix_func(4, 8, outvars)
 
 #format matrix
-binded_gender <- formatted(c("Male managers", "Male petite bourgeoisie", "Male capitalists",
-                             "Female workers", "Female managers", "Female petite bourgeoisie", "Female capitalists"), 4,
+binded_gender <- formatted(c("Male managers", "Male petit bourgeoisie", "Male capitalists",
+                             "Female workers", "Female managers", "Female petit bourgeoisie", "Female capitalists"), 4,
                            c("workdiff_bin_unimp", "learnnew_bin_unimp", "condemnd_bin_unimp", "workfast_bin_unimp"),
                            "Male workers",
-                           c("Male workers", "Male managers", "Male petite bourgeoisie", "Male capitalists",
-                             "Female workers", "Female managers", "Female petite bourgeoisie", "Female capitalists"))
+                           c("Male workers", "Male managers", "Male petit bourgeoisie", "Male capitalists",
+                             "Female workers", "Female managers", "Female petit bourgeoisie", "Female capitalists"))
 
 #######race interaction
 #run regression
@@ -490,12 +526,12 @@ less_adj <- mysvy(subset(svy_dat_mi, race_h!="NH other"), outvars, "~class_poc +
 regs_less <- matrix_func(4, 8, outvars)
 
 #format matrix
-binded_race <- formatted(c("NH white managers", "NH white petite bourgeoisie", "NH white capitalists",
-                           "POC workers", "POC managers", "POC petite bourgeoisie", "POC capitalists"), 4,
+binded_race <- formatted(c("NH white managers", "NH white petit bourgeoisie", "NH white capitalists",
+                           "POC workers", "POC managers", "POC petit bourgeoisie", "POC capitalists"), 4,
                          outvars,
                          "NH white workers",
-                         c("NH white workers", "NH white managers", "NH white petite bourgeoisie", "NH white capitalists",
-                           "POC workers", "POC managers", "POC petite bourgeoisie", "POC capitalists"))
+                         c("NH white workers", "NH white managers", "NH white petit bourgeoisie", "NH white capitalists",
+                           "POC workers", "POC managers", "POC petit bourgeoisie", "POC capitalists"))
 ```
 
 ```{r warning=FALSE, message=FALSE, fig.height=5, fig.width=10.25}
@@ -509,8 +545,10 @@ plotted(binded_overall, limitsvec=c(0.082, 2.84), breaksvec=c(0.125, 0.25, 0.5, 
             xlab("Prevalence ratio") + theme(axis.title.x=element_text(), axis.text.x=element_text(), axis.ticks.x=element_line(), axis.title.y=element_blank()) +
   plot_layout(ncol=1, heights=c(1, 2, 2))
 
+ggsave("labor_process.png", height=5, width=10.25, dpi=600)
+
 #table 
-tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28,1:5]), "Ref: workers/male workers/white workers") 
+tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28,1:5]), "Ref: workers/male workers/white workers")
 ```
 
 ### Autonomy
@@ -527,10 +565,10 @@ less_adj <- mysvy(svy_dat_mi, outvars, "~class + rcs(age, 3) + rcs(year, 3)")
 regs_less <- matrix_func(4, 4, outvars)
 
 #format matrix
-binded_overall <- formatted(c("Managers", "Petite bourgeoisie", "Capitalists"), 4,
+binded_overall <- formatted(c("Managers", "Petit bourgeoisie", "Capitalists"), 4,
                             c("wkdecide_bin_unimp", "wkfreedm_bin_unimp", "mustwork_bin_unimp", "chngtme_bin_unimp"),
                             "Workers",
-                            c("Workers", "Managers", "Petite bourgeoisie", "Capitalists"))
+                            c("Workers", "Managers", "Petit bourgeoisie", "Capitalists"))
 
 #######gender interaction
 #run regression
@@ -540,12 +578,12 @@ less_adj <- mysvy(svy_dat_mi, outvars, "~class_gender + rcs(age, 3) + rcs(year, 
 regs_less <- matrix_func(4, 8, outvars)
 
 #format matrix
-binded_gender <- formatted(c("Male managers", "Male petite bourgeoisie", "Male capitalists",
-                             "Female workers", "Female managers", "Female petite bourgeoisie", "Female capitalists"), 4,
+binded_gender <- formatted(c("Male managers", "Male petit bourgeoisie", "Male capitalists",
+                             "Female workers", "Female managers", "Female petit bourgeoisie", "Female capitalists"), 4,
                            c("wkdecide_bin_unimp", "wkfreedm_bin_unimp", "mustwork_bin_unimp", "chngtme_bin_unimp"),
                            "Male workers",
-                           c("Male workers", "Male managers", "Male petite bourgeoisie", "Male capitalists",
-                             "Female workers", "Female managers", "Female petite bourgeoisie", "Female capitalists"))
+                           c("Male workers", "Male managers", "Male petit bourgeoisie", "Male capitalists",
+                             "Female workers", "Female managers", "Female petit bourgeoisie", "Female capitalists"))
 
 #######race interaction
 #run regression
@@ -555,12 +593,12 @@ less_adj <- mysvy(subset(svy_dat_mi, race_h!="NH other"), outvars, "~class_poc +
 regs_less <- matrix_func(4, 8, outvars)
 
 #format matrix
-binded_race <- formatted(c("NH white managers", "NH white petite bourgeoisie", "NH white capitalists",
-                           "POC workers", "POC managers", "POC petite bourgeoisie", "POC capitalists"), 4,
+binded_race <- formatted(c("NH white managers", "NH white petit bourgeoisie", "NH white capitalists",
+                           "POC workers", "POC managers", "POC petit bourgeoisie", "POC capitalists"), 4,
                          outvars,
                          "NH white workers",
-                         c("NH white workers", "NH white managers", "NH white petite bourgeoisie", "NH white capitalists",
-                           "POC workers", "POC managers", "POC petite bourgeoisie", "POC capitalists"))
+                         c("NH white workers", "NH white managers", "NH white petit bourgeoisie", "NH white capitalists",
+                           "POC workers", "POC managers", "POC petit bourgeoisie", "POC capitalists"))
 ```
 
 ```{r warning=FALSE, message=FALSE, fig.height=5, fig.width=11.25}
@@ -574,8 +612,10 @@ plotted(binded_overall, limitsvec=c(0.026, 2.72), breaksvec=c(0.031, 0.0625, 0.1
             xlab("Prevalence ratio") + theme(axis.title.x=element_text(), axis.text.x=element_text(), axis.ticks.x=element_line(), axis.title.y=element_blank()) +
   plot_layout(ncol=1, heights=c(1, 2, 2))
 
+ggsave("autonomy.png", height=5, width=11.25, dpi=600)
+
 #table 
-tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28,1:5]), "Ref: workers/male workers/white workers") 
+tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28,1:5]), "Ref: workers/male workers/white workers")
 ```
 
 ### Conflict
@@ -592,10 +632,10 @@ less_adj <- mysvy(svy_dat_mi, outvars, "~class + rcs(age, 3) + rcs(year, 3)")
 regs_less <- matrix_func(4, 4, outvars)
 
 #format matrix
-binded_overall <- formatted(c("Managers", "Petite bourgeoisie", "Capitalists"), 4,
+binded_overall <- formatted(c("Managers", "Petit bourgeoisie", "Capitalists"), 4,
                             c("manvsemp_bin_unimp", "trustman_bin_unimp", "respect_bin_unimp", "disc_haras_bin_unimp"),
                             "Workers",
-                            c("Workers", "Managers", "Petite bourgeoisie", "Capitalists"))
+                            c("Workers", "Managers", "Petit bourgeoisie", "Capitalists"))
 
 #######gender interaction
 #run regression
@@ -605,12 +645,12 @@ less_adj <- mysvy(svy_dat_mi, outvars, "~class_gender + rcs(age, 3) + rcs(year, 
 regs_less <- matrix_func(4, 8, outvars)
 
 #format matrix
-binded_gender <- formatted(c("Male managers", "Male petite bourgeoisie", "Male capitalists",
-                             "Female workers", "Female managers", "Female petite bourgeoisie", "Female capitalists"), 4,
+binded_gender <- formatted(c("Male managers", "Male petit bourgeoisie", "Male capitalists",
+                             "Female workers", "Female managers", "Female petit bourgeoisie", "Female capitalists"), 4,
                            c("manvsemp_bin_unimp", "trustman_bin_unimp", "respect_bin_unimp", "disc_haras_bin_unimp"),
                            "Male workers",
-                           c("Male workers", "Male managers", "Male petite bourgeoisie", "Male capitalists",
-                             "Female workers", "Female managers", "Female petite bourgeoisie", "Female capitalists"))
+                           c("Male workers", "Male managers", "Male petit bourgeoisie", "Male capitalists",
+                             "Female workers", "Female managers", "Female petit bourgeoisie", "Female capitalists"))
 
 #######race interaction
 #run regression
@@ -620,12 +660,12 @@ less_adj <- mysvy(subset(svy_dat_mi, race_h!="NH other"), outvars, "~class_poc +
 regs_less <- matrix_func(4, 8, outvars)
 
 #format matrix
-binded_race <- formatted(c("NH white managers", "NH white petite bourgeoisie", "NH white capitalists",
-                           "POC workers", "POC managers", "POC petite bourgeoisie", "POC capitalists"), 4,
+binded_race <- formatted(c("NH white managers", "NH white petit bourgeoisie", "NH white capitalists",
+                           "POC workers", "POC managers", "POC petit bourgeoisie", "POC capitalists"), 4,
                          outvars,
                          "NH white workers",
-                         c("NH white workers", "NH white managers", "NH white petite bourgeoisie", "NH white capitalists",
-                           "POC workers", "POC managers", "POC petite bourgeoisie", "POC capitalists"))
+                         c("NH white workers", "NH white managers", "NH white petit bourgeoisie", "NH white capitalists",
+                           "POC workers", "POC managers", "POC petit bourgeoisie", "POC capitalists"))
 ```
 
 ```{r warning=FALSE, message=FALSE, fig.height=5, fig.width=11.25}
@@ -640,8 +680,10 @@ plotted(binded_overall, limitsvec=c(0.017, 2.42), breaksvec=c(0.031, 0.0625, 0.1
             geom_text(data=filter(binded_race, row_number()==7), x=-3.95, y=1.13, label="\u2190", color="#4A1486", size=6) +  
   plot_layout(ncol=1, heights=c(1, 2, 2))
 
+ggsave("conflict.png", height=5, width=11.25, dpi=600)
+
 #table 
-tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28,1:5]), "Ref: workers/male workers/white workers") 
+tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28,1:5]), "Ref: workers/male workers/white workers")
 ```
 
 ## Gender-race differences in QWL among workers
@@ -692,6 +734,8 @@ conflict <-  ggplot() + theme_void() + ggtitle("Conflict") + theme(plot.title=el
 (comp + process + autonomy + conflict + plot_layout(ncol=4)) /
   ests + 
   plot_layout(heights=c(0.001, 1000))  
+
+ggsave("gender_race_workers.png", height=6, width=8.75, dpi=600)
 
 #table
 kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
@@ -744,24 +788,6 @@ Unadjusted prevalence of bad category of each binary QWL variable among each rac
 x <- svyCreateTableOne(data = svy_dat, vars = qwl_vars, strata='poc_gender')
 x <- print(x, printToggle=FALSE, noSpaces=TRUE)
 kable(x[,1:4]) %>%
-  kable_styling(c("striped", "condensed"))
-```
-
-### Survey-weighted distributions of class stratified by race-gender 
-
-```{r warning=FALSE, message=FALSE}
-x <- svyCreateTableOne(data = svy_dat, vars = "class", strata='poc_gender')
-x <- print(x, printToggle=FALSE, noSpaces=TRUE)
-kable(x[,1:4]) %>%
-  kable_styling(c("striped", "condensed"))
-```
-
-### Survey-weighted distributions of family income stratified by class-gender-race 
-
-```{r warning=FALSE, message=FALSE}
-x <- svyCreateTableOne(data = svy_dat, vars = 'income', strata=c("class_gender", "poc"))
-x <- print(x, printToggle=FALSE, noSpaces=TRUE, nonnormal='income')
-kable(x[,1:16]) %>%
   kable_styling(c("striped", "condensed"))
 ```
 
@@ -854,7 +880,7 @@ less_adj <- mysvy(svy_dat, outvars, "~class + rcs(age, 3) + rcs(year, 3)")
 regs_less <- matrix_func(4, 4, outvars)
 
 #format matrix
-binded_overall <- formatted(c("Managers", "Petite bourgeoisie", "Capitalists"), 4, outvars)
+binded_overall <- formatted(c("Managers", "Petit bourgeoisie", "Capitalists"), 4, outvars)
 
 #######gender interaction
 #run regression
@@ -864,8 +890,8 @@ less_adj <- mysvy(svy_dat, outvars, "~class_gender + rcs(age, 3) + rcs(year, 3)"
 regs_less <- matrix_func(4, 8, outvars)
 
 #format matrix
-binded_gender <- formatted(c("Male managers", "Male petite bourgeoisie", "Male capitalists",
-                             "Female workers", "Female managers", "Female petite bourgeoisie", "Female capitalists"), 4, outvars)
+binded_gender <- formatted(c("Male managers", "Male petit bourgeoisie", "Male capitalists",
+                             "Female workers", "Female managers", "Female petit bourgeoisie", "Female capitalists"), 4, outvars)
 
 #######race interaction
 #run regression
@@ -875,8 +901,8 @@ less_adj <- mysvy(subset(svy_dat, race_h!="NH other"), outvars, "~class_poc + rc
 regs_less <- matrix_func(4, 8, outvars)
 
 #format matrix
-binded_race <- formatted(c("NH white managers", "NH white petite bourgeoisie", "NH white capitalists",
-                           "POC workers", "POC managers", "POC petite bourgeoisie", "POC capitalists"), 4, outvars)
+binded_race <- formatted(c("NH white managers", "NH white petit bourgeoisie", "NH white capitalists",
+                           "POC workers", "POC managers", "POC petit bourgeoisie", "POC capitalists"), 4, outvars)
 ```
 
 ```{r warning=FALSE, message=FALSE}
@@ -898,7 +924,7 @@ less_adj <- mysvy(svy_dat, outvars, "~class + rcs(age, 3) + rcs(year, 3)")
 regs_less <- matrix_func(4, 4, outvars)
 
 #format matrix
-binded_overall <- formatted(c("Managers", "Petite bourgeoisie", "Capitalists"), 4, outvars)
+binded_overall <- formatted(c("Managers", "Petit bourgeoisie", "Capitalists"), 4, outvars)
 
 #######gender interaction
 #run regression
@@ -908,8 +934,8 @@ less_adj <- mysvy(svy_dat, outvars, "~class_gender + rcs(age, 3) + rcs(year, 3)"
 regs_less <- matrix_func(4, 8, outvars)
 
 #format matrix
-binded_gender <- formatted(c("Male managers", "Male petite bourgeoisie", "Male capitalists",
-                             "Female workers", "Female managers", "Female petite bourgeoisie", "Female capitalists"), 4, outvars)
+binded_gender <- formatted(c("Male managers", "Male petit bourgeoisie", "Male capitalists",
+                             "Female workers", "Female managers", "Female petit bourgeoisie", "Female capitalists"), 4, outvars)
 
 #######race interaction
 #run regression
@@ -919,8 +945,8 @@ less_adj <- mysvy(subset(svy_dat, race_h!="NH other"), outvars, "~class_poc + rc
 regs_less <- matrix_func(4, 8, outvars)
 
 #format matrix
-binded_race <- formatted(c("NH white managers", "NH white petite bourgeoisie", "NH white capitalists",
-                           "POC workers", "POC managers", "POC petite bourgeoisie", "POC capitalists"), 4, outvars)
+binded_race <- formatted(c("NH white managers", "NH white petit bourgeoisie", "NH white capitalists",
+                           "POC workers", "POC managers", "POC petit bourgeoisie", "POC capitalists"), 4, outvars)
 ```
 
 ```{r warning=FALSE, message=FALSE}
@@ -942,7 +968,7 @@ less_adj <- mysvy(svy_dat, outvars, "~class + rcs(age, 3) + rcs(year, 3)")
 regs_less <- matrix_func(4, 4, outvars)
 
 #format matrix
-binded_overall <- formatted(c("Managers", "Petite bourgeoisie", "Capitalists"), 4, outvars)
+binded_overall <- formatted(c("Managers", "Petit bourgeoisie", "Capitalists"), 4, outvars)
 
 #######gender interaction
 #run regression
@@ -952,8 +978,8 @@ less_adj <- mysvy(svy_dat, outvars, "~class_gender + rcs(age, 3) + rcs(year, 3)"
 regs_less <- matrix_func(4, 8, outvars)
 
 #format matrix
-binded_gender <- formatted(c("Male managers", "Male petite bourgeoisie", "Male capitalists",
-                             "Female workers", "Female managers", "Female petite bourgeoisie", "Female capitalists"), 4, outvars)
+binded_gender <- formatted(c("Male managers", "Male petit bourgeoisie", "Male capitalists",
+                             "Female workers", "Female managers", "Female petit bourgeoisie", "Female capitalists"), 4, outvars)
 
 #######race interaction
 #run regression
@@ -963,8 +989,8 @@ less_adj <- mysvy(subset(svy_dat, race_h!="NH other"), outvars, "~class_poc + rc
 regs_less <- matrix_func(4, 8, outvars)
 
 #format matrix
-binded_race <- formatted(c("NH white managers", "NH white petite bourgeoisie", "NH white capitalists",
-                           "POC workers", "POC managers", "POC petite bourgeoisie", "POC capitalists"), 4, outvars)
+binded_race <- formatted(c("NH white managers", "NH white petit bourgeoisie", "NH white capitalists",
+                           "POC workers", "POC managers", "POC petit bourgeoisie", "POC capitalists"), 4, outvars)
 ```
 
 ```{r warning=FALSE, message=FALSE}
@@ -986,7 +1012,7 @@ less_adj <- mysvy(svy_dat, outvars, "~class + rcs(age, 3) + rcs(year, 3)")
 regs_less <- matrix_func(4, 4, outvars)
 
 #format matrix
-binded_overall <- formatted(c("Managers", "Petite bourgeoisie", "Capitalists"), 4, outvars)
+binded_overall <- formatted(c("Managers", "Petit bourgeoisie", "Capitalists"), 4, outvars)
 
 #######gender interaction
 #run regression
@@ -996,8 +1022,8 @@ less_adj <- mysvy(svy_dat, outvars, "~class_gender + rcs(age, 3) + rcs(year, 3)"
 regs_less <- matrix_func(4, 8, outvars)
 
 #format matrix
-binded_gender <- formatted(c("Male managers", "Male petite bourgeoisie", "Male capitalists",
-                             "Female workers", "Female managers", "Female petite bourgeoisie", "Female capitalists"), 4, outvars)
+binded_gender <- formatted(c("Male managers", "Male petit bourgeoisie", "Male capitalists",
+                             "Female workers", "Female managers", "Female petit bourgeoisie", "Female capitalists"), 4, outvars)
 
 #######race interaction
 #run regression
@@ -1007,8 +1033,8 @@ less_adj <- mysvy(subset(svy_dat, race_h!="NH other"), outvars, "~class_poc + rc
 regs_less <- matrix_func(4, 8, outvars)
 
 #format matrix
-binded_race <- formatted(c("NH white managers", "NH white petite bourgeoisie", "NH white capitalists",
-                           "POC workers", "POC managers", "POC petite bourgeoisie", "POC capitalists"), 4, outvars)
+binded_race <- formatted(c("NH white managers", "NH white petit bourgeoisie", "NH white capitalists",
+                           "POC workers", "POC managers", "POC petit bourgeoisie", "POC capitalists"), 4, outvars)
 ```
 
 ```{r warning=FALSE, message=FALSE}
