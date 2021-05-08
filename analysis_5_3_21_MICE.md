@@ -1,7 +1,7 @@
 ---
 title: "Class and Quality of Working Life (QWL)"
 author: "Jerzy Eisenberg-Guyot"
-date: "April, 2021"
+date: "May, 2021"
 output: 
   html_document:
     code_folding: hide
@@ -269,9 +269,6 @@ svy_dat_mi <- svydesign(ids = ~ vpsu,
                  nest=TRUE, 
                  data=dat_mi)
 
-#make long imputed dataset
-dat_mi_long <- complete(imp_merged, "long", include=F)
-
 #survey-set unimputed data for descriptives
 svy_dat <- svydesign(ids = ~ vpsu,
                      strata = ~ vstrat,
@@ -287,11 +284,11 @@ svy_dat <- svydesign(ids = ~ vpsu,
 
 ```r
 #vars of interest
-vars <- c('sex', 'race_h', 'educ', 'marital_tri', 'region', 'income', 'age', "srh_bin", "mntlhlth")
+vars <- c('sex', 'race_h', 'educ', 'marital_tri', 'region', 'age', 'income', "srh_bin", "mntlhlth")
 nonorm <- c('income', 'age')
 
 x <- svyCreateTableOne(data = svy_dat, vars = vars, strata='class')
-x <- print(x, printToggle=FALSE, noSpaces=TRUE, nonnormal=nonorm)
+x <- print(x, printToggle=FALSE, noSpaces=TRUE, nonnormal=nonorm, format='p')
 kable(x[,1:4]) %>%
   kable_styling(c("striped", "condensed"))
 ```
@@ -316,10 +313,10 @@ kable(x[,1:4]) %>%
   </tr>
   <tr>
    <td style="text-align:left;"> sex = male (%) </td>
-   <td style="text-align:left;"> 1703.1 (44.6) </td>
-   <td style="text-align:left;"> 1097.2 (51.5) </td>
-   <td style="text-align:left;"> 278.4 (51.2) </td>
-   <td style="text-align:left;"> 324.9 (76.7) </td>
+   <td style="text-align:left;"> 44.6 </td>
+   <td style="text-align:left;"> 51.5 </td>
+   <td style="text-align:left;"> 51.2 </td>
+   <td style="text-align:left;"> 76.7 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> race_h (%) </td>
@@ -330,31 +327,31 @@ kable(x[,1:4]) %>%
   </tr>
   <tr>
    <td style="text-align:left;"> NH white </td>
-   <td style="text-align:left;"> 2521.9 (66.1) </td>
-   <td style="text-align:left;"> 1514.9 (71.2) </td>
-   <td style="text-align:left;"> 392.8 (72.3) </td>
-   <td style="text-align:left;"> 337.6 (79.9) </td>
+   <td style="text-align:left;"> 66.1 </td>
+   <td style="text-align:left;"> 71.2 </td>
+   <td style="text-align:left;"> 72.3 </td>
+   <td style="text-align:left;"> 79.9 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> NH Black </td>
-   <td style="text-align:left;"> 599.7 (15.7) </td>
-   <td style="text-align:left;"> 252.9 (11.9) </td>
-   <td style="text-align:left;"> 40.4 (7.4) </td>
-   <td style="text-align:left;"> 23.4 (5.5) </td>
+   <td style="text-align:left;"> 15.7 </td>
+   <td style="text-align:left;"> 11.9 </td>
+   <td style="text-align:left;"> 7.4 </td>
+   <td style="text-align:left;"> 5.5 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> NH other </td>
-   <td style="text-align:left;"> 145.0 (3.8) </td>
-   <td style="text-align:left;"> 108.7 (5.1) </td>
-   <td style="text-align:left;"> 39.2 (7.2) </td>
-   <td style="text-align:left;"> 29.4 (7.0) </td>
+   <td style="text-align:left;"> 3.8 </td>
+   <td style="text-align:left;"> 5.1 </td>
+   <td style="text-align:left;"> 7.2 </td>
+   <td style="text-align:left;"> 7.0 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Hispanic </td>
-   <td style="text-align:left;"> 547.5 (14.4) </td>
-   <td style="text-align:left;"> 249.9 (11.8) </td>
-   <td style="text-align:left;"> 71.0 (13.1) </td>
-   <td style="text-align:left;"> 32.0 (7.6) </td>
+   <td style="text-align:left;"> 14.4 </td>
+   <td style="text-align:left;"> 11.8 </td>
+   <td style="text-align:left;"> 13.1 </td>
+   <td style="text-align:left;"> 7.6 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> educ (%) </td>
@@ -365,31 +362,31 @@ kable(x[,1:4]) %>%
   </tr>
   <tr>
    <td style="text-align:left;"> &lt;HS </td>
-   <td style="text-align:left;"> 359.4 (9.4) </td>
-   <td style="text-align:left;"> 158.1 (7.4) </td>
-   <td style="text-align:left;"> 65.0 (11.9) </td>
-   <td style="text-align:left;"> 33.4 (7.9) </td>
+   <td style="text-align:left;"> 9.4 </td>
+   <td style="text-align:left;"> 7.4 </td>
+   <td style="text-align:left;"> 11.9 </td>
+   <td style="text-align:left;"> 7.9 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> HS </td>
-   <td style="text-align:left;"> 2111.2 (55.2) </td>
-   <td style="text-align:left;"> 927.3 (43.6) </td>
-   <td style="text-align:left;"> 259.7 (47.7) </td>
-   <td style="text-align:left;"> 170.7 (40.3) </td>
+   <td style="text-align:left;"> 55.2 </td>
+   <td style="text-align:left;"> 43.6 </td>
+   <td style="text-align:left;"> 47.7 </td>
+   <td style="text-align:left;"> 40.3 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> JuCo </td>
-   <td style="text-align:left;"> 345.7 (9.0) </td>
-   <td style="text-align:left;"> 227.7 (10.7) </td>
-   <td style="text-align:left;"> 50.0 (9.2) </td>
-   <td style="text-align:left;"> 31.1 (7.3) </td>
+   <td style="text-align:left;"> 9.0 </td>
+   <td style="text-align:left;"> 10.7 </td>
+   <td style="text-align:left;"> 9.2 </td>
+   <td style="text-align:left;"> 7.3 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> College + </td>
-   <td style="text-align:left;"> 1005.5 (26.3) </td>
-   <td style="text-align:left;"> 815.5 (38.3) </td>
-   <td style="text-align:left;"> 169.5 (31.1) </td>
-   <td style="text-align:left;"> 188.7 (44.5) </td>
+   <td style="text-align:left;"> 26.3 </td>
+   <td style="text-align:left;"> 38.3 </td>
+   <td style="text-align:left;"> 31.1 </td>
+   <td style="text-align:left;"> 44.5 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> marital_tri (%) </td>
@@ -400,24 +397,24 @@ kable(x[,1:4]) %>%
   </tr>
   <tr>
    <td style="text-align:left;"> married </td>
-   <td style="text-align:left;"> 1950.2 (51.0) </td>
-   <td style="text-align:left;"> 1190.8 (55.9) </td>
-   <td style="text-align:left;"> 327.5 (60.2) </td>
-   <td style="text-align:left;"> 301.5 (71.1) </td>
+   <td style="text-align:left;"> 51.0 </td>
+   <td style="text-align:left;"> 55.9 </td>
+   <td style="text-align:left;"> 60.2 </td>
+   <td style="text-align:left;"> 71.1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> never married </td>
-   <td style="text-align:left;"> 1192.5 (31.2) </td>
-   <td style="text-align:left;"> 565.9 (26.6) </td>
-   <td style="text-align:left;"> 106.1 (19.5) </td>
-   <td style="text-align:left;"> 41.6 (9.8) </td>
+   <td style="text-align:left;"> 31.2 </td>
+   <td style="text-align:left;"> 26.6 </td>
+   <td style="text-align:left;"> 19.5 </td>
+   <td style="text-align:left;"> 9.8 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> wid/div/sep </td>
-   <td style="text-align:left;"> 679.1 (17.8) </td>
-   <td style="text-align:left;"> 371.8 (17.5) </td>
-   <td style="text-align:left;"> 110.6 (20.3) </td>
-   <td style="text-align:left;"> 80.7 (19.0) </td>
+   <td style="text-align:left;"> 17.8 </td>
+   <td style="text-align:left;"> 17.5 </td>
+   <td style="text-align:left;"> 20.3 </td>
+   <td style="text-align:left;"> 19.0 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> region (%) </td>
@@ -428,38 +425,31 @@ kable(x[,1:4]) %>%
   </tr>
   <tr>
    <td style="text-align:left;"> Midwest </td>
-   <td style="text-align:left;"> 932.2 (24.4) </td>
-   <td style="text-align:left;"> 475.6 (22.3) </td>
-   <td style="text-align:left;"> 99.9 (18.4) </td>
-   <td style="text-align:left;"> 87.7 (20.7) </td>
+   <td style="text-align:left;"> 24.4 </td>
+   <td style="text-align:left;"> 22.3 </td>
+   <td style="text-align:left;"> 18.4 </td>
+   <td style="text-align:left;"> 20.7 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Northeast </td>
-   <td style="text-align:left;"> 630.1 (16.5) </td>
-   <td style="text-align:left;"> 395.9 (18.6) </td>
-   <td style="text-align:left;"> 87.4 (16.1) </td>
-   <td style="text-align:left;"> 57.2 (13.5) </td>
+   <td style="text-align:left;"> 16.5 </td>
+   <td style="text-align:left;"> 18.6 </td>
+   <td style="text-align:left;"> 16.1 </td>
+   <td style="text-align:left;"> 13.5 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> South </td>
-   <td style="text-align:left;"> 1485.9 (38.9) </td>
-   <td style="text-align:left;"> 745.6 (35.0) </td>
-   <td style="text-align:left;"> 197.7 (36.3) </td>
-   <td style="text-align:left;"> 150.2 (35.4) </td>
+   <td style="text-align:left;"> 38.9 </td>
+   <td style="text-align:left;"> 35.0 </td>
+   <td style="text-align:left;"> 36.3 </td>
+   <td style="text-align:left;"> 35.4 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> West </td>
-   <td style="text-align:left;"> 773.6 (20.2) </td>
-   <td style="text-align:left;"> 511.5 (24.0) </td>
-   <td style="text-align:left;"> 159.1 (29.2) </td>
-   <td style="text-align:left;"> 128.6 (30.3) </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> income (median [IQR]) </td>
-   <td style="text-align:left;"> 6.38 [3.50, 10.22] </td>
-   <td style="text-align:left;"> 8.43 [4.85, 12.86] </td>
-   <td style="text-align:left;"> 6.38 [3.22, 12.27] </td>
-   <td style="text-align:left;"> 12.27 [6.97, 23.07] </td>
+   <td style="text-align:left;"> 20.2 </td>
+   <td style="text-align:left;"> 24.0 </td>
+   <td style="text-align:left;"> 29.2 </td>
+   <td style="text-align:left;"> 30.3 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> age (median [IQR]) </td>
@@ -469,11 +459,18 @@ kable(x[,1:4]) %>%
    <td style="text-align:left;"> 50.00 [40.00, 58.00] </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> income (median [IQR]) </td>
+   <td style="text-align:left;"> 6.38 [3.50, 10.22] </td>
+   <td style="text-align:left;"> 8.43 [4.85, 12.86] </td>
+   <td style="text-align:left;"> 6.38 [3.22, 12.27] </td>
+   <td style="text-align:left;"> 12.27 [6.97, 23.07] </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> srh_bin = poor/fair (%) </td>
-   <td style="text-align:left;"> 579.3 (15.2) </td>
-   <td style="text-align:left;"> 271.1 (12.9) </td>
-   <td style="text-align:left;"> 83.4 (15.6) </td>
-   <td style="text-align:left;"> 43.4 (10.4) </td>
+   <td style="text-align:left;"> 15.2 </td>
+   <td style="text-align:left;"> 12.9 </td>
+   <td style="text-align:left;"> 15.6 </td>
+   <td style="text-align:left;"> 10.4 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> mntlhlth (mean (SD)) </td>
@@ -673,7 +670,8 @@ formatted <- function(classvec, rows, qwlvec, dummy, facvec){
            Cat=ifelse(Var=="satjob1_bin_unimp" | Var=="rincblls_bin_unimp" | Var=="safehlth_bin_unimp" | Var=="safetywk_bin_unimp", "Rewards/hazards",
                       ifelse(Var=="learnnew_bin_unimp" | Var=="workdiff_bin_unimp" | Var == "workfast_bin_unimp" | Var=="condemnd_bin_unimp", "Labor process",
                              ifelse(Var=="wkdecide_bin_unimp" | Var=="wkfreedm_bin_unimp" | Var == "mustwork_bin_unimp" | Var=="chngtme_bin_unimp", "Autonomy",
-                                    ifelse(Var=="manvsemp_bin_unimp" | Var=="trustman_bin_unimp" | Var == "respect_bin_unimp" | Var=="disc_haras_bin_unimp", "Conflict", NA))))) -> binded
+                                    ifelse(Var=="manvsemp_bin_unimp" | Var=="trustman_bin_unimp" | Var == "respect_bin_unimp" | Var=="disc_haras_bin_unimp", "Conflict", NA))))) %>%
+    relocate(Var, Class) -> binded
   return(binded)
 }
 
@@ -715,7 +713,7 @@ plotted <- function(binded, limitsvec, breaksvec, cols, shapes){
 
 #table function
 tabled <- function(dat, captioned){
-  kable(dat, digits=2, col.names=c("PR", "Lower", "Upper", "QWL variable", "Class"), caption=captioned, row.names=FALSE) %>%
+  kable(dat, digits=2, col.names=c("QWL variable", "Class", "PR", "Lower", "Upper"), caption=captioned, row.names=FALSE) %>%
     kable_styling("striped") %>%
     group_rows("Class", 1, 12) %>%
     group_rows("Class*gender", 13, 40) %>%
@@ -726,7 +724,7 @@ tabled <- function(dat, captioned){
 
 ## Class, race, and gender differences in QWL 
 
-Prevalence of bad category of each binary QWL variable among each class relative to the prevalence among workers adjusted for age and year with restricted cubic splines. Class*race estimates exclude "NH other" group from sample because they're so heterogeneous. 
+Prevalence of adverse category of each binary QWL variable among each class relative to the prevalence among workers adjusted for age and year with restricted cubic splines. Class*race estimates exclude "NH other" group from sample because they're so heterogeneous. 
 
 ### Compensation and safety
 
@@ -806,492 +804,492 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
 <caption>Ref: workers/male workers/white workers</caption>
  <thead>
   <tr>
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> QWL variable </th>
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> Class </th>
    <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> PR </th>
    <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> Lower </th>
    <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> Upper </th>
-   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> QWL variable </th>
-   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> Class </th>
   </tr>
  </thead>
 <tbody>
   <tr grouplength="12"><td colspan="5" style="border-bottom: 1px solid;"><strong>Class</strong></td></tr>
 <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.87 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> satjob1_bin_unimp </td>
+   <td style="text-align:left;"> Managers </td>
+   <td style="text-align:right;"> 0.87 </td>
    <td style="text-align:right;"> 0.69 </td>
    <td style="text-align:right;"> 1.10 </td>
-   <td style="text-align:left;"> satjob1_bin_unimp </td>
-   <td style="text-align:left;"> Managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.54 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> satjob1_bin_unimp </td>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.54 </td>
    <td style="text-align:right;"> 0.34 </td>
    <td style="text-align:right;"> 0.88 </td>
-   <td style="text-align:left;"> satjob1_bin_unimp </td>
-   <td style="text-align:left;"> Petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.42 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> satjob1_bin_unimp </td>
+   <td style="text-align:left;"> Capitalists </td>
+   <td style="text-align:right;"> 0.42 </td>
    <td style="text-align:right;"> 0.22 </td>
    <td style="text-align:right;"> 0.80 </td>
-   <td style="text-align:left;"> satjob1_bin_unimp </td>
-   <td style="text-align:left;"> Capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.79 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> rincblls_bin_unimp </td>
+   <td style="text-align:left;"> Managers </td>
+   <td style="text-align:right;"> 0.79 </td>
    <td style="text-align:right;"> 0.75 </td>
    <td style="text-align:right;"> 0.84 </td>
-   <td style="text-align:left;"> rincblls_bin_unimp </td>
-   <td style="text-align:left;"> Managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.92 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> rincblls_bin_unimp </td>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.92 </td>
    <td style="text-align:right;"> 0.84 </td>
    <td style="text-align:right;"> 1.01 </td>
-   <td style="text-align:left;"> rincblls_bin_unimp </td>
-   <td style="text-align:left;"> Petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.50 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> rincblls_bin_unimp </td>
+   <td style="text-align:left;"> Capitalists </td>
+   <td style="text-align:right;"> 0.50 </td>
    <td style="text-align:right;"> 0.41 </td>
    <td style="text-align:right;"> 0.60 </td>
-   <td style="text-align:left;"> rincblls_bin_unimp </td>
-   <td style="text-align:left;"> Capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.75 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> safehlth_bin_unimp </td>
+   <td style="text-align:left;"> Managers </td>
+   <td style="text-align:right;"> 0.75 </td>
    <td style="text-align:right;"> 0.58 </td>
    <td style="text-align:right;"> 0.95 </td>
-   <td style="text-align:left;"> safehlth_bin_unimp </td>
-   <td style="text-align:left;"> Managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.58 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> safehlth_bin_unimp </td>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.58 </td>
    <td style="text-align:right;"> 0.33 </td>
    <td style="text-align:right;"> 1.01 </td>
-   <td style="text-align:left;"> safehlth_bin_unimp </td>
-   <td style="text-align:left;"> Petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.62 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> safehlth_bin_unimp </td>
+   <td style="text-align:left;"> Capitalists </td>
+   <td style="text-align:right;"> 0.62 </td>
    <td style="text-align:right;"> 0.31 </td>
    <td style="text-align:right;"> 1.24 </td>
-   <td style="text-align:left;"> safehlth_bin_unimp </td>
-   <td style="text-align:left;"> Capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.81 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> safetywk_bin_unimp </td>
+   <td style="text-align:left;"> Managers </td>
+   <td style="text-align:right;"> 0.81 </td>
    <td style="text-align:right;"> 0.66 </td>
    <td style="text-align:right;"> 1.01 </td>
-   <td style="text-align:left;"> safetywk_bin_unimp </td>
-   <td style="text-align:left;"> Managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.38 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> safetywk_bin_unimp </td>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.38 </td>
    <td style="text-align:right;"> 0.23 </td>
    <td style="text-align:right;"> 0.63 </td>
-   <td style="text-align:left;"> safetywk_bin_unimp </td>
-   <td style="text-align:left;"> Petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.41 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> safetywk_bin_unimp </td>
+   <td style="text-align:left;"> Capitalists </td>
+   <td style="text-align:right;"> 0.41 </td>
    <td style="text-align:right;"> 0.21 </td>
    <td style="text-align:right;"> 0.82 </td>
-   <td style="text-align:left;"> safetywk_bin_unimp </td>
-   <td style="text-align:left;"> Capitalists </td>
   </tr>
   <tr grouplength="28"><td colspan="5" style="border-bottom: 1px solid;"><strong>Class*gender</strong></td></tr>
 <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.83 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> satjob1_bin_unimp </td>
+   <td style="text-align:left;"> Male managers </td>
+   <td style="text-align:right;"> 0.83 </td>
    <td style="text-align:right;"> 0.61 </td>
    <td style="text-align:right;"> 1.15 </td>
-   <td style="text-align:left;"> satjob1_bin_unimp </td>
-   <td style="text-align:left;"> Male managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.72 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> satjob1_bin_unimp </td>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.72 </td>
    <td style="text-align:right;"> 0.40 </td>
    <td style="text-align:right;"> 1.28 </td>
-   <td style="text-align:left;"> satjob1_bin_unimp </td>
-   <td style="text-align:left;"> Male petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.37 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> satjob1_bin_unimp </td>
+   <td style="text-align:left;"> Male capitalists </td>
+   <td style="text-align:right;"> 0.37 </td>
    <td style="text-align:right;"> 0.16 </td>
    <td style="text-align:right;"> 0.81 </td>
-   <td style="text-align:left;"> satjob1_bin_unimp </td>
-   <td style="text-align:left;"> Male capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.80 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> satjob1_bin_unimp </td>
+   <td style="text-align:left;"> Female workers </td>
+   <td style="text-align:right;"> 0.80 </td>
    <td style="text-align:right;"> 0.63 </td>
    <td style="text-align:right;"> 1.02 </td>
-   <td style="text-align:left;"> satjob1_bin_unimp </td>
-   <td style="text-align:left;"> Female workers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.71 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> satjob1_bin_unimp </td>
+   <td style="text-align:left;"> Female managers </td>
+   <td style="text-align:right;"> 0.71 </td>
    <td style="text-align:right;"> 0.51 </td>
    <td style="text-align:right;"> 1.00 </td>
-   <td style="text-align:left;"> satjob1_bin_unimp </td>
-   <td style="text-align:left;"> Female managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.24 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> satjob1_bin_unimp </td>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.24 </td>
    <td style="text-align:right;"> 0.11 </td>
    <td style="text-align:right;"> 0.55 </td>
-   <td style="text-align:left;"> satjob1_bin_unimp </td>
-   <td style="text-align:left;"> Female petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.38 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> satjob1_bin_unimp </td>
+   <td style="text-align:left;"> Female capitalists </td>
+   <td style="text-align:right;"> 0.38 </td>
    <td style="text-align:right;"> 0.12 </td>
    <td style="text-align:right;"> 1.17 </td>
-   <td style="text-align:left;"> satjob1_bin_unimp </td>
-   <td style="text-align:left;"> Female capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.79 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> rincblls_bin_unimp </td>
+   <td style="text-align:left;"> Male managers </td>
+   <td style="text-align:right;"> 0.79 </td>
    <td style="text-align:right;"> 0.71 </td>
    <td style="text-align:right;"> 0.87 </td>
-   <td style="text-align:left;"> rincblls_bin_unimp </td>
-   <td style="text-align:left;"> Male managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.81 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> rincblls_bin_unimp </td>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.81 </td>
    <td style="text-align:right;"> 0.67 </td>
    <td style="text-align:right;"> 0.96 </td>
-   <td style="text-align:left;"> rincblls_bin_unimp </td>
-   <td style="text-align:left;"> Male petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.48 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> rincblls_bin_unimp </td>
+   <td style="text-align:left;"> Male capitalists </td>
+   <td style="text-align:right;"> 0.48 </td>
    <td style="text-align:right;"> 0.37 </td>
    <td style="text-align:right;"> 0.62 </td>
-   <td style="text-align:left;"> rincblls_bin_unimp </td>
-   <td style="text-align:left;"> Male capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.40 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> rincblls_bin_unimp </td>
+   <td style="text-align:left;"> Female workers </td>
+   <td style="text-align:right;"> 1.40 </td>
    <td style="text-align:right;"> 1.31 </td>
    <td style="text-align:right;"> 1.50 </td>
-   <td style="text-align:left;"> rincblls_bin_unimp </td>
-   <td style="text-align:left;"> Female workers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.17 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> rincblls_bin_unimp </td>
+   <td style="text-align:left;"> Female managers </td>
+   <td style="text-align:right;"> 1.17 </td>
    <td style="text-align:right;"> 1.07 </td>
    <td style="text-align:right;"> 1.27 </td>
-   <td style="text-align:left;"> rincblls_bin_unimp </td>
-   <td style="text-align:left;"> Female managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.47 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> rincblls_bin_unimp </td>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
+   <td style="text-align:right;"> 1.47 </td>
    <td style="text-align:right;"> 1.32 </td>
    <td style="text-align:right;"> 1.63 </td>
-   <td style="text-align:left;"> rincblls_bin_unimp </td>
-   <td style="text-align:left;"> Female petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.02 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> rincblls_bin_unimp </td>
+   <td style="text-align:left;"> Female capitalists </td>
+   <td style="text-align:right;"> 1.02 </td>
    <td style="text-align:right;"> 0.81 </td>
    <td style="text-align:right;"> 1.29 </td>
-   <td style="text-align:left;"> rincblls_bin_unimp </td>
-   <td style="text-align:left;"> Female capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.76 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> safehlth_bin_unimp </td>
+   <td style="text-align:left;"> Male managers </td>
+   <td style="text-align:right;"> 0.76 </td>
    <td style="text-align:right;"> 0.54 </td>
    <td style="text-align:right;"> 1.07 </td>
-   <td style="text-align:left;"> safehlth_bin_unimp </td>
-   <td style="text-align:left;"> Male managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.83 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> safehlth_bin_unimp </td>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.83 </td>
    <td style="text-align:right;"> 0.43 </td>
    <td style="text-align:right;"> 1.62 </td>
-   <td style="text-align:left;"> safehlth_bin_unimp </td>
-   <td style="text-align:left;"> Male petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.74 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> safehlth_bin_unimp </td>
+   <td style="text-align:left;"> Male capitalists </td>
+   <td style="text-align:right;"> 0.74 </td>
    <td style="text-align:right;"> 0.33 </td>
    <td style="text-align:right;"> 1.65 </td>
-   <td style="text-align:left;"> safehlth_bin_unimp </td>
-   <td style="text-align:left;"> Male capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.13 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> safehlth_bin_unimp </td>
+   <td style="text-align:left;"> Female workers </td>
+   <td style="text-align:right;"> 1.13 </td>
    <td style="text-align:right;"> 0.88 </td>
    <td style="text-align:right;"> 1.46 </td>
-   <td style="text-align:left;"> safehlth_bin_unimp </td>
-   <td style="text-align:left;"> Female workers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.85 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> safehlth_bin_unimp </td>
+   <td style="text-align:left;"> Female managers </td>
+   <td style="text-align:right;"> 0.85 </td>
    <td style="text-align:right;"> 0.59 </td>
    <td style="text-align:right;"> 1.21 </td>
-   <td style="text-align:left;"> safehlth_bin_unimp </td>
-   <td style="text-align:left;"> Female managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.41 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> safehlth_bin_unimp </td>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.41 </td>
    <td style="text-align:right;"> 0.14 </td>
    <td style="text-align:right;"> 1.17 </td>
-   <td style="text-align:left;"> safehlth_bin_unimp </td>
-   <td style="text-align:left;"> Female petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.46 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> safehlth_bin_unimp </td>
+   <td style="text-align:left;"> Female capitalists </td>
+   <td style="text-align:right;"> 0.46 </td>
    <td style="text-align:right;"> 0.13 </td>
    <td style="text-align:right;"> 1.59 </td>
-   <td style="text-align:left;"> safehlth_bin_unimp </td>
-   <td style="text-align:left;"> Female capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.75 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> safetywk_bin_unimp </td>
+   <td style="text-align:left;"> Male managers </td>
+   <td style="text-align:right;"> 0.75 </td>
    <td style="text-align:right;"> 0.56 </td>
    <td style="text-align:right;"> 1.01 </td>
-   <td style="text-align:left;"> safetywk_bin_unimp </td>
-   <td style="text-align:left;"> Male managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.55 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> safetywk_bin_unimp </td>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.55 </td>
    <td style="text-align:right;"> 0.30 </td>
    <td style="text-align:right;"> 1.02 </td>
-   <td style="text-align:left;"> safetywk_bin_unimp </td>
-   <td style="text-align:left;"> Male petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.36 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> safetywk_bin_unimp </td>
+   <td style="text-align:left;"> Male capitalists </td>
+   <td style="text-align:right;"> 0.36 </td>
    <td style="text-align:right;"> 0.14 </td>
    <td style="text-align:right;"> 0.92 </td>
-   <td style="text-align:left;"> safetywk_bin_unimp </td>
-   <td style="text-align:left;"> Male capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.02 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> safetywk_bin_unimp </td>
+   <td style="text-align:left;"> Female workers </td>
+   <td style="text-align:right;"> 1.02 </td>
    <td style="text-align:right;"> 0.82 </td>
    <td style="text-align:right;"> 1.27 </td>
-   <td style="text-align:left;"> safetywk_bin_unimp </td>
-   <td style="text-align:left;"> Female workers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.90 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> safetywk_bin_unimp </td>
+   <td style="text-align:left;"> Female managers </td>
+   <td style="text-align:right;"> 0.90 </td>
    <td style="text-align:right;"> 0.67 </td>
    <td style="text-align:right;"> 1.21 </td>
-   <td style="text-align:left;"> safetywk_bin_unimp </td>
-   <td style="text-align:left;"> Female managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.23 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> safetywk_bin_unimp </td>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.23 </td>
    <td style="text-align:right;"> 0.09 </td>
    <td style="text-align:right;"> 0.54 </td>
-   <td style="text-align:left;"> safetywk_bin_unimp </td>
-   <td style="text-align:left;"> Female petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.61 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> safetywk_bin_unimp </td>
+   <td style="text-align:left;"> Female capitalists </td>
+   <td style="text-align:right;"> 0.61 </td>
    <td style="text-align:right;"> 0.27 </td>
    <td style="text-align:right;"> 1.37 </td>
-   <td style="text-align:left;"> safetywk_bin_unimp </td>
-   <td style="text-align:left;"> Female capitalists </td>
   </tr>
   <tr grouplength="28"><td colspan="5" style="border-bottom: 1px solid;"><strong>Class*POC</strong></td></tr>
 <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.83 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> satjob1_bin_unimp </td>
+   <td style="text-align:left;"> NH white managers </td>
+   <td style="text-align:right;"> 0.83 </td>
    <td style="text-align:right;"> 0.62 </td>
    <td style="text-align:right;"> 1.12 </td>
-   <td style="text-align:left;"> satjob1_bin_unimp </td>
-   <td style="text-align:left;"> NH white managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.41 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> satjob1_bin_unimp </td>
+   <td style="text-align:left;"> NH white petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.41 </td>
    <td style="text-align:right;"> 0.23 </td>
    <td style="text-align:right;"> 0.76 </td>
-   <td style="text-align:left;"> satjob1_bin_unimp </td>
-   <td style="text-align:left;"> NH white petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.40 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> satjob1_bin_unimp </td>
+   <td style="text-align:left;"> NH white capitalists </td>
+   <td style="text-align:right;"> 0.40 </td>
    <td style="text-align:right;"> 0.22 </td>
    <td style="text-align:right;"> 0.75 </td>
-   <td style="text-align:left;"> satjob1_bin_unimp </td>
-   <td style="text-align:left;"> NH white capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.10 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> satjob1_bin_unimp </td>
+   <td style="text-align:left;"> POC workers </td>
+   <td style="text-align:right;"> 1.10 </td>
    <td style="text-align:right;"> 0.83 </td>
    <td style="text-align:right;"> 1.46 </td>
-   <td style="text-align:left;"> satjob1_bin_unimp </td>
-   <td style="text-align:left;"> POC workers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.19 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> satjob1_bin_unimp </td>
+   <td style="text-align:left;"> POC managers </td>
+   <td style="text-align:right;"> 1.19 </td>
    <td style="text-align:right;"> 0.82 </td>
    <td style="text-align:right;"> 1.72 </td>
-   <td style="text-align:left;"> satjob1_bin_unimp </td>
-   <td style="text-align:left;"> POC managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.82 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> satjob1_bin_unimp </td>
+   <td style="text-align:left;"> POC petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.82 </td>
    <td style="text-align:right;"> 0.33 </td>
    <td style="text-align:right;"> 2.06 </td>
-   <td style="text-align:left;"> satjob1_bin_unimp </td>
-   <td style="text-align:left;"> POC petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.00 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> satjob1_bin_unimp </td>
+   <td style="text-align:left;"> POC capitalists </td>
+   <td style="text-align:right;"> 0.00 </td>
    <td style="text-align:right;"> 0.00 </td>
    <td style="text-align:right;"> 2142.16 </td>
-   <td style="text-align:left;"> satjob1_bin_unimp </td>
-   <td style="text-align:left;"> POC capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.77 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> rincblls_bin_unimp </td>
+   <td style="text-align:left;"> NH white managers </td>
+   <td style="text-align:right;"> 0.77 </td>
    <td style="text-align:right;"> 0.72 </td>
    <td style="text-align:right;"> 0.83 </td>
-   <td style="text-align:left;"> rincblls_bin_unimp </td>
-   <td style="text-align:left;"> NH white managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.88 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> rincblls_bin_unimp </td>
+   <td style="text-align:left;"> NH white petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.88 </td>
    <td style="text-align:right;"> 0.79 </td>
    <td style="text-align:right;"> 0.99 </td>
-   <td style="text-align:left;"> rincblls_bin_unimp </td>
-   <td style="text-align:left;"> NH white petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.48 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> rincblls_bin_unimp </td>
+   <td style="text-align:left;"> NH white capitalists </td>
+   <td style="text-align:right;"> 0.48 </td>
    <td style="text-align:right;"> 0.38 </td>
    <td style="text-align:right;"> 0.60 </td>
-   <td style="text-align:left;"> rincblls_bin_unimp </td>
-   <td style="text-align:left;"> NH white capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.03 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> rincblls_bin_unimp </td>
+   <td style="text-align:left;"> POC workers </td>
+   <td style="text-align:right;"> 1.03 </td>
    <td style="text-align:right;"> 0.97 </td>
    <td style="text-align:right;"> 1.11 </td>
-   <td style="text-align:left;"> rincblls_bin_unimp </td>
-   <td style="text-align:left;"> POC workers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.91 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> rincblls_bin_unimp </td>
+   <td style="text-align:left;"> POC managers </td>
+   <td style="text-align:right;"> 0.91 </td>
    <td style="text-align:right;"> 0.82 </td>
    <td style="text-align:right;"> 1.01 </td>
-   <td style="text-align:left;"> rincblls_bin_unimp </td>
-   <td style="text-align:left;"> POC managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.08 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> rincblls_bin_unimp </td>
+   <td style="text-align:left;"> POC petit bourgeoisie </td>
+   <td style="text-align:right;"> 1.08 </td>
    <td style="text-align:right;"> 0.91 </td>
    <td style="text-align:right;"> 1.27 </td>
-   <td style="text-align:left;"> rincblls_bin_unimp </td>
-   <td style="text-align:left;"> POC petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.67 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> rincblls_bin_unimp </td>
+   <td style="text-align:left;"> POC capitalists </td>
+   <td style="text-align:right;"> 0.67 </td>
    <td style="text-align:right;"> 0.47 </td>
    <td style="text-align:right;"> 0.97 </td>
-   <td style="text-align:left;"> rincblls_bin_unimp </td>
-   <td style="text-align:left;"> POC capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.75 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> safehlth_bin_unimp </td>
+   <td style="text-align:left;"> NH white managers </td>
+   <td style="text-align:right;"> 0.75 </td>
    <td style="text-align:right;"> 0.55 </td>
    <td style="text-align:right;"> 1.01 </td>
-   <td style="text-align:left;"> safehlth_bin_unimp </td>
-   <td style="text-align:left;"> NH white managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.34 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> safehlth_bin_unimp </td>
+   <td style="text-align:left;"> NH white petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.34 </td>
    <td style="text-align:right;"> 0.17 </td>
    <td style="text-align:right;"> 0.68 </td>
-   <td style="text-align:left;"> safehlth_bin_unimp </td>
-   <td style="text-align:left;"> NH white petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.71 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> safehlth_bin_unimp </td>
+   <td style="text-align:left;"> NH white capitalists </td>
+   <td style="text-align:right;"> 0.71 </td>
    <td style="text-align:right;"> 0.32 </td>
    <td style="text-align:right;"> 1.57 </td>
-   <td style="text-align:left;"> safehlth_bin_unimp </td>
-   <td style="text-align:left;"> NH white capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.34 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> safehlth_bin_unimp </td>
+   <td style="text-align:left;"> POC workers </td>
+   <td style="text-align:right;"> 1.34 </td>
    <td style="text-align:right;"> 1.03 </td>
    <td style="text-align:right;"> 1.75 </td>
-   <td style="text-align:left;"> safehlth_bin_unimp </td>
-   <td style="text-align:left;"> POC workers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.05 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> safehlth_bin_unimp </td>
+   <td style="text-align:left;"> POC managers </td>
+   <td style="text-align:right;"> 1.05 </td>
    <td style="text-align:right;"> 0.70 </td>
    <td style="text-align:right;"> 1.57 </td>
-   <td style="text-align:left;"> safehlth_bin_unimp </td>
-   <td style="text-align:left;"> POC managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.62 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> safehlth_bin_unimp </td>
+   <td style="text-align:left;"> POC petit bourgeoisie </td>
+   <td style="text-align:right;"> 1.62 </td>
    <td style="text-align:right;"> 0.71 </td>
    <td style="text-align:right;"> 3.73 </td>
-   <td style="text-align:left;"> safehlth_bin_unimp </td>
-   <td style="text-align:left;"> POC petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.55 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> safehlth_bin_unimp </td>
+   <td style="text-align:left;"> POC capitalists </td>
+   <td style="text-align:right;"> 0.55 </td>
    <td style="text-align:right;"> 0.13 </td>
    <td style="text-align:right;"> 2.31 </td>
-   <td style="text-align:left;"> safehlth_bin_unimp </td>
-   <td style="text-align:left;"> POC capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.87 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> safetywk_bin_unimp </td>
+   <td style="text-align:left;"> NH white managers </td>
+   <td style="text-align:right;"> 0.87 </td>
    <td style="text-align:right;"> 0.69 </td>
    <td style="text-align:right;"> 1.11 </td>
-   <td style="text-align:left;"> safetywk_bin_unimp </td>
-   <td style="text-align:left;"> NH white managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.34 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> safetywk_bin_unimp </td>
+   <td style="text-align:left;"> NH white petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.34 </td>
    <td style="text-align:right;"> 0.19 </td>
    <td style="text-align:right;"> 0.59 </td>
-   <td style="text-align:left;"> safetywk_bin_unimp </td>
-   <td style="text-align:left;"> NH white petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.53 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> safetywk_bin_unimp </td>
+   <td style="text-align:left;"> NH white capitalists </td>
+   <td style="text-align:right;"> 0.53 </td>
    <td style="text-align:right;"> 0.27 </td>
    <td style="text-align:right;"> 1.06 </td>
-   <td style="text-align:left;"> safetywk_bin_unimp </td>
-   <td style="text-align:left;"> NH white capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.04 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> safetywk_bin_unimp </td>
+   <td style="text-align:left;"> POC workers </td>
+   <td style="text-align:right;"> 1.04 </td>
    <td style="text-align:right;"> 0.81 </td>
    <td style="text-align:right;"> 1.34 </td>
-   <td style="text-align:left;"> safetywk_bin_unimp </td>
-   <td style="text-align:left;"> POC workers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.72 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> safetywk_bin_unimp </td>
+   <td style="text-align:left;"> POC managers </td>
+   <td style="text-align:right;"> 0.72 </td>
    <td style="text-align:right;"> 0.47 </td>
    <td style="text-align:right;"> 1.10 </td>
-   <td style="text-align:left;"> safetywk_bin_unimp </td>
-   <td style="text-align:left;"> POC managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.56 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> safetywk_bin_unimp </td>
+   <td style="text-align:left;"> POC petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.56 </td>
    <td style="text-align:right;"> 0.22 </td>
    <td style="text-align:right;"> 1.38 </td>
-   <td style="text-align:left;"> safetywk_bin_unimp </td>
-   <td style="text-align:left;"> POC petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.00 </td>
-   <td style="text-align:right;"> 0.00 </td>
-   <td style="text-align:right;"> 0.00 </td>
-   <td style="text-align:left;"> safetywk_bin_unimp </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> safetywk_bin_unimp </td>
    <td style="text-align:left;"> POC capitalists </td>
+   <td style="text-align:right;"> 0.00 </td>
+   <td style="text-align:right;"> 0.00 </td>
+   <td style="text-align:right;"> 0.00 </td>
   </tr>
 </tbody>
 </table></div>
@@ -1373,492 +1371,492 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
 <caption>Ref: workers/male workers/white workers</caption>
  <thead>
   <tr>
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> QWL variable </th>
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> Class </th>
    <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> PR </th>
    <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> Lower </th>
    <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> Upper </th>
-   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> QWL variable </th>
-   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> Class </th>
   </tr>
  </thead>
 <tbody>
   <tr grouplength="12"><td colspan="5" style="border-bottom: 1px solid;"><strong>Class</strong></td></tr>
 <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.39 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> workdiff_bin_unimp </td>
+   <td style="text-align:left;"> Managers </td>
+   <td style="text-align:right;"> 0.39 </td>
    <td style="text-align:right;"> 0.31 </td>
    <td style="text-align:right;"> 0.49 </td>
-   <td style="text-align:left;"> workdiff_bin_unimp </td>
-   <td style="text-align:left;"> Managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.84 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> workdiff_bin_unimp </td>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.84 </td>
    <td style="text-align:right;"> 0.64 </td>
    <td style="text-align:right;"> 1.11 </td>
-   <td style="text-align:left;"> workdiff_bin_unimp </td>
-   <td style="text-align:left;"> Petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.36 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> workdiff_bin_unimp </td>
+   <td style="text-align:left;"> Capitalists </td>
+   <td style="text-align:right;"> 0.36 </td>
    <td style="text-align:right;"> 0.21 </td>
    <td style="text-align:right;"> 0.61 </td>
-   <td style="text-align:left;"> workdiff_bin_unimp </td>
-   <td style="text-align:left;"> Capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.48 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> learnnew_bin_unimp </td>
+   <td style="text-align:left;"> Managers </td>
+   <td style="text-align:right;"> 0.48 </td>
    <td style="text-align:right;"> 0.40 </td>
    <td style="text-align:right;"> 0.59 </td>
-   <td style="text-align:left;"> learnnew_bin_unimp </td>
-   <td style="text-align:left;"> Managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.72 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> learnnew_bin_unimp </td>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.72 </td>
    <td style="text-align:right;"> 0.57 </td>
    <td style="text-align:right;"> 0.93 </td>
-   <td style="text-align:left;"> learnnew_bin_unimp </td>
-   <td style="text-align:left;"> Petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.22 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> learnnew_bin_unimp </td>
+   <td style="text-align:left;"> Capitalists </td>
+   <td style="text-align:right;"> 0.22 </td>
    <td style="text-align:right;"> 0.13 </td>
    <td style="text-align:right;"> 0.38 </td>
-   <td style="text-align:left;"> learnnew_bin_unimp </td>
-   <td style="text-align:left;"> Capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.23 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> condemnd_bin_unimp </td>
+   <td style="text-align:left;"> Managers </td>
+   <td style="text-align:right;"> 1.23 </td>
    <td style="text-align:right;"> 1.12 </td>
    <td style="text-align:right;"> 1.36 </td>
-   <td style="text-align:left;"> condemnd_bin_unimp </td>
-   <td style="text-align:left;"> Managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.72 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> condemnd_bin_unimp </td>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.72 </td>
    <td style="text-align:right;"> 0.57 </td>
    <td style="text-align:right;"> 0.91 </td>
-   <td style="text-align:left;"> condemnd_bin_unimp </td>
-   <td style="text-align:left;"> Petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.21 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> condemnd_bin_unimp </td>
+   <td style="text-align:left;"> Capitalists </td>
+   <td style="text-align:right;"> 1.21 </td>
    <td style="text-align:right;"> 1.00 </td>
    <td style="text-align:right;"> 1.46 </td>
-   <td style="text-align:left;"> condemnd_bin_unimp </td>
-   <td style="text-align:left;"> Capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.15 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> workfast_bin_unimp </td>
+   <td style="text-align:left;"> Managers </td>
+   <td style="text-align:right;"> 1.15 </td>
    <td style="text-align:right;"> 1.11 </td>
    <td style="text-align:right;"> 1.20 </td>
-   <td style="text-align:left;"> workfast_bin_unimp </td>
-   <td style="text-align:left;"> Managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.87 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> workfast_bin_unimp </td>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.87 </td>
    <td style="text-align:right;"> 0.79 </td>
    <td style="text-align:right;"> 0.95 </td>
-   <td style="text-align:left;"> workfast_bin_unimp </td>
-   <td style="text-align:left;"> Petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.26 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> workfast_bin_unimp </td>
+   <td style="text-align:left;"> Capitalists </td>
+   <td style="text-align:right;"> 1.26 </td>
    <td style="text-align:right;"> 1.17 </td>
    <td style="text-align:right;"> 1.35 </td>
-   <td style="text-align:left;"> workfast_bin_unimp </td>
-   <td style="text-align:left;"> Capitalists </td>
   </tr>
   <tr grouplength="28"><td colspan="5" style="border-bottom: 1px solid;"><strong>Class*gender</strong></td></tr>
 <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.38 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> workdiff_bin_unimp </td>
+   <td style="text-align:left;"> Male managers </td>
+   <td style="text-align:right;"> 0.38 </td>
    <td style="text-align:right;"> 0.28 </td>
    <td style="text-align:right;"> 0.51 </td>
-   <td style="text-align:left;"> workdiff_bin_unimp </td>
-   <td style="text-align:left;"> Male managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.63 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> workdiff_bin_unimp </td>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.63 </td>
    <td style="text-align:right;"> 0.40 </td>
    <td style="text-align:right;"> 0.99 </td>
-   <td style="text-align:left;"> workdiff_bin_unimp </td>
-   <td style="text-align:left;"> Male petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.34 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> workdiff_bin_unimp </td>
+   <td style="text-align:left;"> Male capitalists </td>
+   <td style="text-align:right;"> 0.34 </td>
    <td style="text-align:right;"> 0.19 </td>
    <td style="text-align:right;"> 0.63 </td>
-   <td style="text-align:left;"> workdiff_bin_unimp </td>
-   <td style="text-align:left;"> Male capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.86 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> workdiff_bin_unimp </td>
+   <td style="text-align:left;"> Female workers </td>
+   <td style="text-align:right;"> 0.86 </td>
    <td style="text-align:right;"> 0.72 </td>
    <td style="text-align:right;"> 1.03 </td>
-   <td style="text-align:left;"> workdiff_bin_unimp </td>
-   <td style="text-align:left;"> Female workers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.34 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> workdiff_bin_unimp </td>
+   <td style="text-align:left;"> Female managers </td>
+   <td style="text-align:right;"> 0.34 </td>
    <td style="text-align:right;"> 0.25 </td>
    <td style="text-align:right;"> 0.48 </td>
-   <td style="text-align:left;"> workdiff_bin_unimp </td>
-   <td style="text-align:left;"> Female managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.92 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> workdiff_bin_unimp </td>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.92 </td>
    <td style="text-align:right;"> 0.65 </td>
    <td style="text-align:right;"> 1.31 </td>
-   <td style="text-align:left;"> workdiff_bin_unimp </td>
-   <td style="text-align:left;"> Female petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.30 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> workdiff_bin_unimp </td>
+   <td style="text-align:left;"> Female capitalists </td>
+   <td style="text-align:right;"> 0.30 </td>
    <td style="text-align:right;"> 0.12 </td>
    <td style="text-align:right;"> 0.76 </td>
-   <td style="text-align:left;"> workdiff_bin_unimp </td>
-   <td style="text-align:left;"> Female capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.48 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> learnnew_bin_unimp </td>
+   <td style="text-align:left;"> Male managers </td>
+   <td style="text-align:right;"> 0.48 </td>
    <td style="text-align:right;"> 0.36 </td>
    <td style="text-align:right;"> 0.62 </td>
-   <td style="text-align:left;"> learnnew_bin_unimp </td>
-   <td style="text-align:left;"> Male managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.47 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> learnnew_bin_unimp </td>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.47 </td>
    <td style="text-align:right;"> 0.31 </td>
    <td style="text-align:right;"> 0.72 </td>
-   <td style="text-align:left;"> learnnew_bin_unimp </td>
-   <td style="text-align:left;"> Male petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.18 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> learnnew_bin_unimp </td>
+   <td style="text-align:left;"> Male capitalists </td>
+   <td style="text-align:right;"> 0.18 </td>
    <td style="text-align:right;"> 0.09 </td>
    <td style="text-align:right;"> 0.36 </td>
-   <td style="text-align:left;"> learnnew_bin_unimp </td>
-   <td style="text-align:left;"> Male capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.92 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> learnnew_bin_unimp </td>
+   <td style="text-align:left;"> Female workers </td>
+   <td style="text-align:right;"> 0.92 </td>
    <td style="text-align:right;"> 0.77 </td>
    <td style="text-align:right;"> 1.10 </td>
-   <td style="text-align:left;"> learnnew_bin_unimp </td>
-   <td style="text-align:left;"> Female workers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.45 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> learnnew_bin_unimp </td>
+   <td style="text-align:left;"> Female managers </td>
+   <td style="text-align:right;"> 0.45 </td>
    <td style="text-align:right;"> 0.33 </td>
    <td style="text-align:right;"> 0.60 </td>
-   <td style="text-align:left;"> learnnew_bin_unimp </td>
-   <td style="text-align:left;"> Female managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.93 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> learnnew_bin_unimp </td>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.93 </td>
    <td style="text-align:right;"> 0.68 </td>
    <td style="text-align:right;"> 1.28 </td>
-   <td style="text-align:left;"> learnnew_bin_unimp </td>
-   <td style="text-align:left;"> Female petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.32 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> learnnew_bin_unimp </td>
+   <td style="text-align:left;"> Female capitalists </td>
+   <td style="text-align:right;"> 0.32 </td>
    <td style="text-align:right;"> 0.15 </td>
    <td style="text-align:right;"> 0.72 </td>
-   <td style="text-align:left;"> learnnew_bin_unimp </td>
-   <td style="text-align:left;"> Female capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.22 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> condemnd_bin_unimp </td>
+   <td style="text-align:left;"> Male managers </td>
+   <td style="text-align:right;"> 1.22 </td>
    <td style="text-align:right;"> 1.07 </td>
    <td style="text-align:right;"> 1.40 </td>
-   <td style="text-align:left;"> condemnd_bin_unimp </td>
-   <td style="text-align:left;"> Male managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.81 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> condemnd_bin_unimp </td>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.81 </td>
    <td style="text-align:right;"> 0.59 </td>
    <td style="text-align:right;"> 1.12 </td>
-   <td style="text-align:left;"> condemnd_bin_unimp </td>
-   <td style="text-align:left;"> Male petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.37 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> condemnd_bin_unimp </td>
+   <td style="text-align:left;"> Male capitalists </td>
+   <td style="text-align:right;"> 1.37 </td>
    <td style="text-align:right;"> 1.10 </td>
    <td style="text-align:right;"> 1.71 </td>
-   <td style="text-align:left;"> condemnd_bin_unimp </td>
-   <td style="text-align:left;"> Male capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.11 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> condemnd_bin_unimp </td>
+   <td style="text-align:left;"> Female workers </td>
+   <td style="text-align:right;"> 1.11 </td>
    <td style="text-align:right;"> 0.98 </td>
    <td style="text-align:right;"> 1.26 </td>
-   <td style="text-align:left;"> condemnd_bin_unimp </td>
-   <td style="text-align:left;"> Female workers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.41 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> condemnd_bin_unimp </td>
+   <td style="text-align:left;"> Female managers </td>
+   <td style="text-align:right;"> 1.41 </td>
    <td style="text-align:right;"> 1.22 </td>
    <td style="text-align:right;"> 1.62 </td>
-   <td style="text-align:left;"> condemnd_bin_unimp </td>
-   <td style="text-align:left;"> Female managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.73 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> condemnd_bin_unimp </td>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.73 </td>
    <td style="text-align:right;"> 0.53 </td>
    <td style="text-align:right;"> 1.00 </td>
-   <td style="text-align:left;"> condemnd_bin_unimp </td>
-   <td style="text-align:left;"> Female petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.03 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> condemnd_bin_unimp </td>
+   <td style="text-align:left;"> Female capitalists </td>
+   <td style="text-align:right;"> 1.03 </td>
    <td style="text-align:right;"> 0.70 </td>
    <td style="text-align:right;"> 1.52 </td>
-   <td style="text-align:left;"> condemnd_bin_unimp </td>
-   <td style="text-align:left;"> Female capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.18 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> workfast_bin_unimp </td>
+   <td style="text-align:left;"> Male managers </td>
+   <td style="text-align:right;"> 1.18 </td>
    <td style="text-align:right;"> 1.11 </td>
    <td style="text-align:right;"> 1.24 </td>
-   <td style="text-align:left;"> workfast_bin_unimp </td>
-   <td style="text-align:left;"> Male managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.89 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> workfast_bin_unimp </td>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.89 </td>
    <td style="text-align:right;"> 0.78 </td>
    <td style="text-align:right;"> 1.03 </td>
-   <td style="text-align:left;"> workfast_bin_unimp </td>
-   <td style="text-align:left;"> Male petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.27 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> workfast_bin_unimp </td>
+   <td style="text-align:left;"> Male capitalists </td>
+   <td style="text-align:right;"> 1.27 </td>
    <td style="text-align:right;"> 1.16 </td>
    <td style="text-align:right;"> 1.39 </td>
-   <td style="text-align:left;"> workfast_bin_unimp </td>
-   <td style="text-align:left;"> Male capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.04 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> workfast_bin_unimp </td>
+   <td style="text-align:left;"> Female workers </td>
+   <td style="text-align:right;"> 1.04 </td>
    <td style="text-align:right;"> 0.98 </td>
    <td style="text-align:right;"> 1.09 </td>
-   <td style="text-align:left;"> workfast_bin_unimp </td>
-   <td style="text-align:left;"> Female workers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.17 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> workfast_bin_unimp </td>
+   <td style="text-align:left;"> Female managers </td>
+   <td style="text-align:right;"> 1.17 </td>
    <td style="text-align:right;"> 1.10 </td>
    <td style="text-align:right;"> 1.25 </td>
-   <td style="text-align:left;"> workfast_bin_unimp </td>
-   <td style="text-align:left;"> Female managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.87 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> workfast_bin_unimp </td>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.87 </td>
    <td style="text-align:right;"> 0.76 </td>
    <td style="text-align:right;"> 1.01 </td>
-   <td style="text-align:left;"> workfast_bin_unimp </td>
-   <td style="text-align:left;"> Female petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.31 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> workfast_bin_unimp </td>
+   <td style="text-align:left;"> Female capitalists </td>
+   <td style="text-align:right;"> 1.31 </td>
    <td style="text-align:right;"> 1.16 </td>
    <td style="text-align:right;"> 1.49 </td>
-   <td style="text-align:left;"> workfast_bin_unimp </td>
-   <td style="text-align:left;"> Female capitalists </td>
   </tr>
   <tr grouplength="28"><td colspan="5" style="border-bottom: 1px solid;"><strong>Class*POC</strong></td></tr>
 <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.36 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> workdiff_bin_unimp </td>
+   <td style="text-align:left;"> NH white managers </td>
+   <td style="text-align:right;"> 0.36 </td>
    <td style="text-align:right;"> 0.27 </td>
    <td style="text-align:right;"> 0.48 </td>
-   <td style="text-align:left;"> workdiff_bin_unimp </td>
-   <td style="text-align:left;"> NH white managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.64 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> workdiff_bin_unimp </td>
+   <td style="text-align:left;"> NH white petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.64 </td>
    <td style="text-align:right;"> 0.46 </td>
    <td style="text-align:right;"> 0.89 </td>
-   <td style="text-align:left;"> workdiff_bin_unimp </td>
-   <td style="text-align:left;"> NH white petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.39 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> workdiff_bin_unimp </td>
+   <td style="text-align:left;"> NH white capitalists </td>
+   <td style="text-align:right;"> 0.39 </td>
    <td style="text-align:right;"> 0.22 </td>
    <td style="text-align:right;"> 0.69 </td>
-   <td style="text-align:left;"> workdiff_bin_unimp </td>
-   <td style="text-align:left;"> NH white capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.16 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> workdiff_bin_unimp </td>
+   <td style="text-align:left;"> POC workers </td>
+   <td style="text-align:right;"> 1.16 </td>
    <td style="text-align:right;"> 0.96 </td>
    <td style="text-align:right;"> 1.41 </td>
-   <td style="text-align:left;"> workdiff_bin_unimp </td>
-   <td style="text-align:left;"> POC workers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.56 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> workdiff_bin_unimp </td>
+   <td style="text-align:left;"> POC managers </td>
+   <td style="text-align:right;"> 0.56 </td>
    <td style="text-align:right;"> 0.38 </td>
    <td style="text-align:right;"> 0.82 </td>
-   <td style="text-align:left;"> workdiff_bin_unimp </td>
-   <td style="text-align:left;"> POC managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.80 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> workdiff_bin_unimp </td>
+   <td style="text-align:left;"> POC petit bourgeoisie </td>
+   <td style="text-align:right;"> 1.80 </td>
    <td style="text-align:right;"> 1.15 </td>
    <td style="text-align:right;"> 2.83 </td>
-   <td style="text-align:left;"> workdiff_bin_unimp </td>
-   <td style="text-align:left;"> POC petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.38 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> workdiff_bin_unimp </td>
+   <td style="text-align:left;"> POC capitalists </td>
+   <td style="text-align:right;"> 0.38 </td>
    <td style="text-align:right;"> 0.10 </td>
    <td style="text-align:right;"> 1.51 </td>
-   <td style="text-align:left;"> workdiff_bin_unimp </td>
-   <td style="text-align:left;"> POC capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.47 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> learnnew_bin_unimp </td>
+   <td style="text-align:left;"> NH white managers </td>
+   <td style="text-align:right;"> 0.47 </td>
    <td style="text-align:right;"> 0.37 </td>
    <td style="text-align:right;"> 0.60 </td>
-   <td style="text-align:left;"> learnnew_bin_unimp </td>
-   <td style="text-align:left;"> NH white managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.65 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> learnnew_bin_unimp </td>
+   <td style="text-align:left;"> NH white petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.65 </td>
    <td style="text-align:right;"> 0.49 </td>
    <td style="text-align:right;"> 0.85 </td>
-   <td style="text-align:left;"> learnnew_bin_unimp </td>
-   <td style="text-align:left;"> NH white petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.23 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> learnnew_bin_unimp </td>
+   <td style="text-align:left;"> NH white capitalists </td>
+   <td style="text-align:right;"> 0.23 </td>
    <td style="text-align:right;"> 0.12 </td>
    <td style="text-align:right;"> 0.42 </td>
-   <td style="text-align:left;"> learnnew_bin_unimp </td>
-   <td style="text-align:left;"> NH white capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.15 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> learnnew_bin_unimp </td>
+   <td style="text-align:left;"> POC workers </td>
+   <td style="text-align:right;"> 1.15 </td>
    <td style="text-align:right;"> 0.96 </td>
    <td style="text-align:right;"> 1.37 </td>
-   <td style="text-align:left;"> learnnew_bin_unimp </td>
-   <td style="text-align:left;"> POC workers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.63 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> learnnew_bin_unimp </td>
+   <td style="text-align:left;"> POC managers </td>
+   <td style="text-align:right;"> 0.63 </td>
    <td style="text-align:right;"> 0.45 </td>
    <td style="text-align:right;"> 0.88 </td>
-   <td style="text-align:left;"> learnnew_bin_unimp </td>
-   <td style="text-align:left;"> POC managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.35 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> learnnew_bin_unimp </td>
+   <td style="text-align:left;"> POC petit bourgeoisie </td>
+   <td style="text-align:right;"> 1.35 </td>
    <td style="text-align:right;"> 0.87 </td>
    <td style="text-align:right;"> 2.08 </td>
-   <td style="text-align:left;"> learnnew_bin_unimp </td>
-   <td style="text-align:left;"> POC petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.27 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> learnnew_bin_unimp </td>
+   <td style="text-align:left;"> POC capitalists </td>
+   <td style="text-align:right;"> 0.27 </td>
    <td style="text-align:right;"> 0.08 </td>
    <td style="text-align:right;"> 0.87 </td>
-   <td style="text-align:left;"> learnnew_bin_unimp </td>
-   <td style="text-align:left;"> POC capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.33 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> condemnd_bin_unimp </td>
+   <td style="text-align:left;"> NH white managers </td>
+   <td style="text-align:right;"> 1.33 </td>
    <td style="text-align:right;"> 1.18 </td>
    <td style="text-align:right;"> 1.49 </td>
-   <td style="text-align:left;"> condemnd_bin_unimp </td>
-   <td style="text-align:left;"> NH white managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.78 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> condemnd_bin_unimp </td>
+   <td style="text-align:left;"> NH white petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.78 </td>
    <td style="text-align:right;"> 0.60 </td>
    <td style="text-align:right;"> 1.00 </td>
-   <td style="text-align:left;"> condemnd_bin_unimp </td>
-   <td style="text-align:left;"> NH white petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.31 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> condemnd_bin_unimp </td>
+   <td style="text-align:left;"> NH white capitalists </td>
+   <td style="text-align:right;"> 1.31 </td>
    <td style="text-align:right;"> 1.07 </td>
    <td style="text-align:right;"> 1.60 </td>
-   <td style="text-align:left;"> condemnd_bin_unimp </td>
-   <td style="text-align:left;"> NH white capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.91 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> condemnd_bin_unimp </td>
+   <td style="text-align:left;"> POC workers </td>
+   <td style="text-align:right;"> 0.91 </td>
    <td style="text-align:right;"> 0.78 </td>
    <td style="text-align:right;"> 1.05 </td>
-   <td style="text-align:left;"> condemnd_bin_unimp </td>
-   <td style="text-align:left;"> POC workers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.95 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> condemnd_bin_unimp </td>
+   <td style="text-align:left;"> POC managers </td>
+   <td style="text-align:right;"> 0.95 </td>
    <td style="text-align:right;"> 0.78 </td>
    <td style="text-align:right;"> 1.17 </td>
-   <td style="text-align:left;"> condemnd_bin_unimp </td>
-   <td style="text-align:left;"> POC managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.53 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> condemnd_bin_unimp </td>
+   <td style="text-align:left;"> POC petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.53 </td>
    <td style="text-align:right;"> 0.30 </td>
    <td style="text-align:right;"> 0.92 </td>
-   <td style="text-align:left;"> condemnd_bin_unimp </td>
-   <td style="text-align:left;"> POC petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.61 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> condemnd_bin_unimp </td>
+   <td style="text-align:left;"> POC capitalists </td>
+   <td style="text-align:right;"> 0.61 </td>
    <td style="text-align:right;"> 0.27 </td>
    <td style="text-align:right;"> 1.41 </td>
-   <td style="text-align:left;"> condemnd_bin_unimp </td>
-   <td style="text-align:left;"> POC capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.15 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> workfast_bin_unimp </td>
+   <td style="text-align:left;"> NH white managers </td>
+   <td style="text-align:right;"> 1.15 </td>
    <td style="text-align:right;"> 1.10 </td>
    <td style="text-align:right;"> 1.21 </td>
-   <td style="text-align:left;"> workfast_bin_unimp </td>
-   <td style="text-align:left;"> NH white managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.85 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> workfast_bin_unimp </td>
+   <td style="text-align:left;"> NH white petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.85 </td>
    <td style="text-align:right;"> 0.76 </td>
    <td style="text-align:right;"> 0.95 </td>
-   <td style="text-align:left;"> workfast_bin_unimp </td>
-   <td style="text-align:left;"> NH white petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.24 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> workfast_bin_unimp </td>
+   <td style="text-align:left;"> NH white capitalists </td>
+   <td style="text-align:right;"> 1.24 </td>
    <td style="text-align:right;"> 1.14 </td>
    <td style="text-align:right;"> 1.34 </td>
-   <td style="text-align:left;"> workfast_bin_unimp </td>
-   <td style="text-align:left;"> NH white capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.87 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> workfast_bin_unimp </td>
+   <td style="text-align:left;"> POC workers </td>
+   <td style="text-align:right;"> 0.87 </td>
    <td style="text-align:right;"> 0.82 </td>
    <td style="text-align:right;"> 0.93 </td>
-   <td style="text-align:left;"> workfast_bin_unimp </td>
-   <td style="text-align:left;"> POC workers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.98 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> workfast_bin_unimp </td>
+   <td style="text-align:left;"> POC managers </td>
+   <td style="text-align:right;"> 0.98 </td>
    <td style="text-align:right;"> 0.91 </td>
    <td style="text-align:right;"> 1.06 </td>
-   <td style="text-align:left;"> workfast_bin_unimp </td>
-   <td style="text-align:left;"> POC managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.70 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> workfast_bin_unimp </td>
+   <td style="text-align:left;"> POC petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.70 </td>
    <td style="text-align:right;"> 0.55 </td>
    <td style="text-align:right;"> 0.89 </td>
-   <td style="text-align:left;"> workfast_bin_unimp </td>
-   <td style="text-align:left;"> POC petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.08 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> workfast_bin_unimp </td>
+   <td style="text-align:left;"> POC capitalists </td>
+   <td style="text-align:right;"> 1.08 </td>
    <td style="text-align:right;"> 0.88 </td>
    <td style="text-align:right;"> 1.32 </td>
-   <td style="text-align:left;"> workfast_bin_unimp </td>
-   <td style="text-align:left;"> POC capitalists </td>
   </tr>
 </tbody>
 </table></div>
@@ -1940,492 +1938,492 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
 <caption>Ref: workers/male workers/white workers</caption>
  <thead>
   <tr>
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> QWL variable </th>
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> Class </th>
    <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> PR </th>
    <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> Lower </th>
    <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> Upper </th>
-   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> QWL variable </th>
-   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> Class </th>
   </tr>
  </thead>
 <tbody>
   <tr grouplength="12"><td colspan="5" style="border-bottom: 1px solid;"><strong>Class</strong></td></tr>
 <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.39 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> wkdecide_bin_unimp </td>
+   <td style="text-align:left;"> Managers </td>
+   <td style="text-align:right;"> 0.39 </td>
    <td style="text-align:right;"> 0.33 </td>
    <td style="text-align:right;"> 0.45 </td>
-   <td style="text-align:left;"> wkdecide_bin_unimp </td>
-   <td style="text-align:left;"> Managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.37 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> wkdecide_bin_unimp </td>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
+   <td style="text-align:right;"> 1.37 </td>
    <td style="text-align:right;"> 1.19 </td>
    <td style="text-align:right;"> 1.59 </td>
-   <td style="text-align:left;"> wkdecide_bin_unimp </td>
-   <td style="text-align:left;"> Petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.53 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> wkdecide_bin_unimp </td>
+   <td style="text-align:left;"> Capitalists </td>
+   <td style="text-align:right;"> 0.53 </td>
    <td style="text-align:right;"> 0.41 </td>
    <td style="text-align:right;"> 0.70 </td>
-   <td style="text-align:left;"> wkdecide_bin_unimp </td>
-   <td style="text-align:left;"> Capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.60 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> wkfreedm_bin_unimp </td>
+   <td style="text-align:left;"> Managers </td>
+   <td style="text-align:right;"> 0.60 </td>
    <td style="text-align:right;"> 0.50 </td>
    <td style="text-align:right;"> 0.72 </td>
-   <td style="text-align:left;"> wkfreedm_bin_unimp </td>
-   <td style="text-align:left;"> Managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.25 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> wkfreedm_bin_unimp </td>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.25 </td>
    <td style="text-align:right;"> 0.16 </td>
    <td style="text-align:right;"> 0.40 </td>
-   <td style="text-align:left;"> wkfreedm_bin_unimp </td>
-   <td style="text-align:left;"> Petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.11 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> wkfreedm_bin_unimp </td>
+   <td style="text-align:left;"> Capitalists </td>
+   <td style="text-align:right;"> 0.11 </td>
    <td style="text-align:right;"> 0.05 </td>
    <td style="text-align:right;"> 0.24 </td>
-   <td style="text-align:left;"> wkfreedm_bin_unimp </td>
-   <td style="text-align:left;"> Capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.21 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> mustwork_bin_unimp </td>
+   <td style="text-align:left;"> Managers </td>
+   <td style="text-align:right;"> 1.21 </td>
    <td style="text-align:right;"> 1.10 </td>
    <td style="text-align:right;"> 1.34 </td>
-   <td style="text-align:left;"> mustwork_bin_unimp </td>
-   <td style="text-align:left;"> Managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.96 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> mustwork_bin_unimp </td>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.96 </td>
    <td style="text-align:right;"> 0.79 </td>
    <td style="text-align:right;"> 1.18 </td>
-   <td style="text-align:left;"> mustwork_bin_unimp </td>
-   <td style="text-align:left;"> Petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.37 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> mustwork_bin_unimp </td>
+   <td style="text-align:left;"> Capitalists </td>
+   <td style="text-align:right;"> 1.37 </td>
    <td style="text-align:right;"> 1.18 </td>
    <td style="text-align:right;"> 1.61 </td>
-   <td style="text-align:left;"> mustwork_bin_unimp </td>
-   <td style="text-align:left;"> Capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.75 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> chngtme_bin_unimp </td>
+   <td style="text-align:left;"> Managers </td>
+   <td style="text-align:right;"> 0.75 </td>
    <td style="text-align:right;"> 0.69 </td>
    <td style="text-align:right;"> 0.81 </td>
-   <td style="text-align:left;"> chngtme_bin_unimp </td>
-   <td style="text-align:left;"> Managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.24 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> chngtme_bin_unimp </td>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.24 </td>
    <td style="text-align:right;"> 0.18 </td>
    <td style="text-align:right;"> 0.31 </td>
-   <td style="text-align:left;"> chngtme_bin_unimp </td>
-   <td style="text-align:left;"> Petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.28 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> chngtme_bin_unimp </td>
+   <td style="text-align:left;"> Capitalists </td>
+   <td style="text-align:right;"> 0.28 </td>
    <td style="text-align:right;"> 0.21 </td>
    <td style="text-align:right;"> 0.39 </td>
-   <td style="text-align:left;"> chngtme_bin_unimp </td>
-   <td style="text-align:left;"> Capitalists </td>
   </tr>
   <tr grouplength="28"><td colspan="5" style="border-bottom: 1px solid;"><strong>Class*gender</strong></td></tr>
 <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.37 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> wkdecide_bin_unimp </td>
+   <td style="text-align:left;"> Male managers </td>
+   <td style="text-align:right;"> 0.37 </td>
    <td style="text-align:right;"> 0.30 </td>
    <td style="text-align:right;"> 0.46 </td>
-   <td style="text-align:left;"> wkdecide_bin_unimp </td>
-   <td style="text-align:left;"> Male managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.15 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> wkdecide_bin_unimp </td>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
+   <td style="text-align:right;"> 1.15 </td>
    <td style="text-align:right;"> 0.92 </td>
    <td style="text-align:right;"> 1.44 </td>
-   <td style="text-align:left;"> wkdecide_bin_unimp </td>
-   <td style="text-align:left;"> Male petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.57 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> wkdecide_bin_unimp </td>
+   <td style="text-align:left;"> Male capitalists </td>
+   <td style="text-align:right;"> 0.57 </td>
    <td style="text-align:right;"> 0.41 </td>
    <td style="text-align:right;"> 0.78 </td>
-   <td style="text-align:left;"> wkdecide_bin_unimp </td>
-   <td style="text-align:left;"> Male capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.02 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> wkdecide_bin_unimp </td>
+   <td style="text-align:left;"> Female workers </td>
+   <td style="text-align:right;"> 1.02 </td>
    <td style="text-align:right;"> 0.91 </td>
    <td style="text-align:right;"> 1.15 </td>
-   <td style="text-align:left;"> wkdecide_bin_unimp </td>
-   <td style="text-align:left;"> Female workers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.41 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> wkdecide_bin_unimp </td>
+   <td style="text-align:left;"> Female managers </td>
+   <td style="text-align:right;"> 0.41 </td>
    <td style="text-align:right;"> 0.33 </td>
    <td style="text-align:right;"> 0.51 </td>
-   <td style="text-align:left;"> wkdecide_bin_unimp </td>
-   <td style="text-align:left;"> Female managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.63 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> wkdecide_bin_unimp </td>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
+   <td style="text-align:right;"> 1.63 </td>
    <td style="text-align:right;"> 1.36 </td>
    <td style="text-align:right;"> 1.95 </td>
-   <td style="text-align:left;"> wkdecide_bin_unimp </td>
-   <td style="text-align:left;"> Female petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.45 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> wkdecide_bin_unimp </td>
+   <td style="text-align:left;"> Female capitalists </td>
+   <td style="text-align:right;"> 0.45 </td>
    <td style="text-align:right;"> 0.27 </td>
    <td style="text-align:right;"> 0.77 </td>
-   <td style="text-align:left;"> wkdecide_bin_unimp </td>
-   <td style="text-align:left;"> Female capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.59 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> wkfreedm_bin_unimp </td>
+   <td style="text-align:left;"> Male managers </td>
+   <td style="text-align:right;"> 0.59 </td>
    <td style="text-align:right;"> 0.46 </td>
    <td style="text-align:right;"> 0.76 </td>
-   <td style="text-align:left;"> wkfreedm_bin_unimp </td>
-   <td style="text-align:left;"> Male managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.24 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> wkfreedm_bin_unimp </td>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.24 </td>
    <td style="text-align:right;"> 0.13 </td>
    <td style="text-align:right;"> 0.43 </td>
-   <td style="text-align:left;"> wkfreedm_bin_unimp </td>
-   <td style="text-align:left;"> Male petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.11 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> wkfreedm_bin_unimp </td>
+   <td style="text-align:left;"> Male capitalists </td>
+   <td style="text-align:right;"> 0.11 </td>
    <td style="text-align:right;"> 0.04 </td>
    <td style="text-align:right;"> 0.27 </td>
-   <td style="text-align:left;"> wkfreedm_bin_unimp </td>
-   <td style="text-align:left;"> Male capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.00 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> wkfreedm_bin_unimp </td>
+   <td style="text-align:left;"> Female workers </td>
+   <td style="text-align:right;"> 1.00 </td>
    <td style="text-align:right;"> 0.86 </td>
    <td style="text-align:right;"> 1.17 </td>
-   <td style="text-align:left;"> wkfreedm_bin_unimp </td>
-   <td style="text-align:left;"> Female workers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.62 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> wkfreedm_bin_unimp </td>
+   <td style="text-align:left;"> Female managers </td>
+   <td style="text-align:right;"> 0.62 </td>
    <td style="text-align:right;"> 0.48 </td>
    <td style="text-align:right;"> 0.80 </td>
-   <td style="text-align:left;"> wkfreedm_bin_unimp </td>
-   <td style="text-align:left;"> Female managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.27 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> wkfreedm_bin_unimp </td>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.27 </td>
    <td style="text-align:right;"> 0.14 </td>
    <td style="text-align:right;"> 0.52 </td>
-   <td style="text-align:left;"> wkfreedm_bin_unimp </td>
-   <td style="text-align:left;"> Female petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.12 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> wkfreedm_bin_unimp </td>
+   <td style="text-align:left;"> Female capitalists </td>
+   <td style="text-align:right;"> 0.12 </td>
    <td style="text-align:right;"> 0.03 </td>
    <td style="text-align:right;"> 0.52 </td>
-   <td style="text-align:left;"> wkfreedm_bin_unimp </td>
-   <td style="text-align:left;"> Female capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.16 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> mustwork_bin_unimp </td>
+   <td style="text-align:left;"> Male managers </td>
+   <td style="text-align:right;"> 1.16 </td>
    <td style="text-align:right;"> 1.03 </td>
    <td style="text-align:right;"> 1.32 </td>
-   <td style="text-align:left;"> mustwork_bin_unimp </td>
-   <td style="text-align:left;"> Male managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.08 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> mustwork_bin_unimp </td>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
+   <td style="text-align:right;"> 1.08 </td>
    <td style="text-align:right;"> 0.85 </td>
    <td style="text-align:right;"> 1.37 </td>
-   <td style="text-align:left;"> mustwork_bin_unimp </td>
-   <td style="text-align:left;"> Male petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.29 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> mustwork_bin_unimp </td>
+   <td style="text-align:left;"> Male capitalists </td>
+   <td style="text-align:right;"> 1.29 </td>
    <td style="text-align:right;"> 1.07 </td>
    <td style="text-align:right;"> 1.54 </td>
-   <td style="text-align:left;"> mustwork_bin_unimp </td>
-   <td style="text-align:left;"> Male capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.76 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> mustwork_bin_unimp </td>
+   <td style="text-align:left;"> Female workers </td>
+   <td style="text-align:right;"> 0.76 </td>
    <td style="text-align:right;"> 0.67 </td>
    <td style="text-align:right;"> 0.86 </td>
-   <td style="text-align:left;"> mustwork_bin_unimp </td>
-   <td style="text-align:left;"> Female workers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.93 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> mustwork_bin_unimp </td>
+   <td style="text-align:left;"> Female managers </td>
+   <td style="text-align:right;"> 0.93 </td>
    <td style="text-align:right;"> 0.81 </td>
    <td style="text-align:right;"> 1.07 </td>
-   <td style="text-align:left;"> mustwork_bin_unimp </td>
-   <td style="text-align:left;"> Female managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.57 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> mustwork_bin_unimp </td>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.57 </td>
    <td style="text-align:right;"> 0.41 </td>
    <td style="text-align:right;"> 0.79 </td>
-   <td style="text-align:left;"> mustwork_bin_unimp </td>
-   <td style="text-align:left;"> Female petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.89 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> mustwork_bin_unimp </td>
+   <td style="text-align:left;"> Female capitalists </td>
+   <td style="text-align:right;"> 0.89 </td>
    <td style="text-align:right;"> 0.61 </td>
    <td style="text-align:right;"> 1.28 </td>
-   <td style="text-align:left;"> mustwork_bin_unimp </td>
-   <td style="text-align:left;"> Female capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.75 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> chngtme_bin_unimp </td>
+   <td style="text-align:left;"> Male managers </td>
+   <td style="text-align:right;"> 0.75 </td>
    <td style="text-align:right;"> 0.67 </td>
    <td style="text-align:right;"> 0.84 </td>
-   <td style="text-align:left;"> chngtme_bin_unimp </td>
-   <td style="text-align:left;"> Male managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.17 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> chngtme_bin_unimp </td>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.17 </td>
    <td style="text-align:right;"> 0.11 </td>
    <td style="text-align:right;"> 0.28 </td>
-   <td style="text-align:left;"> chngtme_bin_unimp </td>
-   <td style="text-align:left;"> Male petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.30 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> chngtme_bin_unimp </td>
+   <td style="text-align:left;"> Male capitalists </td>
+   <td style="text-align:right;"> 0.30 </td>
    <td style="text-align:right;"> 0.21 </td>
    <td style="text-align:right;"> 0.44 </td>
-   <td style="text-align:left;"> chngtme_bin_unimp </td>
-   <td style="text-align:left;"> Male capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.05 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> chngtme_bin_unimp </td>
+   <td style="text-align:left;"> Female workers </td>
+   <td style="text-align:right;"> 1.05 </td>
    <td style="text-align:right;"> 0.98 </td>
    <td style="text-align:right;"> 1.14 </td>
-   <td style="text-align:left;"> chngtme_bin_unimp </td>
-   <td style="text-align:left;"> Female workers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.79 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> chngtme_bin_unimp </td>
+   <td style="text-align:left;"> Female managers </td>
+   <td style="text-align:right;"> 0.79 </td>
    <td style="text-align:right;"> 0.71 </td>
    <td style="text-align:right;"> 0.88 </td>
-   <td style="text-align:left;"> chngtme_bin_unimp </td>
-   <td style="text-align:left;"> Female managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.31 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> chngtme_bin_unimp </td>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.31 </td>
    <td style="text-align:right;"> 0.23 </td>
    <td style="text-align:right;"> 0.43 </td>
-   <td style="text-align:left;"> chngtme_bin_unimp </td>
-   <td style="text-align:left;"> Female petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.26 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> chngtme_bin_unimp </td>
+   <td style="text-align:left;"> Female capitalists </td>
+   <td style="text-align:right;"> 0.26 </td>
    <td style="text-align:right;"> 0.14 </td>
    <td style="text-align:right;"> 0.49 </td>
-   <td style="text-align:left;"> chngtme_bin_unimp </td>
-   <td style="text-align:left;"> Female capitalists </td>
   </tr>
   <tr grouplength="28"><td colspan="5" style="border-bottom: 1px solid;"><strong>Class*POC</strong></td></tr>
 <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.38 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> wkdecide_bin_unimp </td>
+   <td style="text-align:left;"> NH white managers </td>
+   <td style="text-align:right;"> 0.38 </td>
    <td style="text-align:right;"> 0.31 </td>
    <td style="text-align:right;"> 0.47 </td>
-   <td style="text-align:left;"> wkdecide_bin_unimp </td>
-   <td style="text-align:left;"> NH white managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.34 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> wkdecide_bin_unimp </td>
+   <td style="text-align:left;"> NH white petit bourgeoisie </td>
+   <td style="text-align:right;"> 1.34 </td>
    <td style="text-align:right;"> 1.12 </td>
    <td style="text-align:right;"> 1.61 </td>
-   <td style="text-align:left;"> wkdecide_bin_unimp </td>
-   <td style="text-align:left;"> NH white petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.59 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> wkdecide_bin_unimp </td>
+   <td style="text-align:left;"> NH white capitalists </td>
+   <td style="text-align:right;"> 0.59 </td>
    <td style="text-align:right;"> 0.43 </td>
    <td style="text-align:right;"> 0.79 </td>
-   <td style="text-align:left;"> wkdecide_bin_unimp </td>
-   <td style="text-align:left;"> NH white capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.48 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> wkdecide_bin_unimp </td>
+   <td style="text-align:left;"> POC workers </td>
+   <td style="text-align:right;"> 1.48 </td>
    <td style="text-align:right;"> 1.31 </td>
    <td style="text-align:right;"> 1.68 </td>
-   <td style="text-align:left;"> wkdecide_bin_unimp </td>
-   <td style="text-align:left;"> POC workers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.68 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> wkdecide_bin_unimp </td>
+   <td style="text-align:left;"> POC managers </td>
+   <td style="text-align:right;"> 0.68 </td>
    <td style="text-align:right;"> 0.53 </td>
    <td style="text-align:right;"> 0.86 </td>
-   <td style="text-align:left;"> wkdecide_bin_unimp </td>
-   <td style="text-align:left;"> POC managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 2.18 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> wkdecide_bin_unimp </td>
+   <td style="text-align:left;"> POC petit bourgeoisie </td>
+   <td style="text-align:right;"> 2.18 </td>
    <td style="text-align:right;"> 1.75 </td>
    <td style="text-align:right;"> 2.72 </td>
-   <td style="text-align:left;"> wkdecide_bin_unimp </td>
-   <td style="text-align:left;"> POC petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.81 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> wkdecide_bin_unimp </td>
+   <td style="text-align:left;"> POC capitalists </td>
+   <td style="text-align:right;"> 0.81 </td>
    <td style="text-align:right;"> 0.43 </td>
    <td style="text-align:right;"> 1.52 </td>
-   <td style="text-align:left;"> wkdecide_bin_unimp </td>
-   <td style="text-align:left;"> POC capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.58 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> wkfreedm_bin_unimp </td>
+   <td style="text-align:left;"> NH white managers </td>
+   <td style="text-align:right;"> 0.58 </td>
    <td style="text-align:right;"> 0.47 </td>
    <td style="text-align:right;"> 0.72 </td>
-   <td style="text-align:left;"> wkfreedm_bin_unimp </td>
-   <td style="text-align:left;"> NH white managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.25 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> wkfreedm_bin_unimp </td>
+   <td style="text-align:left;"> NH white petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.25 </td>
    <td style="text-align:right;"> 0.15 </td>
    <td style="text-align:right;"> 0.42 </td>
-   <td style="text-align:left;"> wkfreedm_bin_unimp </td>
-   <td style="text-align:left;"> NH white petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.11 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> wkfreedm_bin_unimp </td>
+   <td style="text-align:left;"> NH white capitalists </td>
+   <td style="text-align:right;"> 0.11 </td>
    <td style="text-align:right;"> 0.05 </td>
    <td style="text-align:right;"> 0.26 </td>
-   <td style="text-align:left;"> wkfreedm_bin_unimp </td>
-   <td style="text-align:left;"> NH white capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.11 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> wkfreedm_bin_unimp </td>
+   <td style="text-align:left;"> POC workers </td>
+   <td style="text-align:right;"> 1.11 </td>
    <td style="text-align:right;"> 0.93 </td>
    <td style="text-align:right;"> 1.33 </td>
-   <td style="text-align:left;"> wkfreedm_bin_unimp </td>
-   <td style="text-align:left;"> POC workers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.67 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> wkfreedm_bin_unimp </td>
+   <td style="text-align:left;"> POC managers </td>
+   <td style="text-align:right;"> 0.67 </td>
    <td style="text-align:right;"> 0.48 </td>
    <td style="text-align:right;"> 0.93 </td>
-   <td style="text-align:left;"> wkfreedm_bin_unimp </td>
-   <td style="text-align:left;"> POC managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.29 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> wkfreedm_bin_unimp </td>
+   <td style="text-align:left;"> POC petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.29 </td>
    <td style="text-align:right;"> 0.12 </td>
    <td style="text-align:right;"> 0.72 </td>
-   <td style="text-align:left;"> wkfreedm_bin_unimp </td>
-   <td style="text-align:left;"> POC petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.18 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> wkfreedm_bin_unimp </td>
+   <td style="text-align:left;"> POC capitalists </td>
+   <td style="text-align:right;"> 0.18 </td>
    <td style="text-align:right;"> 0.03 </td>
    <td style="text-align:right;"> 1.19 </td>
-   <td style="text-align:left;"> wkfreedm_bin_unimp </td>
-   <td style="text-align:left;"> POC capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.23 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> mustwork_bin_unimp </td>
+   <td style="text-align:left;"> NH white managers </td>
+   <td style="text-align:right;"> 1.23 </td>
    <td style="text-align:right;"> 1.10 </td>
    <td style="text-align:right;"> 1.37 </td>
-   <td style="text-align:left;"> mustwork_bin_unimp </td>
-   <td style="text-align:left;"> NH white managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.99 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> mustwork_bin_unimp </td>
+   <td style="text-align:left;"> NH white petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.99 </td>
    <td style="text-align:right;"> 0.79 </td>
    <td style="text-align:right;"> 1.25 </td>
-   <td style="text-align:left;"> mustwork_bin_unimp </td>
-   <td style="text-align:left;"> NH white petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.44 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> mustwork_bin_unimp </td>
+   <td style="text-align:left;"> NH white capitalists </td>
+   <td style="text-align:right;"> 1.44 </td>
    <td style="text-align:right;"> 1.22 </td>
    <td style="text-align:right;"> 1.71 </td>
-   <td style="text-align:left;"> mustwork_bin_unimp </td>
-   <td style="text-align:left;"> NH white capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.09 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> mustwork_bin_unimp </td>
+   <td style="text-align:left;"> POC workers </td>
+   <td style="text-align:right;"> 1.09 </td>
    <td style="text-align:right;"> 0.95 </td>
    <td style="text-align:right;"> 1.25 </td>
-   <td style="text-align:left;"> mustwork_bin_unimp </td>
-   <td style="text-align:left;"> POC workers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.28 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> mustwork_bin_unimp </td>
+   <td style="text-align:left;"> POC managers </td>
+   <td style="text-align:right;"> 1.28 </td>
    <td style="text-align:right;"> 1.08 </td>
    <td style="text-align:right;"> 1.52 </td>
-   <td style="text-align:left;"> mustwork_bin_unimp </td>
-   <td style="text-align:left;"> POC managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.88 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> mustwork_bin_unimp </td>
+   <td style="text-align:left;"> POC petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.88 </td>
    <td style="text-align:right;"> 0.53 </td>
    <td style="text-align:right;"> 1.46 </td>
-   <td style="text-align:left;"> mustwork_bin_unimp </td>
-   <td style="text-align:left;"> POC petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.10 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> mustwork_bin_unimp </td>
+   <td style="text-align:left;"> POC capitalists </td>
+   <td style="text-align:right;"> 1.10 </td>
    <td style="text-align:right;"> 0.64 </td>
    <td style="text-align:right;"> 1.87 </td>
-   <td style="text-align:left;"> mustwork_bin_unimp </td>
-   <td style="text-align:left;"> POC capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.69 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> chngtme_bin_unimp </td>
+   <td style="text-align:left;"> NH white managers </td>
+   <td style="text-align:right;"> 0.69 </td>
    <td style="text-align:right;"> 0.63 </td>
    <td style="text-align:right;"> 0.76 </td>
-   <td style="text-align:left;"> chngtme_bin_unimp </td>
-   <td style="text-align:left;"> NH white managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.25 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> chngtme_bin_unimp </td>
+   <td style="text-align:left;"> NH white petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.25 </td>
    <td style="text-align:right;"> 0.19 </td>
    <td style="text-align:right;"> 0.34 </td>
-   <td style="text-align:left;"> chngtme_bin_unimp </td>
-   <td style="text-align:left;"> NH white petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.24 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> chngtme_bin_unimp </td>
+   <td style="text-align:left;"> NH white capitalists </td>
+   <td style="text-align:right;"> 0.24 </td>
    <td style="text-align:right;"> 0.17 </td>
    <td style="text-align:right;"> 0.35 </td>
-   <td style="text-align:left;"> chngtme_bin_unimp </td>
-   <td style="text-align:left;"> NH white capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.18 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> chngtme_bin_unimp </td>
+   <td style="text-align:left;"> POC workers </td>
+   <td style="text-align:right;"> 1.18 </td>
    <td style="text-align:right;"> 1.09 </td>
    <td style="text-align:right;"> 1.28 </td>
-   <td style="text-align:left;"> chngtme_bin_unimp </td>
-   <td style="text-align:left;"> POC workers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.12 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> chngtme_bin_unimp </td>
+   <td style="text-align:left;"> POC managers </td>
+   <td style="text-align:right;"> 1.12 </td>
    <td style="text-align:right;"> 1.01 </td>
    <td style="text-align:right;"> 1.25 </td>
-   <td style="text-align:left;"> chngtme_bin_unimp </td>
-   <td style="text-align:left;"> POC managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.29 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> chngtme_bin_unimp </td>
+   <td style="text-align:left;"> POC petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.29 </td>
    <td style="text-align:right;"> 0.16 </td>
    <td style="text-align:right;"> 0.52 </td>
-   <td style="text-align:left;"> chngtme_bin_unimp </td>
-   <td style="text-align:left;"> POC petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.42 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> chngtme_bin_unimp </td>
+   <td style="text-align:left;"> POC capitalists </td>
+   <td style="text-align:right;"> 0.42 </td>
    <td style="text-align:right;"> 0.19 </td>
    <td style="text-align:right;"> 0.91 </td>
-   <td style="text-align:left;"> chngtme_bin_unimp </td>
-   <td style="text-align:left;"> POC capitalists </td>
   </tr>
 </tbody>
 </table></div>
@@ -2508,492 +2506,492 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
 <caption>Ref: workers/male workers/white workers</caption>
  <thead>
   <tr>
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> QWL variable </th>
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> Class </th>
    <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> PR </th>
    <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> Lower </th>
    <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> Upper </th>
-   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> QWL variable </th>
-   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> Class </th>
   </tr>
  </thead>
 <tbody>
   <tr grouplength="12"><td colspan="5" style="border-bottom: 1px solid;"><strong>Class</strong></td></tr>
 <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.76 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> manvsemp_bin_unimp </td>
+   <td style="text-align:left;"> Managers </td>
+   <td style="text-align:right;"> 0.76 </td>
    <td style="text-align:right;"> 0.61 </td>
    <td style="text-align:right;"> 0.95 </td>
-   <td style="text-align:left;"> manvsemp_bin_unimp </td>
-   <td style="text-align:left;"> Managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.28 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> manvsemp_bin_unimp </td>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.28 </td>
    <td style="text-align:right;"> 0.14 </td>
    <td style="text-align:right;"> 0.54 </td>
-   <td style="text-align:left;"> manvsemp_bin_unimp </td>
-   <td style="text-align:left;"> Petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.23 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> manvsemp_bin_unimp </td>
+   <td style="text-align:left;"> Capitalists </td>
+   <td style="text-align:right;"> 0.23 </td>
    <td style="text-align:right;"> 0.10 </td>
    <td style="text-align:right;"> 0.50 </td>
-   <td style="text-align:left;"> manvsemp_bin_unimp </td>
-   <td style="text-align:left;"> Capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.84 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> trustman_bin_unimp </td>
+   <td style="text-align:left;"> Managers </td>
+   <td style="text-align:right;"> 0.84 </td>
    <td style="text-align:right;"> 0.75 </td>
    <td style="text-align:right;"> 0.95 </td>
-   <td style="text-align:left;"> trustman_bin_unimp </td>
-   <td style="text-align:left;"> Managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.24 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> trustman_bin_unimp </td>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.24 </td>
    <td style="text-align:right;"> 0.16 </td>
    <td style="text-align:right;"> 0.37 </td>
-   <td style="text-align:left;"> trustman_bin_unimp </td>
-   <td style="text-align:left;"> Petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.23 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> trustman_bin_unimp </td>
+   <td style="text-align:left;"> Capitalists </td>
+   <td style="text-align:right;"> 0.23 </td>
    <td style="text-align:right;"> 0.14 </td>
    <td style="text-align:right;"> 0.36 </td>
-   <td style="text-align:left;"> trustman_bin_unimp </td>
-   <td style="text-align:left;"> Capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.70 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> respect_bin_unimp </td>
+   <td style="text-align:left;"> Managers </td>
+   <td style="text-align:right;"> 0.70 </td>
    <td style="text-align:right;"> 0.55 </td>
    <td style="text-align:right;"> 0.89 </td>
-   <td style="text-align:left;"> respect_bin_unimp </td>
-   <td style="text-align:left;"> Managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.51 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> respect_bin_unimp </td>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.51 </td>
    <td style="text-align:right;"> 0.32 </td>
    <td style="text-align:right;"> 0.82 </td>
-   <td style="text-align:left;"> respect_bin_unimp </td>
-   <td style="text-align:left;"> Petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.34 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> respect_bin_unimp </td>
+   <td style="text-align:left;"> Capitalists </td>
+   <td style="text-align:right;"> 0.34 </td>
    <td style="text-align:right;"> 0.18 </td>
    <td style="text-align:right;"> 0.64 </td>
-   <td style="text-align:left;"> respect_bin_unimp </td>
-   <td style="text-align:left;"> Capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.17 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> disc_haras_bin_unimp </td>
+   <td style="text-align:left;"> Managers </td>
+   <td style="text-align:right;"> 1.17 </td>
    <td style="text-align:right;"> 1.04 </td>
    <td style="text-align:right;"> 1.31 </td>
-   <td style="text-align:left;"> disc_haras_bin_unimp </td>
-   <td style="text-align:left;"> Managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.73 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> disc_haras_bin_unimp </td>
+   <td style="text-align:left;"> Petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.73 </td>
    <td style="text-align:right;"> 0.56 </td>
    <td style="text-align:right;"> 0.94 </td>
-   <td style="text-align:left;"> disc_haras_bin_unimp </td>
-   <td style="text-align:left;"> Petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.89 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> disc_haras_bin_unimp </td>
+   <td style="text-align:left;"> Capitalists </td>
+   <td style="text-align:right;"> 0.89 </td>
    <td style="text-align:right;"> 0.68 </td>
    <td style="text-align:right;"> 1.16 </td>
-   <td style="text-align:left;"> disc_haras_bin_unimp </td>
-   <td style="text-align:left;"> Capitalists </td>
   </tr>
   <tr grouplength="28"><td colspan="5" style="border-bottom: 1px solid;"><strong>Class*gender</strong></td></tr>
 <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.74 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> manvsemp_bin_unimp </td>
+   <td style="text-align:left;"> Male managers </td>
+   <td style="text-align:right;"> 0.74 </td>
    <td style="text-align:right;"> 0.53 </td>
    <td style="text-align:right;"> 1.02 </td>
-   <td style="text-align:left;"> manvsemp_bin_unimp </td>
-   <td style="text-align:left;"> Male managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.37 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> manvsemp_bin_unimp </td>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.37 </td>
    <td style="text-align:right;"> 0.15 </td>
    <td style="text-align:right;"> 0.87 </td>
-   <td style="text-align:left;"> manvsemp_bin_unimp </td>
-   <td style="text-align:left;"> Male petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.28 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> manvsemp_bin_unimp </td>
+   <td style="text-align:left;"> Male capitalists </td>
+   <td style="text-align:right;"> 0.28 </td>
    <td style="text-align:right;"> 0.12 </td>
    <td style="text-align:right;"> 0.66 </td>
-   <td style="text-align:left;"> manvsemp_bin_unimp </td>
-   <td style="text-align:left;"> Male capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.10 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> manvsemp_bin_unimp </td>
+   <td style="text-align:left;"> Female workers </td>
+   <td style="text-align:right;"> 1.10 </td>
    <td style="text-align:right;"> 0.85 </td>
    <td style="text-align:right;"> 1.41 </td>
-   <td style="text-align:left;"> manvsemp_bin_unimp </td>
-   <td style="text-align:left;"> Female workers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.87 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> manvsemp_bin_unimp </td>
+   <td style="text-align:left;"> Female managers </td>
+   <td style="text-align:right;"> 0.87 </td>
    <td style="text-align:right;"> 0.64 </td>
    <td style="text-align:right;"> 1.19 </td>
-   <td style="text-align:left;"> manvsemp_bin_unimp </td>
-   <td style="text-align:left;"> Female managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.23 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> manvsemp_bin_unimp </td>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.23 </td>
    <td style="text-align:right;"> 0.08 </td>
    <td style="text-align:right;"> 0.63 </td>
-   <td style="text-align:left;"> manvsemp_bin_unimp </td>
-   <td style="text-align:left;"> Female petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.12 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> manvsemp_bin_unimp </td>
+   <td style="text-align:left;"> Female capitalists </td>
+   <td style="text-align:right;"> 0.12 </td>
    <td style="text-align:right;"> 0.02 </td>
    <td style="text-align:right;"> 0.83 </td>
-   <td style="text-align:left;"> manvsemp_bin_unimp </td>
-   <td style="text-align:left;"> Female capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.83 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> trustman_bin_unimp </td>
+   <td style="text-align:left;"> Male managers </td>
+   <td style="text-align:right;"> 0.83 </td>
    <td style="text-align:right;"> 0.69 </td>
    <td style="text-align:right;"> 1.00 </td>
-   <td style="text-align:left;"> trustman_bin_unimp </td>
-   <td style="text-align:left;"> Male managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.27 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> trustman_bin_unimp </td>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.27 </td>
    <td style="text-align:right;"> 0.16 </td>
    <td style="text-align:right;"> 0.47 </td>
-   <td style="text-align:left;"> trustman_bin_unimp </td>
-   <td style="text-align:left;"> Male petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.23 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> trustman_bin_unimp </td>
+   <td style="text-align:left;"> Male capitalists </td>
+   <td style="text-align:right;"> 0.23 </td>
    <td style="text-align:right;"> 0.13 </td>
    <td style="text-align:right;"> 0.40 </td>
-   <td style="text-align:left;"> trustman_bin_unimp </td>
-   <td style="text-align:left;"> Male capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.99 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> trustman_bin_unimp </td>
+   <td style="text-align:left;"> Female workers </td>
+   <td style="text-align:right;"> 0.99 </td>
    <td style="text-align:right;"> 0.86 </td>
    <td style="text-align:right;"> 1.13 </td>
-   <td style="text-align:left;"> trustman_bin_unimp </td>
-   <td style="text-align:left;"> Female workers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.84 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> trustman_bin_unimp </td>
+   <td style="text-align:left;"> Female managers </td>
+   <td style="text-align:right;"> 0.84 </td>
    <td style="text-align:right;"> 0.71 </td>
    <td style="text-align:right;"> 1.00 </td>
-   <td style="text-align:left;"> trustman_bin_unimp </td>
-   <td style="text-align:left;"> Female managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.21 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> trustman_bin_unimp </td>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.21 </td>
    <td style="text-align:right;"> 0.11 </td>
    <td style="text-align:right;"> 0.42 </td>
-   <td style="text-align:left;"> trustman_bin_unimp </td>
-   <td style="text-align:left;"> Female petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.20 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> trustman_bin_unimp </td>
+   <td style="text-align:left;"> Female capitalists </td>
+   <td style="text-align:right;"> 0.20 </td>
    <td style="text-align:right;"> 0.07 </td>
    <td style="text-align:right;"> 0.59 </td>
-   <td style="text-align:left;"> trustman_bin_unimp </td>
-   <td style="text-align:left;"> Female capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.58 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> respect_bin_unimp </td>
+   <td style="text-align:left;"> Male managers </td>
+   <td style="text-align:right;"> 0.58 </td>
    <td style="text-align:right;"> 0.39 </td>
    <td style="text-align:right;"> 0.85 </td>
-   <td style="text-align:left;"> respect_bin_unimp </td>
-   <td style="text-align:left;"> Male managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.58 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> respect_bin_unimp </td>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.58 </td>
    <td style="text-align:right;"> 0.30 </td>
    <td style="text-align:right;"> 1.12 </td>
-   <td style="text-align:left;"> respect_bin_unimp </td>
-   <td style="text-align:left;"> Male petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.38 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> respect_bin_unimp </td>
+   <td style="text-align:left;"> Male capitalists </td>
+   <td style="text-align:right;"> 0.38 </td>
    <td style="text-align:right;"> 0.19 </td>
    <td style="text-align:right;"> 0.77 </td>
-   <td style="text-align:left;"> respect_bin_unimp </td>
-   <td style="text-align:left;"> Male capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.17 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> respect_bin_unimp </td>
+   <td style="text-align:left;"> Female workers </td>
+   <td style="text-align:right;"> 1.17 </td>
    <td style="text-align:right;"> 0.93 </td>
    <td style="text-align:right;"> 1.46 </td>
-   <td style="text-align:left;"> respect_bin_unimp </td>
-   <td style="text-align:left;"> Female workers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.97 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> respect_bin_unimp </td>
+   <td style="text-align:left;"> Female managers </td>
+   <td style="text-align:right;"> 0.97 </td>
    <td style="text-align:right;"> 0.71 </td>
    <td style="text-align:right;"> 1.32 </td>
-   <td style="text-align:left;"> respect_bin_unimp </td>
-   <td style="text-align:left;"> Female managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.53 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> respect_bin_unimp </td>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.53 </td>
    <td style="text-align:right;"> 0.27 </td>
    <td style="text-align:right;"> 1.05 </td>
-   <td style="text-align:left;"> respect_bin_unimp </td>
-   <td style="text-align:left;"> Female petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.36 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> respect_bin_unimp </td>
+   <td style="text-align:left;"> Female capitalists </td>
+   <td style="text-align:right;"> 0.36 </td>
    <td style="text-align:right;"> 0.09 </td>
    <td style="text-align:right;"> 1.44 </td>
-   <td style="text-align:left;"> respect_bin_unimp </td>
-   <td style="text-align:left;"> Female capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.16 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> disc_haras_bin_unimp </td>
+   <td style="text-align:left;"> Male managers </td>
+   <td style="text-align:right;"> 1.16 </td>
    <td style="text-align:right;"> 0.98 </td>
    <td style="text-align:right;"> 1.38 </td>
-   <td style="text-align:left;"> disc_haras_bin_unimp </td>
-   <td style="text-align:left;"> Male managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.01 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> disc_haras_bin_unimp </td>
+   <td style="text-align:left;"> Male petit bourgeoisie </td>
+   <td style="text-align:right;"> 1.01 </td>
    <td style="text-align:right;"> 0.72 </td>
    <td style="text-align:right;"> 1.43 </td>
-   <td style="text-align:left;"> disc_haras_bin_unimp </td>
-   <td style="text-align:left;"> Male petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.04 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> disc_haras_bin_unimp </td>
+   <td style="text-align:left;"> Male capitalists </td>
+   <td style="text-align:right;"> 1.04 </td>
    <td style="text-align:right;"> 0.74 </td>
    <td style="text-align:right;"> 1.46 </td>
-   <td style="text-align:left;"> disc_haras_bin_unimp </td>
-   <td style="text-align:left;"> Male capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.38 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> disc_haras_bin_unimp </td>
+   <td style="text-align:left;"> Female workers </td>
+   <td style="text-align:right;"> 1.38 </td>
    <td style="text-align:right;"> 1.19 </td>
    <td style="text-align:right;"> 1.59 </td>
-   <td style="text-align:left;"> disc_haras_bin_unimp </td>
-   <td style="text-align:left;"> Female workers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.68 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> disc_haras_bin_unimp </td>
+   <td style="text-align:left;"> Female managers </td>
+   <td style="text-align:right;"> 1.68 </td>
    <td style="text-align:right;"> 1.43 </td>
    <td style="text-align:right;"> 1.97 </td>
-   <td style="text-align:left;"> disc_haras_bin_unimp </td>
-   <td style="text-align:left;"> Female managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.74 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> disc_haras_bin_unimp </td>
+   <td style="text-align:left;"> Female petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.74 </td>
    <td style="text-align:right;"> 0.50 </td>
    <td style="text-align:right;"> 1.11 </td>
-   <td style="text-align:left;"> disc_haras_bin_unimp </td>
-   <td style="text-align:left;"> Female petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.18 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> disc_haras_bin_unimp </td>
+   <td style="text-align:left;"> Female capitalists </td>
+   <td style="text-align:right;"> 1.18 </td>
    <td style="text-align:right;"> 0.76 </td>
    <td style="text-align:right;"> 1.84 </td>
-   <td style="text-align:left;"> disc_haras_bin_unimp </td>
-   <td style="text-align:left;"> Female capitalists </td>
   </tr>
   <tr grouplength="28"><td colspan="5" style="border-bottom: 1px solid;"><strong>Class*POC</strong></td></tr>
 <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.85 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> manvsemp_bin_unimp </td>
+   <td style="text-align:left;"> NH white managers </td>
+   <td style="text-align:right;"> 0.85 </td>
    <td style="text-align:right;"> 0.66 </td>
    <td style="text-align:right;"> 1.10 </td>
-   <td style="text-align:left;"> manvsemp_bin_unimp </td>
-   <td style="text-align:left;"> NH white managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.29 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> manvsemp_bin_unimp </td>
+   <td style="text-align:left;"> NH white petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.29 </td>
    <td style="text-align:right;"> 0.14 </td>
    <td style="text-align:right;"> 0.61 </td>
-   <td style="text-align:left;"> manvsemp_bin_unimp </td>
-   <td style="text-align:left;"> NH white petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.25 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> manvsemp_bin_unimp </td>
+   <td style="text-align:left;"> NH white capitalists </td>
+   <td style="text-align:right;"> 0.25 </td>
    <td style="text-align:right;"> 0.11 </td>
    <td style="text-align:right;"> 0.60 </td>
-   <td style="text-align:left;"> manvsemp_bin_unimp </td>
-   <td style="text-align:left;"> NH white capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.02 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> manvsemp_bin_unimp </td>
+   <td style="text-align:left;"> POC workers </td>
+   <td style="text-align:right;"> 1.02 </td>
    <td style="text-align:right;"> 0.79 </td>
    <td style="text-align:right;"> 1.32 </td>
-   <td style="text-align:left;"> manvsemp_bin_unimp </td>
-   <td style="text-align:left;"> POC workers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.63 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> manvsemp_bin_unimp </td>
+   <td style="text-align:left;"> POC managers </td>
+   <td style="text-align:right;"> 0.63 </td>
    <td style="text-align:right;"> 0.41 </td>
    <td style="text-align:right;"> 0.97 </td>
-   <td style="text-align:left;"> manvsemp_bin_unimp </td>
-   <td style="text-align:left;"> POC managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.35 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> manvsemp_bin_unimp </td>
+   <td style="text-align:left;"> POC petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.35 </td>
    <td style="text-align:right;"> 0.08 </td>
    <td style="text-align:right;"> 1.46 </td>
-   <td style="text-align:left;"> manvsemp_bin_unimp </td>
-   <td style="text-align:left;"> POC petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.00 </td>
-   <td style="text-align:right;"> 0.00 </td>
-   <td style="text-align:right;"> 0.00 </td>
-   <td style="text-align:left;"> manvsemp_bin_unimp </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> manvsemp_bin_unimp </td>
    <td style="text-align:left;"> POC capitalists </td>
+   <td style="text-align:right;"> 0.00 </td>
+   <td style="text-align:right;"> 0.00 </td>
+   <td style="text-align:right;"> 0.00 </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.86 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> trustman_bin_unimp </td>
+   <td style="text-align:left;"> NH white managers </td>
+   <td style="text-align:right;"> 0.86 </td>
    <td style="text-align:right;"> 0.74 </td>
    <td style="text-align:right;"> 0.99 </td>
-   <td style="text-align:left;"> trustman_bin_unimp </td>
-   <td style="text-align:left;"> NH white managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.20 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> trustman_bin_unimp </td>
+   <td style="text-align:left;"> NH white petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.20 </td>
    <td style="text-align:right;"> 0.12 </td>
    <td style="text-align:right;"> 0.32 </td>
-   <td style="text-align:left;"> trustman_bin_unimp </td>
-   <td style="text-align:left;"> NH white petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.22 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> trustman_bin_unimp </td>
+   <td style="text-align:left;"> NH white capitalists </td>
+   <td style="text-align:right;"> 0.22 </td>
    <td style="text-align:right;"> 0.12 </td>
    <td style="text-align:right;"> 0.38 </td>
-   <td style="text-align:left;"> trustman_bin_unimp </td>
-   <td style="text-align:left;"> NH white capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.10 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> trustman_bin_unimp </td>
+   <td style="text-align:left;"> POC workers </td>
+   <td style="text-align:right;"> 1.10 </td>
    <td style="text-align:right;"> 0.94 </td>
    <td style="text-align:right;"> 1.27 </td>
-   <td style="text-align:left;"> trustman_bin_unimp </td>
-   <td style="text-align:left;"> POC workers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.89 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> trustman_bin_unimp </td>
+   <td style="text-align:left;"> POC managers </td>
+   <td style="text-align:right;"> 0.89 </td>
    <td style="text-align:right;"> 0.70 </td>
    <td style="text-align:right;"> 1.12 </td>
-   <td style="text-align:left;"> trustman_bin_unimp </td>
-   <td style="text-align:left;"> POC managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.42 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> trustman_bin_unimp </td>
+   <td style="text-align:left;"> POC petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.42 </td>
    <td style="text-align:right;"> 0.20 </td>
    <td style="text-align:right;"> 0.91 </td>
-   <td style="text-align:left;"> trustman_bin_unimp </td>
-   <td style="text-align:left;"> POC petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.25 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> trustman_bin_unimp </td>
+   <td style="text-align:left;"> POC capitalists </td>
+   <td style="text-align:right;"> 0.25 </td>
    <td style="text-align:right;"> 0.05 </td>
    <td style="text-align:right;"> 1.19 </td>
-   <td style="text-align:left;"> trustman_bin_unimp </td>
-   <td style="text-align:left;"> POC capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.72 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> respect_bin_unimp </td>
+   <td style="text-align:left;"> NH white managers </td>
+   <td style="text-align:right;"> 0.72 </td>
    <td style="text-align:right;"> 0.55 </td>
    <td style="text-align:right;"> 0.94 </td>
-   <td style="text-align:left;"> respect_bin_unimp </td>
-   <td style="text-align:left;"> NH white managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.48 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> respect_bin_unimp </td>
+   <td style="text-align:left;"> NH white petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.48 </td>
    <td style="text-align:right;"> 0.28 </td>
    <td style="text-align:right;"> 0.82 </td>
-   <td style="text-align:left;"> respect_bin_unimp </td>
-   <td style="text-align:left;"> NH white petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.33 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> respect_bin_unimp </td>
+   <td style="text-align:left;"> NH white capitalists </td>
+   <td style="text-align:right;"> 0.33 </td>
    <td style="text-align:right;"> 0.16 </td>
    <td style="text-align:right;"> 0.67 </td>
-   <td style="text-align:left;"> respect_bin_unimp </td>
-   <td style="text-align:left;"> NH white capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.97 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> respect_bin_unimp </td>
+   <td style="text-align:left;"> POC workers </td>
+   <td style="text-align:right;"> 0.97 </td>
    <td style="text-align:right;"> 0.75 </td>
    <td style="text-align:right;"> 1.25 </td>
-   <td style="text-align:left;"> respect_bin_unimp </td>
-   <td style="text-align:left;"> POC workers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.69 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> respect_bin_unimp </td>
+   <td style="text-align:left;"> POC managers </td>
+   <td style="text-align:right;"> 0.69 </td>
    <td style="text-align:right;"> 0.42 </td>
    <td style="text-align:right;"> 1.13 </td>
-   <td style="text-align:left;"> respect_bin_unimp </td>
-   <td style="text-align:left;"> POC managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.53 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> respect_bin_unimp </td>
+   <td style="text-align:left;"> POC petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.53 </td>
    <td style="text-align:right;"> 0.21 </td>
    <td style="text-align:right;"> 1.35 </td>
-   <td style="text-align:left;"> respect_bin_unimp </td>
-   <td style="text-align:left;"> POC petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.42 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> respect_bin_unimp </td>
+   <td style="text-align:left;"> POC capitalists </td>
+   <td style="text-align:right;"> 0.42 </td>
    <td style="text-align:right;"> 0.09 </td>
    <td style="text-align:right;"> 1.89 </td>
-   <td style="text-align:left;"> respect_bin_unimp </td>
-   <td style="text-align:left;"> POC capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.20 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> disc_haras_bin_unimp </td>
+   <td style="text-align:left;"> NH white managers </td>
+   <td style="text-align:right;"> 1.20 </td>
    <td style="text-align:right;"> 1.05 </td>
    <td style="text-align:right;"> 1.37 </td>
-   <td style="text-align:left;"> disc_haras_bin_unimp </td>
-   <td style="text-align:left;"> NH white managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.63 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> disc_haras_bin_unimp </td>
+   <td style="text-align:left;"> NH white petit bourgeoisie </td>
+   <td style="text-align:right;"> 0.63 </td>
    <td style="text-align:right;"> 0.45 </td>
    <td style="text-align:right;"> 0.88 </td>
-   <td style="text-align:left;"> disc_haras_bin_unimp </td>
-   <td style="text-align:left;"> NH white petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 0.80 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> disc_haras_bin_unimp </td>
+   <td style="text-align:left;"> NH white capitalists </td>
+   <td style="text-align:right;"> 0.80 </td>
    <td style="text-align:right;"> 0.58 </td>
    <td style="text-align:right;"> 1.10 </td>
-   <td style="text-align:left;"> disc_haras_bin_unimp </td>
-   <td style="text-align:left;"> NH white capitalists </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.23 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> disc_haras_bin_unimp </td>
+   <td style="text-align:left;"> POC workers </td>
+   <td style="text-align:right;"> 1.23 </td>
    <td style="text-align:right;"> 1.05 </td>
    <td style="text-align:right;"> 1.42 </td>
-   <td style="text-align:left;"> disc_haras_bin_unimp </td>
-   <td style="text-align:left;"> POC workers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.38 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> disc_haras_bin_unimp </td>
+   <td style="text-align:left;"> POC managers </td>
+   <td style="text-align:right;"> 1.38 </td>
    <td style="text-align:right;"> 1.15 </td>
    <td style="text-align:right;"> 1.67 </td>
-   <td style="text-align:left;"> disc_haras_bin_unimp </td>
-   <td style="text-align:left;"> POC managers </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.18 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> disc_haras_bin_unimp </td>
+   <td style="text-align:left;"> POC petit bourgeoisie </td>
+   <td style="text-align:right;"> 1.18 </td>
    <td style="text-align:right;"> 0.76 </td>
    <td style="text-align:right;"> 1.84 </td>
-   <td style="text-align:left;"> disc_haras_bin_unimp </td>
-   <td style="text-align:left;"> POC petit bourgeoisie </td>
   </tr>
   <tr>
-   <td style="text-align:right; padding-left:  2em;" indentlevel="1"> 1.50 </td>
+   <td style="text-align:left; padding-left:  2em;" indentlevel="1"> disc_haras_bin_unimp </td>
+   <td style="text-align:left;"> POC capitalists </td>
+   <td style="text-align:right;"> 1.50 </td>
    <td style="text-align:right;"> 0.94 </td>
    <td style="text-align:right;"> 2.41 </td>
-   <td style="text-align:left;"> disc_haras_bin_unimp </td>
-   <td style="text-align:left;"> POC capitalists </td>
   </tr>
 </tbody>
 </table></div>
@@ -3066,445 +3064,445 @@ kable(binded[1:48,], caption="Ref: NH white men", digits=2) %>%
  <thead>
   <tr>
    <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">   </th>
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> Var </th>
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> Class </th>
    <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> PR </th>
    <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> Lower </th>
    <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> Upper </th>
-   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> Var </th>
-   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> Class </th>
    <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> Cat </th>
   </tr>
  </thead>
 <tbody>
   <tr>
    <td style="text-align:left;"> poc_genderNH white women </td>
+   <td style="text-align:left;"> satjob1_bin_unimp </td>
+   <td style="text-align:left;"> NH white women </td>
    <td style="text-align:right;"> 0.75 </td>
    <td style="text-align:right;"> 0.56 </td>
    <td style="text-align:right;"> 1.01 </td>
-   <td style="text-align:left;"> satjob1_bin_unimp </td>
-   <td style="text-align:left;"> NH white women </td>
    <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
    <td style="text-align:left;"> poc_genderPOC men </td>
+   <td style="text-align:left;"> satjob1_bin_unimp </td>
+   <td style="text-align:left;"> POC men </td>
    <td style="text-align:right;"> 1.03 </td>
    <td style="text-align:right;"> 0.69 </td>
    <td style="text-align:right;"> 1.54 </td>
-   <td style="text-align:left;"> satjob1_bin_unimp </td>
-   <td style="text-align:left;"> POC men </td>
    <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
    <td style="text-align:left;"> poc_genderPOC women </td>
+   <td style="text-align:left;"> satjob1_bin_unimp </td>
+   <td style="text-align:left;"> POC women </td>
    <td style="text-align:right;"> 0.91 </td>
    <td style="text-align:right;"> 0.63 </td>
    <td style="text-align:right;"> 1.31 </td>
-   <td style="text-align:left;"> satjob1_bin_unimp </td>
-   <td style="text-align:left;"> POC women </td>
    <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
    <td style="text-align:left;"> poc_genderNH white women1 </td>
+   <td style="text-align:left;"> rincblls_bin_unimp </td>
+   <td style="text-align:left;"> NH white women </td>
    <td style="text-align:right;"> 1.43 </td>
    <td style="text-align:right;"> 1.32 </td>
    <td style="text-align:right;"> 1.56 </td>
-   <td style="text-align:left;"> rincblls_bin_unimp </td>
-   <td style="text-align:left;"> NH white women </td>
    <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
    <td style="text-align:left;"> poc_genderPOC men1 </td>
+   <td style="text-align:left;"> rincblls_bin_unimp </td>
+   <td style="text-align:left;"> POC men </td>
    <td style="text-align:right;"> 1.07 </td>
    <td style="text-align:right;"> 0.95 </td>
    <td style="text-align:right;"> 1.22 </td>
-   <td style="text-align:left;"> rincblls_bin_unimp </td>
-   <td style="text-align:left;"> POC men </td>
    <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
    <td style="text-align:left;"> poc_genderPOC women1 </td>
+   <td style="text-align:left;"> rincblls_bin_unimp </td>
+   <td style="text-align:left;"> POC women </td>
    <td style="text-align:right;"> 1.46 </td>
    <td style="text-align:right;"> 1.33 </td>
    <td style="text-align:right;"> 1.60 </td>
-   <td style="text-align:left;"> rincblls_bin_unimp </td>
-   <td style="text-align:left;"> POC women </td>
    <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
    <td style="text-align:left;"> poc_genderNH white women2 </td>
+   <td style="text-align:left;"> safehlth_bin_unimp </td>
+   <td style="text-align:left;"> NH white women </td>
    <td style="text-align:right;"> 1.13 </td>
    <td style="text-align:right;"> 0.82 </td>
    <td style="text-align:right;"> 1.58 </td>
-   <td style="text-align:left;"> safehlth_bin_unimp </td>
-   <td style="text-align:left;"> NH white women </td>
    <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
    <td style="text-align:left;"> poc_genderPOC men2 </td>
+   <td style="text-align:left;"> safehlth_bin_unimp </td>
+   <td style="text-align:left;"> POC men </td>
    <td style="text-align:right;"> 1.42 </td>
    <td style="text-align:right;"> 0.93 </td>
    <td style="text-align:right;"> 2.17 </td>
-   <td style="text-align:left;"> safehlth_bin_unimp </td>
-   <td style="text-align:left;"> POC men </td>
    <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
    <td style="text-align:left;"> poc_genderPOC women2 </td>
+   <td style="text-align:left;"> safehlth_bin_unimp </td>
+   <td style="text-align:left;"> POC women </td>
    <td style="text-align:right;"> 1.53 </td>
    <td style="text-align:right;"> 1.07 </td>
    <td style="text-align:right;"> 2.19 </td>
-   <td style="text-align:left;"> safehlth_bin_unimp </td>
-   <td style="text-align:left;"> POC women </td>
    <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
    <td style="text-align:left;"> poc_genderNH white women3 </td>
+   <td style="text-align:left;"> safetywk_bin_unimp </td>
+   <td style="text-align:left;"> NH white women </td>
    <td style="text-align:right;"> 0.91 </td>
    <td style="text-align:right;"> 0.69 </td>
    <td style="text-align:right;"> 1.20 </td>
-   <td style="text-align:left;"> safetywk_bin_unimp </td>
-   <td style="text-align:left;"> NH white women </td>
    <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
    <td style="text-align:left;"> poc_genderPOC men3 </td>
+   <td style="text-align:left;"> safetywk_bin_unimp </td>
+   <td style="text-align:left;"> POC men </td>
    <td style="text-align:right;"> 0.89 </td>
    <td style="text-align:right;"> 0.60 </td>
    <td style="text-align:right;"> 1.31 </td>
-   <td style="text-align:left;"> safetywk_bin_unimp </td>
-   <td style="text-align:left;"> POC men </td>
    <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
    <td style="text-align:left;"> poc_genderPOC women3 </td>
+   <td style="text-align:left;"> safetywk_bin_unimp </td>
+   <td style="text-align:left;"> POC women </td>
    <td style="text-align:right;"> 1.11 </td>
    <td style="text-align:right;"> 0.81 </td>
    <td style="text-align:right;"> 1.52 </td>
-   <td style="text-align:left;"> safetywk_bin_unimp </td>
-   <td style="text-align:left;"> POC women </td>
    <td style="text-align:left;"> Rewards/hazards </td>
   </tr>
   <tr>
    <td style="text-align:left;"> poc_genderNH white women4 </td>
+   <td style="text-align:left;"> workdiff_bin_unimp </td>
+   <td style="text-align:left;"> NH white women </td>
    <td style="text-align:right;"> 0.78 </td>
    <td style="text-align:right;"> 0.61 </td>
    <td style="text-align:right;"> 0.99 </td>
-   <td style="text-align:left;"> workdiff_bin_unimp </td>
-   <td style="text-align:left;"> NH white women </td>
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
    <td style="text-align:left;"> poc_genderPOC men4 </td>
+   <td style="text-align:left;"> workdiff_bin_unimp </td>
+   <td style="text-align:left;"> POC men </td>
    <td style="text-align:right;"> 1.05 </td>
    <td style="text-align:right;"> 0.81 </td>
    <td style="text-align:right;"> 1.36 </td>
-   <td style="text-align:left;"> workdiff_bin_unimp </td>
-   <td style="text-align:left;"> POC men </td>
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
    <td style="text-align:left;"> poc_genderPOC women4 </td>
+   <td style="text-align:left;"> workdiff_bin_unimp </td>
+   <td style="text-align:left;"> POC women </td>
    <td style="text-align:right;"> 1.00 </td>
    <td style="text-align:right;"> 0.77 </td>
    <td style="text-align:right;"> 1.29 </td>
-   <td style="text-align:left;"> workdiff_bin_unimp </td>
-   <td style="text-align:left;"> POC women </td>
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
    <td style="text-align:left;"> poc_genderNH white women5 </td>
+   <td style="text-align:left;"> learnnew_bin_unimp </td>
+   <td style="text-align:left;"> NH white women </td>
    <td style="text-align:right;"> 0.93 </td>
    <td style="text-align:right;"> 0.75 </td>
    <td style="text-align:right;"> 1.14 </td>
-   <td style="text-align:left;"> learnnew_bin_unimp </td>
-   <td style="text-align:left;"> NH white women </td>
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
    <td style="text-align:left;"> poc_genderPOC men5 </td>
+   <td style="text-align:left;"> learnnew_bin_unimp </td>
+   <td style="text-align:left;"> POC men </td>
    <td style="text-align:right;"> 1.18 </td>
    <td style="text-align:right;"> 0.92 </td>
    <td style="text-align:right;"> 1.53 </td>
-   <td style="text-align:left;"> learnnew_bin_unimp </td>
-   <td style="text-align:left;"> POC men </td>
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
    <td style="text-align:left;"> poc_genderPOC women5 </td>
+   <td style="text-align:left;"> learnnew_bin_unimp </td>
+   <td style="text-align:left;"> POC women </td>
    <td style="text-align:right;"> 1.03 </td>
    <td style="text-align:right;"> 0.81 </td>
    <td style="text-align:right;"> 1.32 </td>
-   <td style="text-align:left;"> learnnew_bin_unimp </td>
-   <td style="text-align:left;"> POC women </td>
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
    <td style="text-align:left;"> poc_genderNH white women6 </td>
+   <td style="text-align:left;"> condemnd_bin_unimp </td>
+   <td style="text-align:left;"> NH white women </td>
    <td style="text-align:right;"> 1.10 </td>
    <td style="text-align:right;"> 0.94 </td>
    <td style="text-align:right;"> 1.29 </td>
-   <td style="text-align:left;"> condemnd_bin_unimp </td>
-   <td style="text-align:left;"> NH white women </td>
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
    <td style="text-align:left;"> poc_genderPOC men6 </td>
+   <td style="text-align:left;"> condemnd_bin_unimp </td>
+   <td style="text-align:left;"> POC men </td>
    <td style="text-align:right;"> 0.90 </td>
    <td style="text-align:right;"> 0.70 </td>
    <td style="text-align:right;"> 1.16 </td>
-   <td style="text-align:left;"> condemnd_bin_unimp </td>
-   <td style="text-align:left;"> POC men </td>
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
    <td style="text-align:left;"> poc_genderPOC women6 </td>
+   <td style="text-align:left;"> condemnd_bin_unimp </td>
+   <td style="text-align:left;"> POC women </td>
    <td style="text-align:right;"> 1.01 </td>
    <td style="text-align:right;"> 0.84 </td>
    <td style="text-align:right;"> 1.23 </td>
-   <td style="text-align:left;"> condemnd_bin_unimp </td>
-   <td style="text-align:left;"> POC women </td>
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
    <td style="text-align:left;"> poc_genderNH white women7 </td>
+   <td style="text-align:left;"> workfast_bin_unimp </td>
+   <td style="text-align:left;"> NH white women </td>
    <td style="text-align:right;"> 1.05 </td>
    <td style="text-align:right;"> 0.99 </td>
    <td style="text-align:right;"> 1.12 </td>
-   <td style="text-align:left;"> workfast_bin_unimp </td>
-   <td style="text-align:left;"> NH white women </td>
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
    <td style="text-align:left;"> poc_genderPOC men7 </td>
+   <td style="text-align:left;"> workfast_bin_unimp </td>
+   <td style="text-align:left;"> POC men </td>
    <td style="text-align:right;"> 0.90 </td>
    <td style="text-align:right;"> 0.81 </td>
    <td style="text-align:right;"> 0.99 </td>
-   <td style="text-align:left;"> workfast_bin_unimp </td>
-   <td style="text-align:left;"> POC men </td>
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
    <td style="text-align:left;"> poc_genderPOC women7 </td>
+   <td style="text-align:left;"> workfast_bin_unimp </td>
+   <td style="text-align:left;"> POC women </td>
    <td style="text-align:right;"> 0.89 </td>
    <td style="text-align:right;"> 0.82 </td>
    <td style="text-align:right;"> 0.97 </td>
-   <td style="text-align:left;"> workfast_bin_unimp </td>
-   <td style="text-align:left;"> POC women </td>
    <td style="text-align:left;"> Labor process </td>
   </tr>
   <tr>
    <td style="text-align:left;"> poc_genderNH white women8 </td>
+   <td style="text-align:left;"> wkdecide_bin_unimp </td>
+   <td style="text-align:left;"> NH white women </td>
    <td style="text-align:right;"> 0.95 </td>
    <td style="text-align:right;"> 0.81 </td>
    <td style="text-align:right;"> 1.11 </td>
-   <td style="text-align:left;"> wkdecide_bin_unimp </td>
-   <td style="text-align:left;"> NH white women </td>
    <td style="text-align:left;"> Autonomy </td>
   </tr>
   <tr>
    <td style="text-align:left;"> poc_genderPOC men8 </td>
+   <td style="text-align:left;"> wkdecide_bin_unimp </td>
+   <td style="text-align:left;"> POC men </td>
    <td style="text-align:right;"> 1.43 </td>
    <td style="text-align:right;"> 1.18 </td>
    <td style="text-align:right;"> 1.73 </td>
-   <td style="text-align:left;"> wkdecide_bin_unimp </td>
-   <td style="text-align:left;"> POC men </td>
    <td style="text-align:left;"> Autonomy </td>
   </tr>
   <tr>
    <td style="text-align:left;"> poc_genderPOC women8 </td>
+   <td style="text-align:left;"> wkdecide_bin_unimp </td>
+   <td style="text-align:left;"> POC women </td>
    <td style="text-align:right;"> 1.46 </td>
    <td style="text-align:right;"> 1.23 </td>
    <td style="text-align:right;"> 1.74 </td>
-   <td style="text-align:left;"> wkdecide_bin_unimp </td>
-   <td style="text-align:left;"> POC women </td>
    <td style="text-align:left;"> Autonomy </td>
   </tr>
   <tr>
    <td style="text-align:left;"> poc_genderNH white women9 </td>
+   <td style="text-align:left;"> wkfreedm_bin_unimp </td>
+   <td style="text-align:left;"> NH white women </td>
    <td style="text-align:right;"> 0.96 </td>
    <td style="text-align:right;"> 0.79 </td>
    <td style="text-align:right;"> 1.16 </td>
-   <td style="text-align:left;"> wkfreedm_bin_unimp </td>
-   <td style="text-align:left;"> NH white women </td>
    <td style="text-align:left;"> Autonomy </td>
   </tr>
   <tr>
    <td style="text-align:left;"> poc_genderPOC men9 </td>
+   <td style="text-align:left;"> wkfreedm_bin_unimp </td>
+   <td style="text-align:left;"> POC men </td>
    <td style="text-align:right;"> 1.11 </td>
    <td style="text-align:right;"> 0.85 </td>
    <td style="text-align:right;"> 1.44 </td>
-   <td style="text-align:left;"> wkfreedm_bin_unimp </td>
-   <td style="text-align:left;"> POC men </td>
    <td style="text-align:left;"> Autonomy </td>
   </tr>
   <tr>
    <td style="text-align:left;"> poc_genderPOC women9 </td>
+   <td style="text-align:left;"> wkfreedm_bin_unimp </td>
+   <td style="text-align:left;"> POC women </td>
    <td style="text-align:right;"> 1.10 </td>
    <td style="text-align:right;"> 0.87 </td>
    <td style="text-align:right;"> 1.40 </td>
-   <td style="text-align:left;"> wkfreedm_bin_unimp </td>
-   <td style="text-align:left;"> POC women </td>
    <td style="text-align:left;"> Autonomy </td>
   </tr>
   <tr>
    <td style="text-align:left;"> poc_genderNH white women10 </td>
+   <td style="text-align:left;"> mustwork_bin_unimp </td>
+   <td style="text-align:left;"> NH white women </td>
    <td style="text-align:right;"> 0.70 </td>
    <td style="text-align:right;"> 0.60 </td>
    <td style="text-align:right;"> 0.83 </td>
-   <td style="text-align:left;"> mustwork_bin_unimp </td>
-   <td style="text-align:left;"> NH white women </td>
    <td style="text-align:left;"> Autonomy </td>
   </tr>
   <tr>
    <td style="text-align:left;"> poc_genderPOC men10 </td>
+   <td style="text-align:left;"> mustwork_bin_unimp </td>
+   <td style="text-align:left;"> POC men </td>
    <td style="text-align:right;"> 1.05 </td>
    <td style="text-align:right;"> 0.87 </td>
    <td style="text-align:right;"> 1.27 </td>
-   <td style="text-align:left;"> mustwork_bin_unimp </td>
-   <td style="text-align:left;"> POC men </td>
    <td style="text-align:left;"> Autonomy </td>
   </tr>
   <tr>
    <td style="text-align:left;"> poc_genderPOC women10 </td>
+   <td style="text-align:left;"> mustwork_bin_unimp </td>
+   <td style="text-align:left;"> POC women </td>
    <td style="text-align:right;"> 0.81 </td>
    <td style="text-align:right;"> 0.67 </td>
    <td style="text-align:right;"> 0.97 </td>
-   <td style="text-align:left;"> mustwork_bin_unimp </td>
-   <td style="text-align:left;"> POC women </td>
    <td style="text-align:left;"> Autonomy </td>
   </tr>
   <tr>
    <td style="text-align:left;"> poc_genderNH white women11 </td>
+   <td style="text-align:left;"> chngtme_bin_unimp </td>
+   <td style="text-align:left;"> NH white women </td>
    <td style="text-align:right;"> 1.09 </td>
    <td style="text-align:right;"> 0.99 </td>
    <td style="text-align:right;"> 1.20 </td>
-   <td style="text-align:left;"> chngtme_bin_unimp </td>
-   <td style="text-align:left;"> NH white women </td>
    <td style="text-align:left;"> Autonomy </td>
   </tr>
   <tr>
    <td style="text-align:left;"> poc_genderPOC men11 </td>
+   <td style="text-align:left;"> chngtme_bin_unimp </td>
+   <td style="text-align:left;"> POC men </td>
    <td style="text-align:right;"> 1.25 </td>
    <td style="text-align:right;"> 1.11 </td>
    <td style="text-align:right;"> 1.41 </td>
-   <td style="text-align:left;"> chngtme_bin_unimp </td>
-   <td style="text-align:left;"> POC men </td>
    <td style="text-align:left;"> Autonomy </td>
   </tr>
   <tr>
    <td style="text-align:left;"> poc_genderPOC women11 </td>
+   <td style="text-align:left;"> chngtme_bin_unimp </td>
+   <td style="text-align:left;"> POC women </td>
    <td style="text-align:right;"> 1.22 </td>
    <td style="text-align:right;"> 1.10 </td>
    <td style="text-align:right;"> 1.37 </td>
-   <td style="text-align:left;"> chngtme_bin_unimp </td>
-   <td style="text-align:left;"> POC women </td>
    <td style="text-align:left;"> Autonomy </td>
   </tr>
   <tr>
    <td style="text-align:left;"> poc_genderNH white women12 </td>
+   <td style="text-align:left;"> manvsemp_bin_unimp </td>
+   <td style="text-align:left;"> NH white women </td>
    <td style="text-align:right;"> 0.82 </td>
    <td style="text-align:right;"> 0.62 </td>
    <td style="text-align:right;"> 1.10 </td>
-   <td style="text-align:left;"> manvsemp_bin_unimp </td>
-   <td style="text-align:left;"> NH white women </td>
    <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
    <td style="text-align:left;"> poc_genderPOC men12 </td>
+   <td style="text-align:left;"> manvsemp_bin_unimp </td>
+   <td style="text-align:left;"> POC men </td>
    <td style="text-align:right;"> 0.63 </td>
    <td style="text-align:right;"> 0.40 </td>
    <td style="text-align:right;"> 0.99 </td>
-   <td style="text-align:left;"> manvsemp_bin_unimp </td>
-   <td style="text-align:left;"> POC men </td>
    <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
    <td style="text-align:left;"> poc_genderPOC women12 </td>
+   <td style="text-align:left;"> manvsemp_bin_unimp </td>
+   <td style="text-align:left;"> POC women </td>
    <td style="text-align:right;"> 1.17 </td>
    <td style="text-align:right;"> 0.84 </td>
    <td style="text-align:right;"> 1.63 </td>
-   <td style="text-align:left;"> manvsemp_bin_unimp </td>
-   <td style="text-align:left;"> POC women </td>
    <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
    <td style="text-align:left;"> poc_genderNH white women13 </td>
+   <td style="text-align:left;"> trustman_bin_unimp </td>
+   <td style="text-align:left;"> NH white women </td>
    <td style="text-align:right;"> 0.84 </td>
    <td style="text-align:right;"> 0.72 </td>
    <td style="text-align:right;"> 0.99 </td>
-   <td style="text-align:left;"> trustman_bin_unimp </td>
-   <td style="text-align:left;"> NH white women </td>
    <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
    <td style="text-align:left;"> poc_genderPOC men13 </td>
+   <td style="text-align:left;"> trustman_bin_unimp </td>
+   <td style="text-align:left;"> POC men </td>
    <td style="text-align:right;"> 0.83 </td>
    <td style="text-align:right;"> 0.65 </td>
    <td style="text-align:right;"> 1.05 </td>
-   <td style="text-align:left;"> trustman_bin_unimp </td>
-   <td style="text-align:left;"> POC men </td>
    <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
    <td style="text-align:left;"> poc_genderPOC women13 </td>
+   <td style="text-align:left;"> trustman_bin_unimp </td>
+   <td style="text-align:left;"> POC women </td>
    <td style="text-align:right;"> 1.15 </td>
    <td style="text-align:right;"> 0.95 </td>
    <td style="text-align:right;"> 1.38 </td>
-   <td style="text-align:left;"> trustman_bin_unimp </td>
-   <td style="text-align:left;"> POC women </td>
    <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
    <td style="text-align:left;"> poc_genderNH white women14 </td>
+   <td style="text-align:left;"> respect_bin_unimp </td>
+   <td style="text-align:left;"> NH white women </td>
    <td style="text-align:right;"> 0.93 </td>
    <td style="text-align:right;"> 0.71 </td>
    <td style="text-align:right;"> 1.22 </td>
-   <td style="text-align:left;"> respect_bin_unimp </td>
-   <td style="text-align:left;"> NH white women </td>
    <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
    <td style="text-align:left;"> poc_genderPOC men14 </td>
+   <td style="text-align:left;"> respect_bin_unimp </td>
+   <td style="text-align:left;"> POC men </td>
    <td style="text-align:right;"> 0.73 </td>
    <td style="text-align:right;"> 0.50 </td>
    <td style="text-align:right;"> 1.09 </td>
-   <td style="text-align:left;"> respect_bin_unimp </td>
-   <td style="text-align:left;"> POC men </td>
    <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
    <td style="text-align:left;"> poc_genderPOC women14 </td>
+   <td style="text-align:left;"> respect_bin_unimp </td>
+   <td style="text-align:left;"> POC women </td>
    <td style="text-align:right;"> 1.14 </td>
    <td style="text-align:right;"> 0.82 </td>
    <td style="text-align:right;"> 1.58 </td>
-   <td style="text-align:left;"> respect_bin_unimp </td>
-   <td style="text-align:left;"> POC women </td>
    <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
    <td style="text-align:left;"> poc_genderNH white women15 </td>
+   <td style="text-align:left;"> disc_haras_bin_unimp </td>
+   <td style="text-align:left;"> NH white women </td>
    <td style="text-align:right;"> 1.65 </td>
    <td style="text-align:right;"> 1.39 </td>
    <td style="text-align:right;"> 1.97 </td>
-   <td style="text-align:left;"> disc_haras_bin_unimp </td>
-   <td style="text-align:left;"> NH white women </td>
    <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
    <td style="text-align:left;"> poc_genderPOC men15 </td>
+   <td style="text-align:left;"> disc_haras_bin_unimp </td>
+   <td style="text-align:left;"> POC men </td>
    <td style="text-align:right;"> 1.69 </td>
    <td style="text-align:right;"> 1.34 </td>
    <td style="text-align:right;"> 2.14 </td>
-   <td style="text-align:left;"> disc_haras_bin_unimp </td>
-   <td style="text-align:left;"> POC men </td>
    <td style="text-align:left;"> Conflict </td>
   </tr>
   <tr>
    <td style="text-align:left;"> poc_genderPOC women15 </td>
+   <td style="text-align:left;"> disc_haras_bin_unimp </td>
+   <td style="text-align:left;"> POC women </td>
    <td style="text-align:right;"> 1.70 </td>
    <td style="text-align:right;"> 1.36 </td>
    <td style="text-align:right;"> 2.13 </td>
-   <td style="text-align:left;"> disc_haras_bin_unimp </td>
-   <td style="text-align:left;"> POC women </td>
    <td style="text-align:left;"> Conflict </td>
   </tr>
 </tbody>
@@ -4547,11 +4545,11 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
 <caption>Ref: workers/male workers/white workers</caption>
  <thead>
   <tr>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> QWL variable </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> Class </th>
    <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> PR </th>
-   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> Lower </th>
-   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> Upper </th>
-   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> QWL variable </th>
-   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> Class </th>
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> Lower </th>
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> Upper </th>
   </tr>
  </thead>
 <tbody>
@@ -5087,11 +5085,11 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
 <caption>Ref: workers/male workers/white workers</caption>
  <thead>
   <tr>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> QWL variable </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> Class </th>
    <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> PR </th>
-   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> Lower </th>
-   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> Upper </th>
-   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> QWL variable </th>
-   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> Class </th>
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> Lower </th>
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> Upper </th>
   </tr>
  </thead>
 <tbody>
@@ -5627,11 +5625,11 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
 <caption>Ref: workers/male workers/white workers</caption>
  <thead>
   <tr>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> QWL variable </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> Class </th>
    <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> PR </th>
-   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> Lower </th>
-   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> Upper </th>
-   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> QWL variable </th>
-   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> Class </th>
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> Lower </th>
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> Upper </th>
   </tr>
  </thead>
 <tbody>
@@ -6167,11 +6165,11 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
 <caption>Ref: workers/male workers/white workers</caption>
  <thead>
   <tr>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> QWL variable </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> Class </th>
    <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> PR </th>
-   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> Lower </th>
-   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> Upper </th>
-   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> QWL variable </th>
-   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> Class </th>
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> Lower </th>
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> Upper </th>
   </tr>
  </thead>
 <tbody>

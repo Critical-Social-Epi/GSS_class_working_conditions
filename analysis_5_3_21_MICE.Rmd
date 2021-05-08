@@ -268,9 +268,6 @@ svy_dat_mi <- svydesign(ids = ~ vpsu,
                  nest=TRUE, 
                  data=dat_mi)
 
-#make long imputed dataset
-dat_mi_long <- complete(imp_merged, "long", include=F)
-
 #survey-set unimputed data for descriptives
 svy_dat <- svydesign(ids = ~ vpsu,
                      strata = ~ vstrat,
@@ -285,11 +282,11 @@ svy_dat <- svydesign(ids = ~ vpsu,
 
 ```{r warning=FALSE, message=FALSE}
 #vars of interest
-vars <- c('sex', 'race_h', 'educ', 'marital_tri', 'region', 'income', 'age', "srh_bin", "mntlhlth")
+vars <- c('sex', 'race_h', 'educ', 'marital_tri', 'region', 'age', 'income', "srh_bin", "mntlhlth")
 nonorm <- c('income', 'age')
 
 x <- svyCreateTableOne(data = svy_dat, vars = vars, strata='class')
-x <- print(x, printToggle=FALSE, noSpaces=TRUE, nonnormal=nonorm)
+x <- print(x, printToggle=FALSE, noSpaces=TRUE, nonnormal=nonorm, format='p')
 kable(x[,1:4]) %>%
   kable_styling(c("striped", "condensed"))
 ```
@@ -361,7 +358,8 @@ formatted <- function(classvec, rows, qwlvec, dummy, facvec){
            Cat=ifelse(Var=="satjob1_bin_unimp" | Var=="rincblls_bin_unimp" | Var=="safehlth_bin_unimp" | Var=="safetywk_bin_unimp", "Rewards/hazards",
                       ifelse(Var=="learnnew_bin_unimp" | Var=="workdiff_bin_unimp" | Var == "workfast_bin_unimp" | Var=="condemnd_bin_unimp", "Labor process",
                              ifelse(Var=="wkdecide_bin_unimp" | Var=="wkfreedm_bin_unimp" | Var == "mustwork_bin_unimp" | Var=="chngtme_bin_unimp", "Autonomy",
-                                    ifelse(Var=="manvsemp_bin_unimp" | Var=="trustman_bin_unimp" | Var == "respect_bin_unimp" | Var=="disc_haras_bin_unimp", "Conflict", NA))))) -> binded
+                                    ifelse(Var=="manvsemp_bin_unimp" | Var=="trustman_bin_unimp" | Var == "respect_bin_unimp" | Var=="disc_haras_bin_unimp", "Conflict", NA))))) %>%
+    relocate(Var, Class) -> binded
   return(binded)
 }
 
@@ -403,7 +401,7 @@ plotted <- function(binded, limitsvec, breaksvec, cols, shapes){
 
 #table function
 tabled <- function(dat, captioned){
-  kable(dat, digits=2, col.names=c("PR", "Lower", "Upper", "QWL variable", "Class"), caption=captioned, row.names=FALSE) %>%
+  kable(dat, digits=2, col.names=c("QWL variable", "Class", "PR", "Lower", "Upper"), caption=captioned, row.names=FALSE) %>%
     kable_styling("striped") %>%
     group_rows("Class", 1, 12) %>%
     group_rows("Class*gender", 13, 40) %>%
@@ -414,7 +412,7 @@ tabled <- function(dat, captioned){
 
 ## Class, race, and gender differences in QWL 
 
-Prevalence of bad category of each binary QWL variable among each class relative to the prevalence among workers adjusted for age and year with restricted cubic splines. Class*race estimates exclude "NH other" group from sample because they're so heterogeneous. 
+Prevalence of adverse category of each binary QWL variable among each class relative to the prevalence among workers adjusted for age and year with restricted cubic splines. Class*race estimates exclude "NH other" group from sample because they're so heterogeneous. 
 
 ### Compensation and safety
 
