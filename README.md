@@ -1,2 +1,2 @@
 # GSS_class_analysis
-Class-health analyses of GSS data 
+Class inequities in working conditions in the GSS 
