@@ -280,10 +280,10 @@ svy_dat <- svydesign(ids = ~ vpsu,
 
 ```r
 #vars of interest
-vars <- c('sex', 'race_h', 'educ', 'marital_tri', 'region', 'age', 'income', "srh_bin", "mntlhlth")
+vars <- c('sex', 'race_h', 'educ', 'marital_tri', 'region', 'age', 'income')
 nonorm <- c('income', 'age')
 
-x <- svyCreateTableOne(data = svy_dat, vars = vars, strata='class')
+x <- svyCreateTableOne(data = subset(svy_dat, !is.na(class) & !is.na(sex) & !is.na(race_h) & !is.na(educ) & !is.na(marital_tri) & !is.na(region) & !is.na(age) & !is.na(income)), vars = vars, strata='class')
 x <- print(x, printToggle=FALSE, noSpaces=TRUE, nonnormal=nonorm, format='p')
 kable(x[,1:4]) %>%
   kable_styling(c("striped", "condensed"))
@@ -302,17 +302,17 @@ kable(x[,1:4]) %>%
 <tbody>
   <tr>
    <td style="text-align:left;"> n </td>
-   <td style="text-align:left;"> 3821.8 </td>
-   <td style="text-align:left;"> 2128.6 </td>
-   <td style="text-align:left;"> 544.2 </td>
-   <td style="text-align:left;"> 423.8 </td>
+   <td style="text-align:left;"> 3435.1 </td>
+   <td style="text-align:left;"> 1958.6 </td>
+   <td style="text-align:left;"> 471.9 </td>
+   <td style="text-align:left;"> 390.5 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> sex = male (%) </td>
-   <td style="text-align:left;"> 44.6 </td>
-   <td style="text-align:left;"> 51.5 </td>
-   <td style="text-align:left;"> 51.2 </td>
-   <td style="text-align:left;"> 76.7 </td>
+   <td style="text-align:left;"> 44.9 </td>
+   <td style="text-align:left;"> 51.8 </td>
+   <td style="text-align:left;"> 51.1 </td>
+   <td style="text-align:left;"> 77.4 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> race_h (%) </td>
@@ -323,31 +323,31 @@ kable(x[,1:4]) %>%
   </tr>
   <tr>
    <td style="text-align:left;"> NH white </td>
-   <td style="text-align:left;"> 66.1 </td>
-   <td style="text-align:left;"> 71.2 </td>
-   <td style="text-align:left;"> 72.3 </td>
-   <td style="text-align:left;"> 79.9 </td>
+   <td style="text-align:left;"> 66.3 </td>
+   <td style="text-align:left;"> 71.1 </td>
+   <td style="text-align:left;"> 71.9 </td>
+   <td style="text-align:left;"> 81.2 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> NH Black </td>
    <td style="text-align:left;"> 15.7 </td>
-   <td style="text-align:left;"> 11.9 </td>
+   <td style="text-align:left;"> 11.6 </td>
    <td style="text-align:left;"> 7.4 </td>
-   <td style="text-align:left;"> 5.5 </td>
+   <td style="text-align:left;"> 6.0 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> NH other </td>
-   <td style="text-align:left;"> 3.8 </td>
-   <td style="text-align:left;"> 5.1 </td>
-   <td style="text-align:left;"> 7.2 </td>
-   <td style="text-align:left;"> 7.0 </td>
+   <td style="text-align:left;"> 3.7 </td>
+   <td style="text-align:left;"> 5.3 </td>
+   <td style="text-align:left;"> 7.3 </td>
+   <td style="text-align:left;"> 5.6 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Hispanic </td>
    <td style="text-align:left;"> 14.4 </td>
-   <td style="text-align:left;"> 11.8 </td>
-   <td style="text-align:left;"> 13.1 </td>
-   <td style="text-align:left;"> 7.6 </td>
+   <td style="text-align:left;"> 12.0 </td>
+   <td style="text-align:left;"> 13.4 </td>
+   <td style="text-align:left;"> 7.3 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> educ (%) </td>
@@ -358,31 +358,31 @@ kable(x[,1:4]) %>%
   </tr>
   <tr>
    <td style="text-align:left;"> &lt;HS </td>
-   <td style="text-align:left;"> 9.4 </td>
-   <td style="text-align:left;"> 7.4 </td>
-   <td style="text-align:left;"> 11.9 </td>
-   <td style="text-align:left;"> 7.9 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> HS </td>
-   <td style="text-align:left;"> 55.2 </td>
-   <td style="text-align:left;"> 43.6 </td>
-   <td style="text-align:left;"> 47.7 </td>
-   <td style="text-align:left;"> 40.3 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> JuCo </td>
-   <td style="text-align:left;"> 9.0 </td>
-   <td style="text-align:left;"> 10.7 </td>
-   <td style="text-align:left;"> 9.2 </td>
+   <td style="text-align:left;"> 9.3 </td>
+   <td style="text-align:left;"> 7.6 </td>
+   <td style="text-align:left;"> 11.4 </td>
    <td style="text-align:left;"> 7.3 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> HS </td>
+   <td style="text-align:left;"> 54.3 </td>
+   <td style="text-align:left;"> 44.0 </td>
+   <td style="text-align:left;"> 48.1 </td>
+   <td style="text-align:left;"> 39.3 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> JuCo </td>
+   <td style="text-align:left;"> 9.1 </td>
+   <td style="text-align:left;"> 10.6 </td>
+   <td style="text-align:left;"> 8.7 </td>
+   <td style="text-align:left;"> 7.7 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> College + </td>
-   <td style="text-align:left;"> 26.3 </td>
-   <td style="text-align:left;"> 38.3 </td>
-   <td style="text-align:left;"> 31.1 </td>
-   <td style="text-align:left;"> 44.5 </td>
+   <td style="text-align:left;"> 27.3 </td>
+   <td style="text-align:left;"> 37.8 </td>
+   <td style="text-align:left;"> 31.8 </td>
+   <td style="text-align:left;"> 45.6 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> marital_tri (%) </td>
@@ -393,24 +393,24 @@ kable(x[,1:4]) %>%
   </tr>
   <tr>
    <td style="text-align:left;"> married </td>
-   <td style="text-align:left;"> 51.0 </td>
-   <td style="text-align:left;"> 55.9 </td>
+   <td style="text-align:left;"> 51.5 </td>
+   <td style="text-align:left;"> 55.7 </td>
    <td style="text-align:left;"> 60.2 </td>
-   <td style="text-align:left;"> 71.1 </td>
+   <td style="text-align:left;"> 71.3 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> never married </td>
-   <td style="text-align:left;"> 31.2 </td>
-   <td style="text-align:left;"> 26.6 </td>
-   <td style="text-align:left;"> 19.5 </td>
-   <td style="text-align:left;"> 9.8 </td>
+   <td style="text-align:left;"> 30.5 </td>
+   <td style="text-align:left;"> 26.3 </td>
+   <td style="text-align:left;"> 19.2 </td>
+   <td style="text-align:left;"> 10.2 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> wid/div/sep </td>
-   <td style="text-align:left;"> 17.8 </td>
-   <td style="text-align:left;"> 17.5 </td>
-   <td style="text-align:left;"> 20.3 </td>
-   <td style="text-align:left;"> 19.0 </td>
+   <td style="text-align:left;"> 18.0 </td>
+   <td style="text-align:left;"> 18.0 </td>
+   <td style="text-align:left;"> 20.6 </td>
+   <td style="text-align:left;"> 18.5 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> region (%) </td>
@@ -421,73 +421,59 @@ kable(x[,1:4]) %>%
   </tr>
   <tr>
    <td style="text-align:left;"> Midwest </td>
-   <td style="text-align:left;"> 24.4 </td>
-   <td style="text-align:left;"> 22.3 </td>
-   <td style="text-align:left;"> 18.4 </td>
-   <td style="text-align:left;"> 20.7 </td>
+   <td style="text-align:left;"> 25.2 </td>
+   <td style="text-align:left;"> 22.6 </td>
+   <td style="text-align:left;"> 18.7 </td>
+   <td style="text-align:left;"> 20.8 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Northeast </td>
-   <td style="text-align:left;"> 16.5 </td>
-   <td style="text-align:left;"> 18.6 </td>
-   <td style="text-align:left;"> 16.1 </td>
-   <td style="text-align:left;"> 13.5 </td>
+   <td style="text-align:left;"> 15.3 </td>
+   <td style="text-align:left;"> 17.8 </td>
+   <td style="text-align:left;"> 15.7 </td>
+   <td style="text-align:left;"> 12.8 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> South </td>
-   <td style="text-align:left;"> 38.9 </td>
-   <td style="text-align:left;"> 35.0 </td>
-   <td style="text-align:left;"> 36.3 </td>
-   <td style="text-align:left;"> 35.4 </td>
+   <td style="text-align:left;"> 38.7 </td>
+   <td style="text-align:left;"> 34.5 </td>
+   <td style="text-align:left;"> 35.3 </td>
+   <td style="text-align:left;"> 35.9 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> West </td>
-   <td style="text-align:left;"> 20.2 </td>
-   <td style="text-align:left;"> 24.0 </td>
-   <td style="text-align:left;"> 29.2 </td>
+   <td style="text-align:left;"> 20.7 </td>
+   <td style="text-align:left;"> 25.1 </td>
    <td style="text-align:left;"> 30.3 </td>
+   <td style="text-align:left;"> 30.5 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> age (median [IQR]) </td>
-   <td style="text-align:left;"> 40.00 [29.00, 51.00] </td>
-   <td style="text-align:left;"> 42.00 [31.00, 51.00] </td>
-   <td style="text-align:left;"> 49.00 [37.00, 58.00] </td>
-   <td style="text-align:left;"> 50.00 [40.00, 58.00] </td>
+   <td style="text-align:left;"> 40.00 [30.00, 51.00] </td>
+   <td style="text-align:left;"> 41.00 [31.00, 51.00] </td>
+   <td style="text-align:left;"> 49.00 [37.00, 57.00] </td>
+   <td style="text-align:left;"> 51.00 [41.00, 58.00] </td>
   </tr>
   <tr>
    <td style="text-align:left;"> income (median [IQR]) </td>
    <td style="text-align:left;"> 6.38 [3.50, 10.22] </td>
    <td style="text-align:left;"> 8.43 [4.85, 12.86] </td>
    <td style="text-align:left;"> 6.38 [3.22, 12.27] </td>
-   <td style="text-align:left;"> 12.27 [6.97, 23.07] </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> srh_bin = poor/fair (%) </td>
-   <td style="text-align:left;"> 15.2 </td>
-   <td style="text-align:left;"> 12.9 </td>
-   <td style="text-align:left;"> 15.6 </td>
-   <td style="text-align:left;"> 10.4 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> mntlhlth (mean (SD)) </td>
-   <td style="text-align:left;"> 3.55 (7.14) </td>
-   <td style="text-align:left;"> 3.34 (6.83) </td>
-   <td style="text-align:left;"> 2.55 (6.13) </td>
-   <td style="text-align:left;"> 2.98 (6.99) </td>
+   <td style="text-align:left;"> 12.27 [6.92, 23.07] </td>
   </tr>
 </tbody>
 </table>
 
 ## Distribution of class stratified by race-gender (and vice versa)
 
-Estimates exclude "NH other" group from sample because they're so heterogeneous. 
+Estimates exclude "NH other" group from sample. 
 
 ### Tables
 
 
 ```r
 #class by race-gender
-x <- svyCreateTableOne(data = subset(svy_dat, race_h != "NH other"), vars = "class", strata='poc_gender')
+x <- svyCreateTableOne(data = subset(svy_dat, !is.na(race_h) & !is.na(class) & !is.na(poc_gender) & race_h != "NH other"), vars = "class", strata='poc_gender')
 x <- print(x, printToggle=FALSE, noSpaces=TRUE, format='p')
 kable(x[,1:4]) %>%
   kable_styling(c("striped", "condensed"))
@@ -506,10 +492,10 @@ kable(x[,1:4]) %>%
 <tbody>
   <tr>
    <td style="text-align:left;"> n </td>
-   <td style="text-align:left;"> 2414.8 </td>
-   <td style="text-align:left;"> 2393.3 </td>
-   <td style="text-align:left;"> 853.5 </td>
-   <td style="text-align:left;"> 977.3 </td>
+   <td style="text-align:left;"> 2397.9 </td>
+   <td style="text-align:left;"> 2369.2 </td>
+   <td style="text-align:left;"> 844.4 </td>
+   <td style="text-align:left;"> 972.4 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> class (%) </td>
@@ -551,7 +537,7 @@ kable(x[,1:4]) %>%
 
 ```r
 #race-gender by class
-x <- svyCreateTableOne(data = subset(svy_dat, race_h != "NH other"), vars = "poc_gender", strata='class')
+x <- svyCreateTableOne(data = subset(svy_dat, !is.na(race_h) & !is.na(class) & !is.na(poc_gender) & race_h != "NH other"), vars = "poc_gender", strata='class')
 x <- print(x, printToggle=FALSE, noSpaces=TRUE, format='p')
 kable(x[,1:4]) %>%
   kable_styling(c("striped", "condensed"))
@@ -617,7 +603,7 @@ kable(x[,1:4]) %>%
 
 
 ```r
-ggplot(data = subset(dat, !is.na(class) & !is.na(poc_gender) & race_h != "NH other")) +
+ggplot(data = subset(dat, !is.na(class) & !is.na(poc_gender) & !is.na(race_h) & race_h != "NH other")) +
   geom_mosaic(aes(x = product(class, poc_gender), fill=class, weight=wtssall)) +
   ylab("") +
   xlab("")  +
@@ -628,7 +614,7 @@ ggplot(data = subset(dat, !is.na(class) & !is.na(poc_gender) & race_h != "NH oth
   theme(axis.line=element_blank(), axis.title=element_blank(), legend.position="none") 
 ```
 
-![](analysis_6_13_21_MICE_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
+![](analysis_6_15_21_MICE_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
 
 ```r
 ggsave("mosaic.png", height=4.5, width=6.4, dpi=600)
@@ -722,7 +708,7 @@ tabled <- function(dat, captioned){
 
 ## Class, race, and gender differences in QWL 
 
-Prevalence of adverse category of each binary QWL variable among each class relative to the prevalence among workers adjusted for age and year with restricted cubic splines. Class*race estimates exclude "NH other" group from sample because they're so heterogeneous. 
+Prevalence of adverse category of each binary QWL variable among each class relative to the prevalence among workers adjusted for age and year with restricted cubic splines. Class*race estimates exclude "NH other" group from sample. 
 
 ### Compensation and safety
 
@@ -789,7 +775,7 @@ plotted(binded_overall, limitsvec=c(0.09, 3.73), breaksvec=c(0.125, 0.25, 0.5, 1
   plot_layout(ncol=1, heights=c(1, 2, 2))
 ```
 
-![](analysis_6_13_21_MICE_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
+![](analysis_6_15_21_MICE_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
 
 ```r
 ggsave("comp_safety.png", height=5, width=10.25, dpi=600)
@@ -1356,7 +1342,7 @@ plotted(binded_overall, limitsvec=c(0.082, 2.84), breaksvec=c(0.125, 0.25, 0.5, 
   plot_layout(ncol=1, heights=c(1, 2, 2))
 ```
 
-![](analysis_6_13_21_MICE_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+![](analysis_6_15_21_MICE_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
 
 ```r
 ggsave("labor_process.png", height=5, width=10.25, dpi=600)
@@ -1923,7 +1909,7 @@ plotted(binded_overall, limitsvec=c(0.026, 2.72), breaksvec=c(0.031, 0.0625, 0.1
   plot_layout(ncol=1, heights=c(1, 2, 2))
 ```
 
-![](analysis_6_13_21_MICE_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
+![](analysis_6_15_21_MICE_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
 
 ```r
 ggsave("autonomy.png", height=5, width=11.25, dpi=600)
@@ -2491,7 +2477,7 @@ plotted(binded_overall, limitsvec=c(0.017, 2.42), breaksvec=c(0.031, 0.0625, 0.1
   plot_layout(ncol=1, heights=c(1, 2, 2))
 ```
 
-![](analysis_6_13_21_MICE_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
+![](analysis_6_15_21_MICE_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
 
 ```r
 ggsave("conflict.png", height=5, width=11.25, dpi=600)
@@ -2996,7 +2982,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
 
 ## Gender-race differences in QWL among workers
 
-Prevalence of bad category of each binary QWL variable among each gender-racial group of workers relative to the prevalence among white male workers adjusted for age and year with restricted cubic splines. Estimates exclude "NH other" group from sample because they're so heterogeneous. 
+Prevalence of bad category of each binary QWL variable among each gender-racial group of workers relative to the prevalence among white male workers adjusted for age and year with restricted cubic splines. Estimates exclude "NH other" group from sample. 
 
 
 ```r
@@ -3046,7 +3032,7 @@ conflict <-  ggplot() + theme_void() + ggtitle("Conflict") + theme(plot.title=el
   plot_layout(heights=c(0.001, 1000))  
 ```
 
-![](analysis_6_13_21_MICE_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
+![](analysis_6_15_21_MICE_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
 
 ```r
 ggsave("gender_race_workers.png", height=6, width=8.75, dpi=600)
@@ -3472,7 +3458,7 @@ Unadjusted prevalence of bad category of each binary QWL variable among each cla
 #vars of interest
 qwl_vars <- c("satjob1_bin", "rincblls_bin", "safehlth_bin", "safetywk_bin", "workdiff_bin", "learnnew_bin", "condemnd_bin", "workfast_bin", "wkdecide_bin", "wkfreedm_bin", "mustwork_bin", "chngtme_bin", "manvsemp_bin", "trustman_bin", "respect_bin", "disc_haras_bin")
 
-x <- svyCreateTableOne(data = svy_dat, vars = qwl_vars, factorVars = qwl_vars, strata='class')
+x <- svyCreateTableOne(data = subset(svy_dat, !is.na(class)), vars = qwl_vars, factorVars = qwl_vars, strata='class')
 x <- print(x, printToggle=FALSE, noSpaces=TRUE, format='p')
 kable(x[,1:4]) %>%
   kable_styling(c("striped", "condensed"))
@@ -3613,11 +3599,11 @@ kable(x[,1:4]) %>%
 
 ### Survey-weighted distributions of QWL variables stratified by race-gender
 
-Unadjusted prevalence of bad category of each binary QWL variable among each race-gender. Estimates exclude "NH other" group from sample because they're so heterogeneous. 
+Unadjusted prevalence of bad category of each binary QWL variable among each race-gender. Estimates exclude "NH other" group from sample. 
 
 
 ```r
-x <- svyCreateTableOne(data = subset(svy_dat, race_h!="NH other"), vars = qwl_vars, factorVars = qwl_vars, strata='poc_gender')
+x <- svyCreateTableOne(data = subset(svy_dat, race_h!="NH other" & !is.na(race_h) & !is.na(poc_gender)), vars = qwl_vars, factorVars = qwl_vars, strata='poc_gender')
 x <- print(x, printToggle=FALSE, noSpaces=TRUE, format='p')
 kable(x[,1:4]) %>%
   kable_styling(c("striped", "condensed"))
@@ -4347,7 +4333,7 @@ kable(table(dat$poc_gender, dat$race_h, dat$sex), caption="Race-gender by race a
 aggr(dat[,c("class", 'sex', 'poc', 'educ', 'marital_tri', 'region', 'income',  "prestg10", 'age', "srh_bin", "mntlhlth", "satjob1_bin", "rincblls_bin", "safehlth_bin", "safetywk_bin", "workdiff_bin", "learnnew_bin", "condemnd_bin", "workfast_bin", "wkdecide_bin", "wkfreedm_bin", "mustwork_bin", "chngtme_bin", "manvsemp_bin", "trustman_bin", "respect_bin", "disc_haras_bin")], cex.axis = 0.6, numbers=FALSE, prop=TRUE)
 ```
 
-![](analysis_6_13_21_MICE_files/figure-html/unnamed-chunk-22-1.png)<!-- -->
+![](analysis_6_15_21_MICE_files/figure-html/unnamed-chunk-22-1.png)<!-- -->
 
 ## Imputation convergence plots
 
@@ -4356,13 +4342,13 @@ aggr(dat[,c("class", 'sex', 'poc', 'educ', 'marital_tri', 'region', 'income',  "
 plot(imp_merged, y=c('class', 'race_h', 'educ', 'marital_tri', "prestg10", 'income', 'age', "srh_bin", "mntlhlth", "satjob1_bin", "rincblls_bin", "safehlth_bin", "safetywk_bin", "workdiff_bin", "learnnew_bin", "condemnd_bin", "workfast_bin", "wkdecide_bin", "wkfreedm_bin", "mustwork_bin", "manvsemp_bin", "trustman_bin", "respect_bin", "disc_haras_bin"), main='Convergence plots')
 ```
 
-![](analysis_6_13_21_MICE_files/figure-html/unnamed-chunk-23-1.png)<!-- -->![](analysis_6_13_21_MICE_files/figure-html/unnamed-chunk-23-2.png)<!-- -->![](analysis_6_13_21_MICE_files/figure-html/unnamed-chunk-23-3.png)<!-- -->![](analysis_6_13_21_MICE_files/figure-html/unnamed-chunk-23-4.png)<!-- -->![](analysis_6_13_21_MICE_files/figure-html/unnamed-chunk-23-5.png)<!-- -->![](analysis_6_13_21_MICE_files/figure-html/unnamed-chunk-23-6.png)<!-- -->![](analysis_6_13_21_MICE_files/figure-html/unnamed-chunk-23-7.png)<!-- -->![](analysis_6_13_21_MICE_files/figure-html/unnamed-chunk-23-8.png)<!-- -->
+![](analysis_6_15_21_MICE_files/figure-html/unnamed-chunk-23-1.png)<!-- -->![](analysis_6_15_21_MICE_files/figure-html/unnamed-chunk-23-2.png)<!-- -->![](analysis_6_15_21_MICE_files/figure-html/unnamed-chunk-23-3.png)<!-- -->![](analysis_6_15_21_MICE_files/figure-html/unnamed-chunk-23-4.png)<!-- -->![](analysis_6_15_21_MICE_files/figure-html/unnamed-chunk-23-5.png)<!-- -->![](analysis_6_15_21_MICE_files/figure-html/unnamed-chunk-23-6.png)<!-- -->![](analysis_6_15_21_MICE_files/figure-html/unnamed-chunk-23-7.png)<!-- -->![](analysis_6_15_21_MICE_files/figure-html/unnamed-chunk-23-8.png)<!-- -->
 
 ## Unimputed analyses
 
 ### Class, race, and gender differences in QWL 
 
-Prevalence of bad category of each binary QWL variable among each class relative to the prevalence among workers adjusted for age and year with restricted cubic splines. Class*race estimates exclude "NH other" group from sample because they're so heterogeneous. 
+Prevalence of bad category of each binary QWL variable among each class relative to the prevalence among workers adjusted for age and year with restricted cubic splines. Class*race estimates exclude "NH other" group from sample. 
 
 #### Compensation and safety
 
@@ -6566,7 +6552,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
 
 ### Gender-race differences in QWL among workers
 
-Prevalence of bad category of each binary QWL variable among each gender-racial group of workers relative to the prevalence among white male workers adjusted for age and year with restricted cubic splines. Estimates exclude "NH other" group from sample because they're so heterogeneous. 
+Prevalence of bad category of each binary QWL variable among each gender-racial group of workers relative to the prevalence among white male workers adjusted for age and year with restricted cubic splines. Estimates exclude "NH other" group from sample. 
 
 
 ```r

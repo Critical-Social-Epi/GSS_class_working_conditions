@@ -278,10 +278,10 @@ svy_dat <- svydesign(ids = ~ vpsu,
 
 ```{r warning=FALSE, message=FALSE}
 #vars of interest
-vars <- c('sex', 'race_h', 'educ', 'marital_tri', 'region', 'age', 'income', "srh_bin", "mntlhlth")
+vars <- c('sex', 'race_h', 'educ', 'marital_tri', 'region', 'age', 'income')
 nonorm <- c('income', 'age')
 
-x <- svyCreateTableOne(data = svy_dat, vars = vars, strata='class')
+x <- svyCreateTableOne(data = subset(svy_dat, !is.na(class) & !is.na(sex) & !is.na(race_h) & !is.na(educ) & !is.na(marital_tri) & !is.na(region) & !is.na(age) & !is.na(income)), vars = vars, strata='class')
 x <- print(x, printToggle=FALSE, noSpaces=TRUE, nonnormal=nonorm, format='p')
 kable(x[,1:4]) %>%
   kable_styling(c("striped", "condensed"))
@@ -289,19 +289,19 @@ kable(x[,1:4]) %>%
 
 ## Distribution of class stratified by race-gender (and vice versa)
 
-Estimates exclude "NH other" group from sample because they're so heterogeneous. 
+Estimates exclude "NH other" group from sample. 
 
 ### Tables
 
 ```{r warning=FALSE, message=FALSE}
 #class by race-gender
-x <- svyCreateTableOne(data = subset(svy_dat, race_h != "NH other"), vars = "class", strata='poc_gender')
+x <- svyCreateTableOne(data = subset(svy_dat, !is.na(race_h) & !is.na(class) & !is.na(poc_gender) & race_h != "NH other"), vars = "class", strata='poc_gender')
 x <- print(x, printToggle=FALSE, noSpaces=TRUE, format='p')
 kable(x[,1:4]) %>%
   kable_styling(c("striped", "condensed"))
 
 #race-gender by class
-x <- svyCreateTableOne(data = subset(svy_dat, race_h != "NH other"), vars = "poc_gender", strata='class')
+x <- svyCreateTableOne(data = subset(svy_dat, !is.na(race_h) & !is.na(class) & !is.na(poc_gender) & race_h != "NH other"), vars = "poc_gender", strata='class')
 x <- print(x, printToggle=FALSE, noSpaces=TRUE, format='p')
 kable(x[,1:4]) %>%
   kable_styling(c("striped", "condensed"))
@@ -310,7 +310,7 @@ kable(x[,1:4]) %>%
 ### Figure
 
 ```{r warning=FALSE, message=FALSE, fig.height=4.5, fig.width=6.4}
-ggplot(data = subset(dat, !is.na(class) & !is.na(poc_gender) & race_h != "NH other")) +
+ggplot(data = subset(dat, !is.na(class) & !is.na(poc_gender) & !is.na(race_h) & race_h != "NH other")) +
   geom_mosaic(aes(x = product(class, poc_gender), fill=class, weight=wtssall)) +
   ylab("") +
   xlab("")  +
@@ -410,7 +410,7 @@ tabled <- function(dat, captioned){
 
 ## Class, race, and gender differences in QWL 
 
-Prevalence of adverse category of each binary QWL variable among each class relative to the prevalence among workers adjusted for age and year with restricted cubic splines. Class*race estimates exclude "NH other" group from sample because they're so heterogeneous. 
+Prevalence of adverse category of each binary QWL variable among each class relative to the prevalence among workers adjusted for age and year with restricted cubic splines. Class*race estimates exclude "NH other" group from sample. 
 
 ### Compensation and safety
 
@@ -684,7 +684,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
 
 ## Gender-race differences in QWL among workers
 
-Prevalence of bad category of each binary QWL variable among each gender-racial group of workers relative to the prevalence among white male workers adjusted for age and year with restricted cubic splines. Estimates exclude "NH other" group from sample because they're so heterogeneous. 
+Prevalence of bad category of each binary QWL variable among each gender-racial group of workers relative to the prevalence among white male workers adjusted for age and year with restricted cubic splines. Estimates exclude "NH other" group from sample. 
 
 ```{r warning=FALSE, message=FALSE, results='hide'}
 #outvars
@@ -770,7 +770,7 @@ Unadjusted prevalence of bad category of each binary QWL variable among each cla
 #vars of interest
 qwl_vars <- c("satjob1_bin", "rincblls_bin", "safehlth_bin", "safetywk_bin", "workdiff_bin", "learnnew_bin", "condemnd_bin", "workfast_bin", "wkdecide_bin", "wkfreedm_bin", "mustwork_bin", "chngtme_bin", "manvsemp_bin", "trustman_bin", "respect_bin", "disc_haras_bin")
 
-x <- svyCreateTableOne(data = svy_dat, vars = qwl_vars, factorVars = qwl_vars, strata='class')
+x <- svyCreateTableOne(data = subset(svy_dat, !is.na(class)), vars = qwl_vars, factorVars = qwl_vars, strata='class')
 x <- print(x, printToggle=FALSE, noSpaces=TRUE, format='p')
 kable(x[,1:4]) %>%
   kable_styling(c("striped", "condensed"))
@@ -778,10 +778,10 @@ kable(x[,1:4]) %>%
 
 ### Survey-weighted distributions of QWL variables stratified by race-gender
 
-Unadjusted prevalence of bad category of each binary QWL variable among each race-gender. Estimates exclude "NH other" group from sample because they're so heterogeneous. 
+Unadjusted prevalence of bad category of each binary QWL variable among each race-gender. Estimates exclude "NH other" group from sample. 
 
 ```{r warning=FALSE, message=FALSE}
-x <- svyCreateTableOne(data = subset(svy_dat, race_h!="NH other"), vars = qwl_vars, factorVars = qwl_vars, strata='poc_gender')
+x <- svyCreateTableOne(data = subset(svy_dat, race_h!="NH other" & !is.na(race_h) & !is.na(poc_gender)), vars = qwl_vars, factorVars = qwl_vars, strata='poc_gender')
 x <- print(x, printToggle=FALSE, noSpaces=TRUE, format='p')
 kable(x[,1:4]) %>%
   kable_styling(c("striped", "condensed"))
@@ -829,7 +829,7 @@ plot(imp_merged, y=c('class', 'race_h', 'educ', 'marital_tri', "prestg10", 'inco
 
 ### Class, race, and gender differences in QWL 
 
-Prevalence of bad category of each binary QWL variable among each class relative to the prevalence among workers adjusted for age and year with restricted cubic splines. Class*race estimates exclude "NH other" group from sample because they're so heterogeneous. 
+Prevalence of bad category of each binary QWL variable among each class relative to the prevalence among workers adjusted for age and year with restricted cubic splines. Class*race estimates exclude "NH other" group from sample. 
 
 #### Compensation and safety
 
@@ -1049,7 +1049,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
 
 ### Gender-race differences in QWL among workers
 
-Prevalence of bad category of each binary QWL variable among each gender-racial group of workers relative to the prevalence among white male workers adjusted for age and year with restricted cubic splines. Estimates exclude "NH other" group from sample because they're so heterogeneous. 
+Prevalence of bad category of each binary QWL variable among each gender-racial group of workers relative to the prevalence among white male workers adjusted for age and year with restricted cubic splines. Estimates exclude "NH other" group from sample. 
 
 ```{r warning=FALSE, message=FALSE, results='hide'}
 #outvars
