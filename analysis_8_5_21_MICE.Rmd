@@ -355,7 +355,7 @@ formatted <- function(classvec, rows, qwlvec, dummy, facvec){
            Var=factor(Var, levels=qwlvec),
            Cat=ifelse(Var=="satjob1_bin_unimp" | Var=="rincblls_bin_unimp" | Var=="safehlth_bin_unimp" | Var=="safetywk_bin_unimp", "Rewards/hazards",
                       ifelse(Var=="learnnew_bin_unimp" | Var=="workdiff_bin_unimp" | Var == "workfast_bin_unimp" | Var=="condemnd_bin_unimp", "Labor process",
-                             ifelse(Var=="wkdecide_bin_unimp" | Var=="wkfreedm_bin_unimp" | Var == "mustwork_bin_unimp" | Var=="chngtme_bin_unimp", "Autonomy",
+                             ifelse(Var=="wkdecide_bin_unimp" | Var=="wkfreedm_bin_unimp" | Var == "mustwork_bin_unimp" | Var=="chngtme_bin_unimp", "Control",
                                     ifelse(Var=="manvsemp_bin_unimp" | Var=="trustman_bin_unimp" | Var == "respect_bin_unimp" | Var=="disc_haras_bin_unimp", "Conflict", NA))))) %>%
     relocate(Var, Class) -> binded
   return(binded)
@@ -547,7 +547,7 @@ ggsave("labor_process.png", height=5, width=10.25, dpi=600)
 tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28,1:5]), "Ref: workers/male workers/white workers")
 ```
 
-### Autonomy
+### Control
 
 ```{r message=FALSE, warning=FALSE, results='hide'}
 #outvars
@@ -608,7 +608,7 @@ plotted(binded_overall, limitsvec=c(0.026, 2.72), breaksvec=c(0.031, 0.0625, 0.1
             xlab("Prevalence ratio") + theme(axis.title.x=element_text(), axis.text.x=element_text(), axis.ticks.x=element_line(), axis.title.y=element_blank()) +
   plot_layout(ncol=1, heights=c(1, 2, 2))
 
-ggsave("autonomy.png", height=5, width=11.25, dpi=600)
+ggsave("control.png", height=5, width=11.25, dpi=600)
 
 #table 
 tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28,1:5]), "Ref: workers/male workers/white workers")
@@ -724,10 +724,10 @@ ests <-  ggplot(binded, aes(y=Class, x=PR, xmin=Lower, xmax=Upper, shape=Class, 
   
 comp <-  ggplot() + theme_void() + ggtitle("Compensation/hazards") + theme(plot.title=element_text(hjust=0.5))
 process <-  ggplot() + theme_void() + ggtitle("Labor process") + theme(plot.title=element_text(hjust=0.5))
-autonomy <-  ggplot() + theme_void() + ggtitle("Autonomy") + theme(plot.title=element_text(hjust=0.5))
+Control <-  ggplot() + theme_void() + ggtitle("Control") + theme(plot.title=element_text(hjust=0.5))
 conflict <-  ggplot() + theme_void() + ggtitle("Conflict") + theme(plot.title=element_text(hjust=0.5))
 
-(comp + process + autonomy + conflict + plot_layout(ncol=4)) /
+(comp + process + Control + conflict + plot_layout(ncol=4)) /
   ests + 
   plot_layout(heights=c(0.001, 1000))  
 
@@ -863,7 +863,7 @@ formatted <- function(classvec, rows, qwlvec){
            Var=factor(Var, levels=qwlvec),
            Cat=ifelse(Var=="satjob1_bin_unimp" | Var=="rincblls_bin_unimp" | Var=="safehlth_bin_unimp" | Var=="safetywk_bin_unimp", "Rewards/hazards",
                       ifelse(Var=="learnnew_bin_unimp" | Var=="workdiff_bin_unimp" | Var == "workfast_bin_unimp" | Var=="condemnd_bin_unimp", "Labor process",
-                             ifelse(Var=="wkdecide_bin_unimp" | Var=="wkfreedm_bin_unimp" | Var == "mustwork_bin_unimp" | Var=="chngtme_bin_unimp", "Autonomy",
+                             ifelse(Var=="wkdecide_bin_unimp" | Var=="wkfreedm_bin_unimp" | Var == "mustwork_bin_unimp" | Var=="chngtme_bin_unimp", "Control",
                                     ifelse(Var=="manvsemp_bin_unimp" | Var=="trustman_bin_unimp" | Var == "respect_bin_unimp" | Var=="disc_haras_bin_unimp", "Conflict", NA))))) -> binded
   return(binded)
 }
@@ -959,7 +959,7 @@ binded_race <- formatted(c("White managers", "White petit bourgeoisie", "White c
 tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28,1:5]), "Ref: workers/male workers/white workers")
 ```
 
-#### Autonomy
+#### Control
 
 ```{r message=FALSE, warning=FALSE, results='hide'}
 #outvars

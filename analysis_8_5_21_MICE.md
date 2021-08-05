@@ -1,7 +1,7 @@
 ---
 title: "Class and Quality of Working Life (QWL)"
 author: "Jerzy Eisenberg-Guyot"
-date: "June 2021"
+date: "August 2021"
 output: 
   html_document:
     code_folding: hide
@@ -614,7 +614,7 @@ ggplot(data = subset(dat, !is.na(class) & !is.na(poc_gender) & !is.na(race_h) & 
   theme(axis.line=element_blank(), axis.title=element_blank(), legend.position="none") 
 ```
 
-![](analysis_6_15_21_MICE_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
+![](analysis_8_5_21_MICE_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
 
 ```r
 ggsave("mosaic.png", height=4.5, width=6.4, dpi=600)
@@ -653,7 +653,7 @@ formatted <- function(classvec, rows, qwlvec, dummy, facvec){
            Var=factor(Var, levels=qwlvec),
            Cat=ifelse(Var=="satjob1_bin_unimp" | Var=="rincblls_bin_unimp" | Var=="safehlth_bin_unimp" | Var=="safetywk_bin_unimp", "Rewards/hazards",
                       ifelse(Var=="learnnew_bin_unimp" | Var=="workdiff_bin_unimp" | Var == "workfast_bin_unimp" | Var=="condemnd_bin_unimp", "Labor process",
-                             ifelse(Var=="wkdecide_bin_unimp" | Var=="wkfreedm_bin_unimp" | Var == "mustwork_bin_unimp" | Var=="chngtme_bin_unimp", "Autonomy",
+                             ifelse(Var=="wkdecide_bin_unimp" | Var=="wkfreedm_bin_unimp" | Var == "mustwork_bin_unimp" | Var=="chngtme_bin_unimp", "Control",
                                     ifelse(Var=="manvsemp_bin_unimp" | Var=="trustman_bin_unimp" | Var == "respect_bin_unimp" | Var=="disc_haras_bin_unimp", "Conflict", NA))))) %>%
     relocate(Var, Class) -> binded
   return(binded)
@@ -775,7 +775,7 @@ plotted(binded_overall, limitsvec=c(0.09, 3.73), breaksvec=c(0.125, 0.25, 0.5, 1
   plot_layout(ncol=1, heights=c(1, 2, 2))
 ```
 
-![](analysis_6_15_21_MICE_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
+![](analysis_8_5_21_MICE_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
 
 ```r
 ggsave("comp_safety.png", height=5, width=10.25, dpi=600)
@@ -1342,7 +1342,7 @@ plotted(binded_overall, limitsvec=c(0.082, 2.84), breaksvec=c(0.125, 0.25, 0.5, 
   plot_layout(ncol=1, heights=c(1, 2, 2))
 ```
 
-![](analysis_6_15_21_MICE_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+![](analysis_8_5_21_MICE_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
 
 ```r
 ggsave("labor_process.png", height=5, width=10.25, dpi=600)
@@ -1845,7 +1845,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
 </tbody>
 </table></div>
 
-### Autonomy
+### Control
 
 
 ```r
@@ -1909,10 +1909,10 @@ plotted(binded_overall, limitsvec=c(0.026, 2.72), breaksvec=c(0.031, 0.0625, 0.1
   plot_layout(ncol=1, heights=c(1, 2, 2))
 ```
 
-![](analysis_6_15_21_MICE_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
+![](analysis_8_5_21_MICE_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
 
 ```r
-ggsave("autonomy.png", height=5, width=11.25, dpi=600)
+ggsave("Control.png", height=5, width=11.25, dpi=600)
 
 #table 
 tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28,1:5]), "Ref: workers/male workers/white workers")
@@ -2477,7 +2477,7 @@ plotted(binded_overall, limitsvec=c(0.017, 2.42), breaksvec=c(0.031, 0.0625, 0.1
   plot_layout(ncol=1, heights=c(1, 2, 2))
 ```
 
-![](analysis_6_15_21_MICE_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
+![](analysis_8_5_21_MICE_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
 
 ```r
 ggsave("conflict.png", height=5, width=11.25, dpi=600)
@@ -3024,15 +3024,15 @@ ests <-  ggplot(binded, aes(y=Class, x=PR, xmin=Lower, xmax=Upper, shape=Class, 
   
 comp <-  ggplot() + theme_void() + ggtitle("Compensation/hazards") + theme(plot.title=element_text(hjust=0.5))
 process <-  ggplot() + theme_void() + ggtitle("Labor process") + theme(plot.title=element_text(hjust=0.5))
-autonomy <-  ggplot() + theme_void() + ggtitle("Autonomy") + theme(plot.title=element_text(hjust=0.5))
+Control <-  ggplot() + theme_void() + ggtitle("Control") + theme(plot.title=element_text(hjust=0.5))
 conflict <-  ggplot() + theme_void() + ggtitle("Conflict") + theme(plot.title=element_text(hjust=0.5))
 
-(comp + process + autonomy + conflict + plot_layout(ncol=4)) /
+(comp + process + Control + conflict + plot_layout(ncol=4)) /
   ests + 
   plot_layout(heights=c(0.001, 1000))  
 ```
 
-![](analysis_6_15_21_MICE_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
+![](analysis_8_5_21_MICE_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
 
 ```r
 ggsave("gender_race_workers.png", height=6, width=8.75, dpi=600)
@@ -4333,7 +4333,7 @@ kable(table(dat$poc_gender, dat$race_h, dat$sex), caption="Race-gender by race a
 aggr(dat[,c("class", 'sex', 'poc', 'educ', 'marital_tri', 'region', 'income',  "prestg10", 'age', "srh_bin", "mntlhlth", "satjob1_bin", "rincblls_bin", "safehlth_bin", "safetywk_bin", "workdiff_bin", "learnnew_bin", "condemnd_bin", "workfast_bin", "wkdecide_bin", "wkfreedm_bin", "mustwork_bin", "chngtme_bin", "manvsemp_bin", "trustman_bin", "respect_bin", "disc_haras_bin")], cex.axis = 0.6, numbers=FALSE, prop=TRUE)
 ```
 
-![](analysis_6_15_21_MICE_files/figure-html/unnamed-chunk-22-1.png)<!-- -->
+![](analysis_8_5_21_MICE_files/figure-html/unnamed-chunk-22-1.png)<!-- -->
 
 ## Imputation convergence plots
 
@@ -4342,7 +4342,7 @@ aggr(dat[,c("class", 'sex', 'poc', 'educ', 'marital_tri', 'region', 'income',  "
 plot(imp_merged, y=c('class', 'race_h', 'educ', 'marital_tri', "prestg10", 'income', 'age', "srh_bin", "mntlhlth", "satjob1_bin", "rincblls_bin", "safehlth_bin", "safetywk_bin", "workdiff_bin", "learnnew_bin", "condemnd_bin", "workfast_bin", "wkdecide_bin", "wkfreedm_bin", "mustwork_bin", "manvsemp_bin", "trustman_bin", "respect_bin", "disc_haras_bin"), main='Convergence plots')
 ```
 
-![](analysis_6_15_21_MICE_files/figure-html/unnamed-chunk-23-1.png)<!-- -->![](analysis_6_15_21_MICE_files/figure-html/unnamed-chunk-23-2.png)<!-- -->![](analysis_6_15_21_MICE_files/figure-html/unnamed-chunk-23-3.png)<!-- -->![](analysis_6_15_21_MICE_files/figure-html/unnamed-chunk-23-4.png)<!-- -->![](analysis_6_15_21_MICE_files/figure-html/unnamed-chunk-23-5.png)<!-- -->![](analysis_6_15_21_MICE_files/figure-html/unnamed-chunk-23-6.png)<!-- -->![](analysis_6_15_21_MICE_files/figure-html/unnamed-chunk-23-7.png)<!-- -->![](analysis_6_15_21_MICE_files/figure-html/unnamed-chunk-23-8.png)<!-- -->
+![](analysis_8_5_21_MICE_files/figure-html/unnamed-chunk-23-1.png)<!-- -->![](analysis_8_5_21_MICE_files/figure-html/unnamed-chunk-23-2.png)<!-- -->![](analysis_8_5_21_MICE_files/figure-html/unnamed-chunk-23-3.png)<!-- -->![](analysis_8_5_21_MICE_files/figure-html/unnamed-chunk-23-4.png)<!-- -->![](analysis_8_5_21_MICE_files/figure-html/unnamed-chunk-23-5.png)<!-- -->![](analysis_8_5_21_MICE_files/figure-html/unnamed-chunk-23-6.png)<!-- -->![](analysis_8_5_21_MICE_files/figure-html/unnamed-chunk-23-7.png)<!-- -->![](analysis_8_5_21_MICE_files/figure-html/unnamed-chunk-23-8.png)<!-- -->
 
 ## Unimputed analyses
 
@@ -4383,7 +4383,7 @@ formatted <- function(classvec, rows, qwlvec){
            Var=factor(Var, levels=qwlvec),
            Cat=ifelse(Var=="satjob1_bin_unimp" | Var=="rincblls_bin_unimp" | Var=="safehlth_bin_unimp" | Var=="safetywk_bin_unimp", "Rewards/hazards",
                       ifelse(Var=="learnnew_bin_unimp" | Var=="workdiff_bin_unimp" | Var == "workfast_bin_unimp" | Var=="condemnd_bin_unimp", "Labor process",
-                             ifelse(Var=="wkdecide_bin_unimp" | Var=="wkfreedm_bin_unimp" | Var == "mustwork_bin_unimp" | Var=="chngtme_bin_unimp", "Autonomy",
+                             ifelse(Var=="wkdecide_bin_unimp" | Var=="wkfreedm_bin_unimp" | Var == "mustwork_bin_unimp" | Var=="chngtme_bin_unimp", "Control",
                                     ifelse(Var=="manvsemp_bin_unimp" | Var=="trustman_bin_unimp" | Var == "respect_bin_unimp" | Var=="disc_haras_bin_unimp", "Conflict", NA))))) -> binded
   return(binded)
 }
@@ -5470,7 +5470,7 @@ tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28
 </tbody>
 </table></div>
 
-#### Autonomy
+#### Control
 
 
 ```r
@@ -6791,7 +6791,7 @@ kable(binded[1:48,], caption="Ref: white men", digits=2, row.names=F) %>%
    <td style="text-align:right;"> 1.10 </td>
    <td style="text-align:left;"> wkdecide_bin_unimp </td>
    <td style="text-align:left;"> White women </td>
-   <td style="text-align:left;"> Autonomy </td>
+   <td style="text-align:left;"> Control </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 1.42 </td>
@@ -6799,7 +6799,7 @@ kable(binded[1:48,], caption="Ref: white men", digits=2, row.names=F) %>%
    <td style="text-align:right;"> 1.72 </td>
    <td style="text-align:left;"> wkdecide_bin_unimp </td>
    <td style="text-align:left;"> POC men </td>
-   <td style="text-align:left;"> Autonomy </td>
+   <td style="text-align:left;"> Control </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 1.46 </td>
@@ -6807,7 +6807,7 @@ kable(binded[1:48,], caption="Ref: white men", digits=2, row.names=F) %>%
    <td style="text-align:right;"> 1.73 </td>
    <td style="text-align:left;"> wkdecide_bin_unimp </td>
    <td style="text-align:left;"> POC women </td>
-   <td style="text-align:left;"> Autonomy </td>
+   <td style="text-align:left;"> Control </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 0.94 </td>
@@ -6815,7 +6815,7 @@ kable(binded[1:48,], caption="Ref: white men", digits=2, row.names=F) %>%
    <td style="text-align:right;"> 1.14 </td>
    <td style="text-align:left;"> wkfreedm_bin_unimp </td>
    <td style="text-align:left;"> White women </td>
-   <td style="text-align:left;"> Autonomy </td>
+   <td style="text-align:left;"> Control </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 1.11 </td>
@@ -6823,7 +6823,7 @@ kable(binded[1:48,], caption="Ref: white men", digits=2, row.names=F) %>%
    <td style="text-align:right;"> 1.45 </td>
    <td style="text-align:left;"> wkfreedm_bin_unimp </td>
    <td style="text-align:left;"> POC men </td>
-   <td style="text-align:left;"> Autonomy </td>
+   <td style="text-align:left;"> Control </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 1.09 </td>
@@ -6831,7 +6831,7 @@ kable(binded[1:48,], caption="Ref: white men", digits=2, row.names=F) %>%
    <td style="text-align:right;"> 1.38 </td>
    <td style="text-align:left;"> wkfreedm_bin_unimp </td>
    <td style="text-align:left;"> POC women </td>
-   <td style="text-align:left;"> Autonomy </td>
+   <td style="text-align:left;"> Control </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 0.71 </td>
@@ -6839,7 +6839,7 @@ kable(binded[1:48,], caption="Ref: white men", digits=2, row.names=F) %>%
    <td style="text-align:right;"> 0.84 </td>
    <td style="text-align:left;"> mustwork_bin_unimp </td>
    <td style="text-align:left;"> White women </td>
-   <td style="text-align:left;"> Autonomy </td>
+   <td style="text-align:left;"> Control </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 1.05 </td>
@@ -6847,7 +6847,7 @@ kable(binded[1:48,], caption="Ref: white men", digits=2, row.names=F) %>%
    <td style="text-align:right;"> 1.27 </td>
    <td style="text-align:left;"> mustwork_bin_unimp </td>
    <td style="text-align:left;"> POC men </td>
-   <td style="text-align:left;"> Autonomy </td>
+   <td style="text-align:left;"> Control </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 0.80 </td>
@@ -6855,7 +6855,7 @@ kable(binded[1:48,], caption="Ref: white men", digits=2, row.names=F) %>%
    <td style="text-align:right;"> 0.97 </td>
    <td style="text-align:left;"> mustwork_bin_unimp </td>
    <td style="text-align:left;"> POC women </td>
-   <td style="text-align:left;"> Autonomy </td>
+   <td style="text-align:left;"> Control </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 1.08 </td>
@@ -6863,7 +6863,7 @@ kable(binded[1:48,], caption="Ref: white men", digits=2, row.names=F) %>%
    <td style="text-align:right;"> 1.19 </td>
    <td style="text-align:left;"> chngtme_bin_unimp </td>
    <td style="text-align:left;"> White women </td>
-   <td style="text-align:left;"> Autonomy </td>
+   <td style="text-align:left;"> Control </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 1.24 </td>
@@ -6871,7 +6871,7 @@ kable(binded[1:48,], caption="Ref: white men", digits=2, row.names=F) %>%
    <td style="text-align:right;"> 1.40 </td>
    <td style="text-align:left;"> chngtme_bin_unimp </td>
    <td style="text-align:left;"> POC men </td>
-   <td style="text-align:left;"> Autonomy </td>
+   <td style="text-align:left;"> Control </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 1.22 </td>
@@ -6879,7 +6879,7 @@ kable(binded[1:48,], caption="Ref: white men", digits=2, row.names=F) %>%
    <td style="text-align:right;"> 1.36 </td>
    <td style="text-align:left;"> chngtme_bin_unimp </td>
    <td style="text-align:left;"> POC women </td>
-   <td style="text-align:left;"> Autonomy </td>
+   <td style="text-align:left;"> Control </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 0.81 </td>
