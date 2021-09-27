@@ -1075,7 +1075,7 @@ kable(binded[1:48,], caption="Ref: white men", digits=2, row.names=F) %>%
     scroll_box(width = "100%", height = "250px")
 ```
 
-## Package versions
+## R session info
 
 ```{r  warning=FALSE, message=FALSE}
 sessionInfo()
