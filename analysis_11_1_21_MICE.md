@@ -1,7 +1,7 @@
 ---
 title: "Class and Quality of Working Life (QWL)"
 author: "Jerzy Eisenberg-Guyot"
-date: "September 2021"
+date: "November 2021"
 output: 
   html_document:
     code_folding: hide
@@ -38,6 +38,8 @@ always_allow_html: true
     + disc_haras :  Faced any discrimination or harassment on job
 
 
+
+# Data management and imputation
 
 
 ```r
@@ -614,10 +616,10 @@ ggplot(data = subset(dat, !is.na(class) & !is.na(poc_gender) & !is.na(race_h) & 
   theme(axis.line=element_blank(), axis.title=element_blank(), legend.position="none") 
 ```
 
-![](analysis_9_27_21_MICE_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
+![](analysis_11_1_21_MICE_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
 
 ```r
-ggsave("mosaic.png", height=4.5, width=6.4, dpi=600)
+ggsave("mosaic.tiff", height=4.5, width=6.4, dpi=600, compression="lzw")
 ```
 
 # Survey-weighted regressions
@@ -775,10 +777,10 @@ plotted(binded_overall, limitsvec=c(0.09, 3.73), breaksvec=c(0.125, 0.25, 0.5, 1
   plot_layout(ncol=1, heights=c(1, 2, 2))
 ```
 
-![](analysis_9_27_21_MICE_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
+![](analysis_11_1_21_MICE_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
 
 ```r
-ggsave("comp_safety.png", height=5, width=10.25, dpi=600)
+ggsave("comp_safety.tiff", height=5, width=10.25, dpi=600, compression="lzw")
 
 #table 
 tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28,1:5]), "Ref: workers/male workers/white workers")
@@ -1342,10 +1344,10 @@ plotted(binded_overall, limitsvec=c(0.082, 2.84), breaksvec=c(0.125, 0.25, 0.5, 
   plot_layout(ncol=1, heights=c(1, 2, 2))
 ```
 
-![](analysis_9_27_21_MICE_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+![](analysis_11_1_21_MICE_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
 
 ```r
-ggsave("labor_process.png", height=5, width=10.25, dpi=600)
+ggsave("labor_process.tiff", height=5, width=10.25, dpi=600, compression="lzw")
 
 #table 
 tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28,1:5]), "Ref: workers/male workers/white workers")
@@ -1909,10 +1911,10 @@ plotted(binded_overall, limitsvec=c(0.026, 2.72), breaksvec=c(0.031, 0.0625, 0.1
   plot_layout(ncol=1, heights=c(1, 2, 2))
 ```
 
-![](analysis_9_27_21_MICE_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
+![](analysis_11_1_21_MICE_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
 
 ```r
-ggsave("control.png", height=5, width=11.25, dpi=600)
+ggsave("control.tiff", height=5, width=11.25, dpi=600, compression="lzw")
 
 #table 
 tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28,1:5]), "Ref: workers/male workers/white workers")
@@ -2477,10 +2479,10 @@ plotted(binded_overall, limitsvec=c(0.017, 2.42), breaksvec=c(0.031, 0.0625, 0.1
   plot_layout(ncol=1, heights=c(1, 2, 2))
 ```
 
-![](analysis_9_27_21_MICE_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
+![](analysis_11_1_21_MICE_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
 
 ```r
-ggsave("conflict.png", height=5, width=11.25, dpi=600)
+ggsave("conflict.tiff", height=5, width=11.25, dpi=600, compression="lzw")
 
 #table 
 tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28,1:5]), "Ref: workers/male workers/white workers")
@@ -3022,7 +3024,7 @@ ests <-  ggplot(binded, aes(y=Class, x=PR, xmin=Lower, xmax=Upper, shape=Class, 
     theme(strip.background = element_blank(), strip.text = element_text(color='black'), legend.position='none', 
           panel.grid.major.y = element_blank(), axis.title.y=element_blank())
   
-comp <-  ggplot() + theme_void() + ggtitle("Compensation/hazards") + theme(plot.title=element_text(hjust=0.5))
+comp <-  ggplot() + theme_void() + ggtitle("Compensation/safety") + theme(plot.title=element_text(hjust=0.5))
 process <-  ggplot() + theme_void() + ggtitle("Labor process") + theme(plot.title=element_text(hjust=0.5))
 Control <-  ggplot() + theme_void() + ggtitle("Control") + theme(plot.title=element_text(hjust=0.5))
 conflict <-  ggplot() + theme_void() + ggtitle("Conflict") + theme(plot.title=element_text(hjust=0.5))
@@ -3032,10 +3034,10 @@ conflict <-  ggplot() + theme_void() + ggtitle("Conflict") + theme(plot.title=el
   plot_layout(heights=c(0.001, 1000))  
 ```
 
-![](analysis_9_27_21_MICE_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
+![](analysis_11_1_21_MICE_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
 
 ```r
-ggsave("gender_race_workers.png", height=6, width=8.75, dpi=600)
+ggsave("gender_race_workers.tiff", height=6, width=8.75, dpi=600, compression="lzw")
 
 #table
 kable(binded[1:48,1:5], caption="Ref: white men", digits=2, row.names=FALSE) %>%
@@ -4333,7 +4335,7 @@ kable(table(dat$poc_gender, dat$race_h, dat$sex), caption="Race-gender by race a
 aggr(dat[,c("class", 'sex', 'poc', 'educ', 'marital_tri', 'region', 'income',  "prestg10", 'age', "srh_bin", "mntlhlth", "satjob1_bin", "rincblls_bin", "safehlth_bin", "safetywk_bin", "workdiff_bin", "learnnew_bin", "condemnd_bin", "workfast_bin", "wkdecide_bin", "wkfreedm_bin", "mustwork_bin", "chngtme_bin", "manvsemp_bin", "trustman_bin", "respect_bin", "disc_haras_bin")], cex.axis = 0.6, numbers=FALSE, prop=TRUE)
 ```
 
-![](analysis_9_27_21_MICE_files/figure-html/unnamed-chunk-22-1.png)<!-- -->
+![](analysis_11_1_21_MICE_files/figure-html/unnamed-chunk-22-1.png)<!-- -->
 
 ## Imputation convergence plots
 
@@ -4342,7 +4344,7 @@ aggr(dat[,c("class", 'sex', 'poc', 'educ', 'marital_tri', 'region', 'income',  "
 plot(imp_merged, y=c('class', 'race_h', 'educ', 'marital_tri', "prestg10", 'income', 'age', "srh_bin", "mntlhlth", "satjob1_bin", "rincblls_bin", "safehlth_bin", "safetywk_bin", "workdiff_bin", "learnnew_bin", "condemnd_bin", "workfast_bin", "wkdecide_bin", "wkfreedm_bin", "mustwork_bin", "manvsemp_bin", "trustman_bin", "respect_bin", "disc_haras_bin"), main='Convergence plots')
 ```
 
-![](analysis_9_27_21_MICE_files/figure-html/unnamed-chunk-23-1.png)<!-- -->![](analysis_9_27_21_MICE_files/figure-html/unnamed-chunk-23-2.png)<!-- -->![](analysis_9_27_21_MICE_files/figure-html/unnamed-chunk-23-3.png)<!-- -->![](analysis_9_27_21_MICE_files/figure-html/unnamed-chunk-23-4.png)<!-- -->![](analysis_9_27_21_MICE_files/figure-html/unnamed-chunk-23-5.png)<!-- -->![](analysis_9_27_21_MICE_files/figure-html/unnamed-chunk-23-6.png)<!-- -->![](analysis_9_27_21_MICE_files/figure-html/unnamed-chunk-23-7.png)<!-- -->![](analysis_9_27_21_MICE_files/figure-html/unnamed-chunk-23-8.png)<!-- -->
+![](analysis_11_1_21_MICE_files/figure-html/unnamed-chunk-23-1.png)<!-- -->![](analysis_11_1_21_MICE_files/figure-html/unnamed-chunk-23-2.png)<!-- -->![](analysis_11_1_21_MICE_files/figure-html/unnamed-chunk-23-3.png)<!-- -->![](analysis_11_1_21_MICE_files/figure-html/unnamed-chunk-23-4.png)<!-- -->![](analysis_11_1_21_MICE_files/figure-html/unnamed-chunk-23-5.png)<!-- -->![](analysis_11_1_21_MICE_files/figure-html/unnamed-chunk-23-6.png)<!-- -->![](analysis_11_1_21_MICE_files/figure-html/unnamed-chunk-23-7.png)<!-- -->![](analysis_11_1_21_MICE_files/figure-html/unnamed-chunk-23-8.png)<!-- -->
 
 ## Unimputed analyses
 

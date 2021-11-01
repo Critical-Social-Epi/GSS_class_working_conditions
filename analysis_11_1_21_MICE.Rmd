@@ -322,7 +322,7 @@ ggplot(data = subset(dat, !is.na(class) & !is.na(poc_gender) & !is.na(race_h) & 
   theme_classic() +
   theme(axis.line=element_blank(), axis.title=element_blank(), legend.position="none") 
 
-ggsave("mosaic.png", height=4.5, width=6.4, dpi=600)
+ggsave("mosaic.tiff", height=4.5, width=6.4, dpi=600, compression="lzw")
 ```
 
 # Survey-weighted regressions
@@ -476,7 +476,7 @@ plotted(binded_overall, limitsvec=c(0.09, 3.73), breaksvec=c(0.125, 0.25, 0.5, 1
             geom_text(data=filter(binded_race, row_number()==28), x=-2.3, y=1.13, label="\u2190", color="#4A1486", size=6) +  
   plot_layout(ncol=1, heights=c(1, 2, 2))
 
-ggsave("comp_safety.png", height=5, width=10.25, dpi=600)
+ggsave("comp_safety.tiff", height=5, width=10.25, dpi=600, compression="lzw")
 
 #table 
 tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28,1:5]), "Ref: workers/male workers/white workers")
@@ -543,7 +543,7 @@ plotted(binded_overall, limitsvec=c(0.082, 2.84), breaksvec=c(0.125, 0.25, 0.5, 
             xlab("Prevalence ratio") + theme(axis.title.x=element_text(), axis.text.x=element_text(), axis.ticks.x=element_line(), axis.title.y=element_blank()) +
   plot_layout(ncol=1, heights=c(1, 2, 2))
 
-ggsave("labor_process.png", height=5, width=10.25, dpi=600)
+ggsave("labor_process.tiff", height=5, width=10.25, dpi=600, compression="lzw")
 
 #table 
 tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28,1:5]), "Ref: workers/male workers/white workers")
@@ -610,7 +610,7 @@ plotted(binded_overall, limitsvec=c(0.026, 2.72), breaksvec=c(0.031, 0.0625, 0.1
             xlab("Prevalence ratio") + theme(axis.title.x=element_text(), axis.text.x=element_text(), axis.ticks.x=element_line(), axis.title.y=element_blank()) +
   plot_layout(ncol=1, heights=c(1, 2, 2))
 
-ggsave("control.png", height=5, width=11.25, dpi=600)
+ggsave("control.tiff", height=5, width=11.25, dpi=600, compression="lzw")
 
 #table 
 tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28,1:5]), "Ref: workers/male workers/white workers")
@@ -678,7 +678,7 @@ plotted(binded_overall, limitsvec=c(0.017, 2.42), breaksvec=c(0.031, 0.0625, 0.1
             geom_text(data=filter(binded_race, row_number()==7), x=-3.95, y=1.13, label="\u2190", color="#4A1486", size=6) +  
   plot_layout(ncol=1, heights=c(1, 2, 2))
 
-ggsave("conflict.png", height=5, width=11.25, dpi=600)
+ggsave("conflict.tiff", height=5, width=11.25, dpi=600, compression="lzw")
 
 #table 
 tabled(rbind(binded_overall[1:12,1:5], binded_gender[1:28,1:5], binded_race[1:28,1:5]), "Ref: workers/male workers/white workers")
@@ -724,7 +724,7 @@ ests <-  ggplot(binded, aes(y=Class, x=PR, xmin=Lower, xmax=Upper, shape=Class, 
     theme(strip.background = element_blank(), strip.text = element_text(color='black'), legend.position='none', 
           panel.grid.major.y = element_blank(), axis.title.y=element_blank())
   
-comp <-  ggplot() + theme_void() + ggtitle("Compensation/hazards") + theme(plot.title=element_text(hjust=0.5))
+comp <-  ggplot() + theme_void() + ggtitle("Compensation/safety") + theme(plot.title=element_text(hjust=0.5))
 process <-  ggplot() + theme_void() + ggtitle("Labor process") + theme(plot.title=element_text(hjust=0.5))
 Control <-  ggplot() + theme_void() + ggtitle("Control") + theme(plot.title=element_text(hjust=0.5))
 conflict <-  ggplot() + theme_void() + ggtitle("Conflict") + theme(plot.title=element_text(hjust=0.5))
@@ -733,7 +733,7 @@ conflict <-  ggplot() + theme_void() + ggtitle("Conflict") + theme(plot.title=el
   ests + 
   plot_layout(heights=c(0.001, 1000))  
 
-ggsave("gender_race_workers.png", height=6, width=8.75, dpi=600)
+ggsave("gender_race_workers.tiff", height=6, width=8.75, dpi=600, compression="lzw")
 
 #table
 kable(binded[1:48,1:5], caption="Ref: white men", digits=2, row.names=FALSE) %>%
