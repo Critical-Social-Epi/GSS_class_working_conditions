@@ -1,5 +1,5 @@
 ---
-title: "Class and Quality of Working Life (QWL)"
+title: "Classed, gendered, and racialized inequities in hazardous working conditions in the GSS"
 author: "Jerzy Eisenberg-Guyot"
 date: "`r format(Sys.time(), '%B %Y')`"
 output: 
@@ -12,6 +12,8 @@ always_allow_html: true
 ---
 
 # Codebook for key variables
+
+Additional details available in the GSS Data Explorer (https://gssdataexplorer.norc.org/) and in the GSS Cumulative Codebook (https://gss.norc.org/documents/codebook/gss_codebook.pdf).
 
 * Class variables:
     + workers: those who are not self-employed (wrkslf), who do not supervise others (wksup), and who are not chief executives (occ10)
@@ -75,8 +77,8 @@ library(ggmosaic)
 #
 #drop survey-ballot d, which was a ballot in 2006 that lacked responses to QWL variables
 #remove those who were not employed, as only employed respondents were asked the QWL variables - also remove those with NA wrkstat (n=9), since they weren't asked the QWL variables 
-#remove ballot b in 2002, as class variables weren't asked of that ballot in that year
-#remove 421 respondents who still have IAP in 2006 and 2014 for QWL variables, even after making appropriate sample restrictions - according to GSS helpdesk, they weren't administered the questions/didn't complete the survey ('breakoffs')
+#remove ballot b in 2002, as class questions weren't asked of respondents in that ballot in that year
+#remove 421 respondents who are marked 'IAP' in 2006 and 2014 for QWL variables, even after making appropriate sample restrictions - according to GSS helpdesk, they weren't administered the questions/didn't complete the survey ('breakoffs')
 read.csv('GSS_02_06_10_14_18.csv') %>% 
   filter(ballot != "ballot d") %>%
   filter(wrkstat=="working fulltime" | wrkstat=="working parttime" | wrkstat=="temp not working") %>%
@@ -84,7 +86,7 @@ read.csv('GSS_02_06_10_14_18.csv') %>%
   mutate_all(funs(ifelse(.=="DK" | .=="NO ANSWER" | .=="DONT KNOW" | .=="Not asked" | .=="IAP,DK,NA,uncodeable" | .==".a", NA, .))) %>%
   filter(is.na(respect) | respect!="IAP") -> dat #removing those with IAP for respect is sufficient since IAPs are the same across other QWL variables
 
-#########code new variables and make sure other variables coded correctly and will be treated appropriately by MICE (e.g., no character vars)
+#########code new variables and make sure other variables are coded correctly and will be treated appropriately by MICE (e.g., no character vars)
 ######
 #
 
@@ -111,7 +113,7 @@ dat %>%
                                             ifelse(marital=="widowed" | marital=="divorced" | marital=="separated", "wid/div/sep", marital)))),
          sex=as.factor(sex),
          disc_haras_bin=ifelse(wkageism=="yes" | wkracism=="yes" | wksexism=="yes" | wkharsex=="yes" | wkharoth=="yes", 1, 0),
-         disc_haras_bin_unimp=disc_haras_bin, #make duplicated version of each variable for which we wont impute data for so that we can use it in outcome regression
+         disc_haras_bin_unimp=disc_haras_bin, #make duplicated version of each variable that we wont impute values for to use in outcome regressions
          respect_bin=ifelse(respect=="disagree" | respect=="strongly disagree", 1, 0),
          respect_bin_unimp=respect_bin,
          trustman_bin=ifelse(trustman=="disagree" | trustman=="strongly disagree", 1, 0),
@@ -134,17 +136,11 @@ dat %>%
          workfast_bin_unimp=workfast_bin,
          workdiff_bin=ifelse(workdiff=="disagree" | workdiff=="strongly disagree", 1, 0),
          workdiff_bin_unimp=workdiff_bin,
-         overwork_bin=ifelse(overwork=="agree" | overwork=="strongly agree", 1, 0),
-         overwork_bin_unimp=overwork_bin,
-         wrktime_bin=ifelse(wrktime=="not too true" | wrktime=="not at all true", 1, 0),
-         wrktime_bin_unimp=wrktime_bin,
          learnnew_bin=ifelse(learnnew=="disagree" | learnnew=="strongly disagree", 1, 0),
          learnnew_bin_unimp=learnnew_bin,
          condemnd_bin=ifelse(condemnd=="not too true" | condemnd=="not at all true", 1, 0),
          condemnd_bin_unimp=condemnd_bin,
-         knowschd_bin=ifelse(knowschd=="not too true" | knowschd=="not at all true", 1, 0),
-         knowschd_bin_unimp=knowschd_bin,
-         satjob1_bin=ifelse(satjob1=="not at all satisifed" | satjob1=="not too satisfied", 1, 0),
+         satjob1_bin=ifelse(satjob1=="not at all satisfied" | satjob1=="not too satisfied", 1, 0),
          satjob1_bin_unimp=satjob1_bin,
          rincblls_bin=ifelse(rincblls=="no", 1, 0),
          rincblls_bin_unimp=rincblls_bin,
@@ -196,14 +192,13 @@ initialize <- mice(dat_mice, max=0, print=FALSE)
 #this creates an object that will contain the imputation method for each variable. let mice choose defaults based on variable class
 method <- initialize$method 
 
-#this code tells mice not to impute these variables: not imputing variables with complete data or the unimputed versions of the outcome variables; don't impute chngtme_bin either, since it wasn't asked in 2018;  correlation with other variables should mitigate bias towards null
+#this code tells mice not to impute these variables: not imputing variables with complete data or the unimputed versions of the outcome variables; don't impute chngtme_bin either, since it wasn't asked in 2018 (correlation with other variables should mitigate bias) 
 method[c("vpsu", 'vstrat', 'wtssall', "year", "sex", "region", "satjob1_bin_unimp", "rincblls_bin_unimp", "safehlth_bin_unimp", "safetywk_bin_unimp", "workdiff_bin_unimp", "learnnew_bin_unimp", "condemnd_bin_unimp", "workfast_bin_unimp", "wkdecide_bin_unimp", "wkfreedm_bin_unimp", "mustwork_bin_unimp", "chngtme_bin", "chngtme_bin_unimp", "manvsemp_bin_unimp", "trustman_bin_unimp", "respect_bin_unimp", "disc_haras_bin_unimp")] <- "" 
 
-#use logistic models for imputed versions of outcome variables: default otherwise is pmm since I didn't code them as factor variables above
+#use logistic models for imputed versions of outcome variables; default otherwise is pmm since I didn't code them as factor variables above
 method[c("satjob1_bin", "rincblls_bin", "safehlth_bin", "safetywk_bin", "workdiff_bin", "learnnew_bin", "condemnd_bin", "workfast_bin", "wkdecide_bin", "wkfreedm_bin", "mustwork_bin", "manvsemp_bin", "trustman_bin", "respect_bin", "disc_haras_bin")] <- "logreg" 
 
 #passive imputation of variables that are perfect combos of other variables; we transformed then imputed where we could (e.g., for the uninteracted class variable), but aren't with these variables to avoid collinearity/perfect-prediction issues; since there's so little missingness in the dataset anyways, the choice of transform-then-impute or impute-then-transform doesn't make much of a difference)
-
 method['poc'] <- "~ifelse(race_h=='NH white', 'NH white',
                                   ifelse(race_h=='NH Black' | race_h=='Hispanic' | race_h=='NH other', 'POC', NA))"
 
@@ -232,15 +227,15 @@ method['class_poc'] <- "~ifelse(class=='Workers' & poc=='NH white', 'NH white wo
 
 method['class_poc_gender'] <- "~ifelse(is.na(class_poc) | is.na(class_gender), NA, paste(class_poc, class_gender))"
 
-#this creates an object that will indicate which variables we actually want to include in predicting missing variables. 
+#create an object that will indicate which variables we actually want to include in predicting missing variable 
 prediction <- initialize$predictorMatrix  
 
-#in general, don't use uninteracted/less-interacted versions (poc, sex, class, poc_gender, class_poc, class_gender) of fully interacted variable (class_poc_gender) as predictors since they're collinear with fully-interacted variable; fully-interacted variable included over uninteracted/less-interacted variables per advice of MICE documentation; also don't use vstrat as a predictor, since it has so many levels that models dont fit; don't use duplicated versions of dependent variables; don't use chngtme_bin, since it wasn't asked in 2018
+#in general, don't use uninteracted/less-interacted versions (poc, sex, class, poc_gender, class_poc, class_gender) of fully interacted variable (class_poc_gender) as predictors since they're collinear with fully-interacted variable; fully-interacted variable included over uninteracted/less-interacted variables per advice of MICE documentation; also don't use vstrat as a predictor, since it has so many levels, causing models not to converge; don't use duplicated versions of dependent variables; don't use chngtme_bin, since it wasn't asked in 2018
 prediction[,c("race_h", "poc", "sex", "class", "poc_gender", "class_poc", "class_gender", 'vstrat', "satjob1_bin_unimp", "rincblls_bin_unimp", "safehlth_bin_unimp", "safetywk_bin_unimp", "workdiff_bin_unimp", "learnnew_bin_unimp", "condemnd_bin_unimp", "workfast_bin_unimp", "wkdecide_bin_unimp", "wkfreedm_bin_unimp", "mustwork_bin_unimp", "chngtme_bin", "chngtme_bin_unimp", "manvsemp_bin_unimp", "trustman_bin_unimp", "respect_bin_unimp", "disc_haras_bin_unimp")] <- 0
 
-#when imputing race_h, i want gender and class as predictors (class_gender) but not class_poc_gender because of collinearity; don't need to do this for 'poc' because it's passively imputed
-#when imputing class, i want gender and poc as predictors (poc_gender) but not class_poc_gender because of collinearity
-#gender doesn't need imputing, interacted versions of variables are passively imputed
+#when imputing race_h, we want gender and class as predictors (class_gender) but not class_poc_gender because of collinearity; don't need to do this for 'poc' because it's passively imputed
+#when imputing class, we want gender and poc as predictors (poc_gender) but not class_poc_gender because of collinearity
+#gender doesn't need imputing; interacted versions of variables are passively imputed
 prediction[c("race_h"), "class_gender"] <- 1
 prediction[c("race_h"), "class_poc_gender"] <- 0
 prediction[c("class"), "poc_gender"] <- 1
@@ -328,9 +323,9 @@ ggsave("mosaic.tiff", height=4.5, width=6.4, dpi=600, compression="lzw")
 
 ```{r, message=FALSE, warning=FALSE}
 #regression function
-mysvy <- function(dat, outvars, adjvars, ...){
+mysvy <- function(imp_dat, outvars, adjvars, ...){
   model <- lapply(as.list(outvars), function(x){
-    with(dat, svyglm(as.formula(paste0(names(dat$designs[[1]]$variables)[which(names(dat$designs[[1]]$variables)==x)], adjvars)), family=poisson(), ...))
+    with(imp_dat, svyglm(as.formula(paste0(names(imp_dat$designs[[1]]$variables)[which(names(imp_dat$designs[[1]]$variables)==x)], adjvars)), family=poisson(), ...))
   })
   return(model)
 }
@@ -399,8 +394,8 @@ plotted <- function(binded, limitsvec, breaksvec, cols, shapes){
 }
 
 #table function
-tabled <- function(dat, captioned){
-  kable(dat, digits=2, col.names=c("QWL variable", "Class", "PR", "Lower", "Upper"), caption=captioned, row.names=FALSE) %>%
+tabled <- function(ests, captioned){
+  kable(ests, digits=2, col.names=c("QWL variable", "Class", "PR", "Lower", "Upper"), caption=captioned, row.names=FALSE) %>%
     kable_styling("striped") %>%
     group_rows("Class", 1, 12) %>%
     group_rows("Class*gender", 13, 40) %>%
@@ -409,7 +404,7 @@ tabled <- function(dat, captioned){
 }
 ```
 
-## Class, race, and gender differences in QWL 
+## Classed, gendered, and racialized differences in QWL 
 
 Prevalence of adverse category of each binary QWL variable among each class relative to the prevalence among workers adjusted for age and year with restricted cubic splines. Class*race estimates exclude "NH other" group from sample. 
 
@@ -465,14 +460,14 @@ binded_race <- formatted(c("White managers", "White petit bourgeoisie", "White c
 
 ```{r warning=FALSE, message=FALSE, fig.height=5, fig.width=10.25}
 #figure
-plotted(binded_overall, limitsvec=c(0.09, 3.73), breaksvec=c(0.125, 0.25, 0.5, 1, 2, 4), 
+plotted(binded_overall, limitsvec=c(0.088, 3.73), breaksvec=c(0.125, 0.25, 0.5, 1, 2, 4), 
              cols=brewer.pal(8, "Blues")[c(5,6,7,8)], shapes=c(15,16,17,18)) + theme(strip.text=element_text(colour = "black", vjust=1.07)) +
-    plotted(binded_gender, limitsvec=c(0.09, 3.73), breaksvec=c(0.125, 0.25, 0.5, 1, 2, 4), 
+    plotted(binded_gender, limitsvec=c(0.088, 3.73), breaksvec=c(0.125, 0.25, 0.5, 1, 2, 4), 
                  cols=c(brewer.pal(8, "Blues")[c(5,6,7,8)], brewer.pal(8, "Purples")[c(5,6,7,8)]), shapes=c(15,16,17,18,0,1,2,5)) +
-    plotted(filter(binded_race, row_number() != 7), limitsvec=c(0.09, 3.73), breaksvec=c(0.125, 0.25, 0.5, 1, 2, 4), 
+    plotted(binded_race, limitsvec=c(0.088, 3.73), breaksvec=c(0.125, 0.25, 0.5, 1, 2, 4), 
             cols=c(brewer.pal(8, "Blues")[c(5,6,7,8)], brewer.pal(8, "Purples")[c(5,6,7,8)]), shapes=c(15,16,17,18,0,1,2,5)) + 
-            xlab("Prevalence ratio") + theme(axis.title.x=element_text(), axis.text.x=element_text(), axis.ticks.x=element_line(), axis.title.y=element_blank()) +              geom_text(data=filter(binded_race, row_number()==7), x=-2.3, y=1.13, label="\u2190", color="#4A1486", size=6) +  
-            geom_text(data=filter(binded_race, row_number()==28), x=-2.3, y=1.13, label="\u2190", color="#4A1486", size=6) +  
+            xlab("Prevalence ratio") + theme(axis.title.x=element_text(), axis.text.x=element_text(), axis.ticks.x=element_line(), axis.title.y=element_blank()) +              
+    geom_text(data=filter(binded_race, row_number()==28), x=-2.3, y=1.13, label="\u2190", color="#4A1486", size=6) +  
   plot_layout(ncol=1, heights=c(1, 2, 2))
 
 ggsave("comp_safety.tiff", height=5, width=10.25, dpi=600, compression="lzw")
@@ -600,11 +595,11 @@ binded_race <- formatted(c("White managers", "White petit bourgeoisie", "White c
 
 ```{r warning=FALSE, message=FALSE, fig.height=5, fig.width=11.25}
 #figure
-plotted(binded_overall, limitsvec=c(0.026, 2.72), breaksvec=c(0.031, 0.0625, 0.125, 0.25, 0.5, 1, 2, 4), 
+plotted(binded_overall, limitsvec=c(0.0259, 2.72), breaksvec=c(0.031, 0.0625, 0.125, 0.25, 0.5, 1, 2, 4), 
              cols=brewer.pal(8, "Blues")[c(5,6,7,8)], shapes=c(15,16,17,18)) + theme(strip.text=element_text(colour = "black", vjust=1.07)) +
-    plotted(binded_gender, limitsvec=c(0.026, 2.72), breaksvec=c(0.031, 0.0625, 0.125, 0.25, 0.5, 1, 2, 4), 
+    plotted(binded_gender, limitsvec=c(0.0259, 2.72), breaksvec=c(0.031, 0.0625, 0.125, 0.25, 0.5, 1, 2, 4), 
                  cols=c(brewer.pal(8, "Blues")[c(5,6,7,8)], brewer.pal(8, "Purples")[c(5,6,7,8)]), shapes=c(15,16,17,18,0,1,2,5)) +
-    plotted(binded_race, limitsvec=c(0.026, 2.72), breaksvec=c(0.031, 0.0625, 0.125, 0.25, 0.5, 1, 2, 4), 
+    plotted(binded_race, limitsvec=c(0.0259, 2.72), breaksvec=c(0.031, 0.0625, 0.125, 0.25, 0.5, 1, 2, 4), 
             cols=c(brewer.pal(8, "Blues")[c(5,6,7,8)], brewer.pal(8, "Purples")[c(5,6,7,8)]), shapes=c(15,16,17,18,0,1,2,5)) + 
             xlab("Prevalence ratio") + theme(axis.title.x=element_text(), axis.text.x=element_text(), axis.ticks.x=element_line(), axis.title.y=element_blank()) +
   plot_layout(ncol=1, heights=c(1, 2, 2))
@@ -746,7 +741,7 @@ kable(binded[1:48,1:5], caption="Ref: white men", digits=2, row.names=FALSE) %>%
 
 ### How many employees do PBs and capitalists identify as having? 
 
-Note that the numemps variable wasn't asked in 2002, which is why we aren't using it for our primary analyses. Note also that numemps was only asked of people who identified as self-employed, which supports our use of the self-employed variable to identify owners.
+Note that the numemps variable wasn't asked in 2002, which is one reason we didn't use it for our primary analyses. Note also that numemps was only asked of people who identified as self-employed, which supports our use of the self-employed variable to identify owners.
 
 ```{r, warning=FALSE, message=FALSE}
 #run on unimputed data
@@ -790,26 +785,34 @@ kable(x[,1:4]) %>%
 
 ## Data management
 
-Confirming that class, race, and gender variables are coded correctly
+### Confirming that binary QWL variables are coded correctly
+
+```{r warning=FALSE, message=FALSE}
+kable(table(dat$class, dat$wrkslf, dat$wksup, dat$occ10=="chief executives"), caption="Class by self employed by supervisor by chief executive", col.names=c("Class", "Self-employed", "Supervisor", "Chief executive", "Count")) %>%
+  kable_styling("striped") %>%
+  scroll_box(width = "100%", height = "250px")
+```
+
+### Confirming that class, race, and gender variables are coded correctly
 
 ```{r warning=FALSE, message=FALSE}
 #class variable 
-kable(table(dat$class, dat$wrkslf, dat$wksup, dat$occ10=="chief executives"), caption="Class by self employed by supervisor by chief executive", col.names=c("Class", "Self-employed", "Supervisor", "Chief executive", "Count")) %>%
+kable(table(dat$class, dat$wrkslf, dat$wksup, dat$occ10=="chief executives", useNA='always'), caption="Class by self employed by supervisor by chief executive", col.names=c("Class", "Self-employed", "Supervisor", "Chief executive", "Count")) %>%
   kable_styling("striped") %>%
   scroll_box(width = "100%", height = "250px")
 
 #class-gender variable 
-kable(table(dat$class_gender, dat$sex), caption="Class-gender by gender", col.names=c("Class-gender", "Gender")) %>%
+kable(table(dat$class_gender, dat$sex, useNA='always'), caption="Class-gender by gender", col.names=c("Class-gender", "Gender", "NA")) %>%
   kable_styling("striped") %>%
   scroll_box(width = "100%", height = "250px")
 
 #class-POC variable
-kable(table(dat$class_poc, dat$poc), caption="Class-POC by POC") %>%
+kable(table(dat$class_poc, dat$poc, useNA='always'), caption="Class-POC by POC") %>%
   kable_styling("striped") %>%
   scroll_box(width = "100%", height = "250px")
 
 #race-gender variable
-kable(table(dat$poc_gender, dat$race_h, dat$sex), caption="Race-gender by race and gender", col.names=c("Race-gender", "Race", "Gender", "Count")) %>%
+kable(table(dat$poc_gender, dat$race_h, dat$sex, useNA='always'), caption="Race-gender by race and gender", col.names=c("Race-gender", "Race", "Gender", "Count")) %>%
   kable_styling("striped") %>%
   scroll_box(width = "100%", height = "250px")
 ```
@@ -839,9 +842,9 @@ Prevalence of bad category of each binary QWL variable among each class relative
 outvars <- c("satjob1_bin_unimp", "rincblls_bin_unimp", "safehlth_bin_unimp", "safetywk_bin_unimp")
 
 #functions
-mysvy <- function(dat, columns, adjvars, ...) {
+mysvy <- function(mi_dat, columns, adjvars, ...) {
   model <- lapply(as.list(columns), function(x) {
-    svyglm(as.formula(paste0(names(dat$variables)[which(names(dat$variables)==x)], adjvars)), family=poisson(), design=dat)
+    svyglm(as.formula(paste0(names(mi_dat$variables)[which(names(mi_dat$variables)==x)], adjvars)), family=poisson(), design=mi_dat)
   })
   return(model)
 }
@@ -869,8 +872,8 @@ formatted <- function(classvec, rows, qwlvec){
   return(binded)
 }
 
-tabled <- function(dat, captioned){
-  kable(dat, digits=2, col.names=c("PR", "Lower", "Upper", "QWL variable", "Class"), caption=captioned, row.names=FALSE) %>%
+tabled <- function(ests, captioned){
+  kable(ests, digits=2, col.names=c("PR", "Lower", "Upper", "QWL variable", "Class"), caption=captioned, row.names=FALSE) %>%
     kable_styling("striped") %>%
     group_rows("Class", 1, 12) %>%
     group_rows("Class*gender", 13, 40) %>%
